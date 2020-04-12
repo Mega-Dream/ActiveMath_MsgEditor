@@ -1,0 +1,5 @@
+メッセージ
+MsgBoxFormNumber,0
+Location[2],0,0
+Width,500
+Height,117

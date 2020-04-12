@@ -1,0 +1,27 @@
+﻿  Source.cpp
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(2088): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(2090): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(2521): warning C4244: '=': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(2865): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(2867): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(2869): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(2871): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(2873): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(2875): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(2877): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(2879): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(2881): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(2883): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(3301): warning C4244: '=': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(3659): warning C4129: '%': エスケープ シーケンスとして正しく認識されませんでした。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(3667): warning C4129: '%': エスケープ シーケンスとして正しく認識されませんでした。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(3675): warning C4129: '%': エスケープ シーケンスとして正しく認識されませんでした。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(2751): warning C4101: 'ListStrLen': ローカル変数は 1 度も使われていません。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(4593): warning C4101: 'ButtonStrLen': ローカル変数は 1 度も使われていません。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(4830): warning C4101: 'ListStrLen': ローカル変数は 1 度も使われていません。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(4980): warning C4101: 'MsgBoxCtrlmEnd': ローカル変数は 1 度も使われていません。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(5695): warning C4101: 'ButtonStrLen': ローカル変数は 1 度も使われていません。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(5850): warning C4101: 'ListStrLen': ローカル変数は 1 度も使われていません。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(6612): warning C4101: 'StrLen': ローカル変数は 1 度も使われていません。
+c:\users\yoshi\source\repos\activemsgeditor\project1\source.cpp(7940): warning C4101: 'ListStrLen': ローカル変数は 1 度も使われていません。
+  Project1.vcxproj -> C:\Users\Yoshi\source\repos\ActiveMsgEditor\Debug\Project1.exe

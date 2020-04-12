@@ -1,0 +1,2 @@
+インプットエリア,.\EditorImg\BGI\back_img03.png
+ディスプレイエリア,.\EditorImg\BGI\back_img04.png
