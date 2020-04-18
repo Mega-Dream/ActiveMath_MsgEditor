@@ -4,17 +4,21 @@
 #include "ActiveMath.h"
 #include <string.h>//文字列用？
 #include <stdlib.h>//終了時のexit()関数が入っている itoa関数（intからcharへの変換）
-#include <stdio.h>
-#define _USE_MATH_DEFINES//
-#include <math.h>//_USE_MATH_DEFINES を定義してから、cmath（ｃ++用） や math.h（c言語用） をインクルードする必要があります。
+//#include <stdio.h>
+//#define _USE_MATH_DEFINES//
+//#include <math.h>//_USE_MATH_DEFINES を定義してから、cmath（ｃ++用） や math.h（c言語用） をインクルードする必要があります。
 
-#include <windows.h>//編集時に画像選択ダイアログで使用
-#include <tchar.h>//編集時に画像選択ダイアログで使用　ディレクトリー内の操作関連で使用
+//#include <windows.h>//編集時に画像選択ダイアログで使用
+//#include <tchar.h>//編集時に画像選択ダイアログで使用　ディレクトリー内の操作関連で使用
 
-#include <shlwapi.h>
-#pragma comment( lib, "Shlwapi.lib" )
+#include <shlwapi.h>//PathRelativePathToで使用
+#pragma comment( lib, "Shlwapi.lib" )//PathRelativePathToで使用
 //
+
+
 //●グローバル変数
+char ApplicationTitle[] = "Avtive";
+
 int FPS = 60;
 int WindowWidth = 1000, WindowHeight = 750 + 24 + 24, ColorBitNum = 32;//PCモニターは1920 * 1080
 
@@ -1373,9 +1377,9 @@ int EditMonster(char *FilePath_Monster_h, struct Monster *Monster_p, int *Monste
 
 	}
 	//タイトルバーのテキストの更新
-	const char AppricationTitle[MAX_PATH] = "Active Math - モンスター編集モード - ";
 	char Titlebar_text[MAX_PATH];
-	strcpy(Titlebar_text, AppricationTitle);//アプリケーション名を代入
+	strcpy(Titlebar_text, ApplicationTitle);//アプリケーション名を代入
+	strcat(Titlebar_text, " - モンスター編集モード - ");//ファイル名を連結
 	strcat(Titlebar_text, FileTitle_Monster);//ファイル名を連結
 	SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 
@@ -3222,17 +3226,18 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//0番があるから全88個のボタン
-
-	//タイトル
-	char MondaiMode[MAX_PATH] = "Active Math - 問題編集モード - ";
-	char MsgMode[MAX_PATH] = "Active Math - メッセージ編集モード - ";
-	char PadMode[MAX_PATH] = "Active Math - パッドビューア - ";
-	const char *AppricationTitle_p;
-	if (*EditorMode_p == 0) AppricationTitle_p = MsgMode;
-	else if (*EditorMode_p == 1) AppricationTitle_p = MondaiMode;
-	else AppricationTitle_p = PadMode;//if (*EditorMode_p == 2) 
-
+	   	 
+	//モードのテキストの更新
+	char AppMode_text[MAX_PATH];
+	strcpy(AppMode_text, ApplicationTitle);//アプリケーション名を代入
+	if (*EditorMode_p % 100 / 10 == 0) strcat(AppMode_text, " - メッセージ編集モード - ");//
+	else if (*EditorMode_p % 100 / 10 == 1) strcat(AppMode_text, " - 問題編集モード - ");
+	else strcat(AppMode_text, " - パッドビューア - ");//if (*EditorMode_p == 2) 
+	//タイトルバーのテキストの更新
 	char Titlebar_text[MAX_PATH];
+	strcpy(Titlebar_text, AppMode_text);//ファイル名を連結
+	strcat(Titlebar_text, FileTitle_h);
+	SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 
 	//■メッセージフォーム番号の算出///////////////
 	int MsgFormNo = MsgBoxFormNumber_h[MsgBoxCrlNumber];
@@ -3469,7 +3474,7 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 					//終了時のカレントディレクトリはLocalDir
 
 					//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
-					strcpy(Titlebar_text, AppricationTitle_p);//アプリケーション名を代入
+					strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
 					strcat(Titlebar_text, FileTitle_h);//ファイル名を連結
 					SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 					//forループから抜けて書き直す
@@ -4274,7 +4279,7 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 						//終了時のカレントディレクトリはLocalDir
 
 						//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
-						strcpy(Titlebar_text, AppricationTitle_p);//アプリケーション名を代入
+						strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
 						strcat(Titlebar_text, FileTitle_h);//ファイル名を連結
 						SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 						//forループから抜けて書き直す
@@ -4310,7 +4315,7 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 						SaveJoypadSetPath(".\\JoypadSettings.txt");//スタイルセットの保存
 
 						//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
-						strcpy(Titlebar_text, AppricationTitle_p);//アプリケーション名を代入
+						strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
 						strcat(Titlebar_text, FileTitle_h);//ファイル名を連結
 						SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 						//forループから抜けて書き直す
@@ -4981,13 +4986,14 @@ int PadPreviewMode(int *EditorMode_p, char* FilePath_Pad_h//, struct AREACONTROL
 	struct MsgBoxCtrl MsgBoxCtrl_Master = { 0 };//レフトバー（Height），メッセージプレビュー（ポインターアドレス），パッドプレビュー（ポインターアドレス）で使用
 	int FormNumberOfMsgCtrs = 0;
 
-	//タイトル表示
-	const char AppricationTitle[MAX_PATH] = "Active Math - パッドビューア - ";
+	//タイトル
+	char AppMode_text[MAX_PATH];
+	strcpy(AppMode_text, ApplicationTitle);//アプリケーション名を代入
+	strcat(AppMode_text, " - パッドビューア - ");//ファイル名を連結
 	char Titlebar_text[MAX_PATH];
 	char FileTitle_Pad[MAX_PATH] = { 0 };//問題ファイル名を取得する変数
 	if (FilePath_Pad_h[0] != '\0') GetTitleFromPath(FileTitle_Pad, FilePath_Pad_h);//ファイルパスからファイル名を取得（ファイルパスが"無題"のときはファイル名も"無題"）
 	static char PadDir[MAX_PATH] = { 0 };
-
 		//////////↓開くのとき（ファイルパスがない）や，ファイル名が"無題"（新規作成）のとき）
 	if (FilePath_Pad_h[0] != '\0') {
 		//ディレクトリの取得（ファイル名の前の\\の位置を探す）
@@ -5046,7 +5052,7 @@ int PadPreviewMode(int *EditorMode_p, char* FilePath_Pad_h//, struct AREACONTROL
 		LoadMsgBoxForm_RGB_SoundPath(".\\MsgBoxForm.txt", &MsgBoxForm_RGB_SoundPath, MsgBoxForm_Kosuu);//ファームのセーブがあるため，LoadMsgBoxForm2もロードしておく必要がある。
 
 		//■タイトルバーのテキストの更新
-		strcpy(Titlebar_text, AppricationTitle);//アプリケーション名を代入
+		strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
 		strcat(Titlebar_text, FileTitle_Pad);//ファイル名を連結
 		SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 
@@ -5952,13 +5958,17 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 																						  //メッセージとメッセージプロパティ
 	struct Kadai mondai = { 0 }; //問題データを入れる
 	int MsgSizeE = 0;//MsgSizeEは終端文字を含めたサイズ
-
-
-	//タイトル
-	const char AppricationTitle[MAX_PATH] = "Active Math - 問題編集モード - ";
+	//モードのテキスト
+	char AppMode_text[MAX_PATH];
+	strcpy(AppMode_text, ApplicationTitle);//アプリケーション名を代入
+	strcat(AppMode_text, " - 問題編集モード - ");//モード名を連結
+	//タイトルバー
 	char Titlebar_text[MAX_PATH];
+	strcpy(Titlebar_text, AppMode_text);
+	//
 	static char FileTitle_Mondai[MAX_PATH] = { 0 };//問題ファイル名を取得する変数
 	if (FilePath_Mondai_h[0] != '\0') GetTitleFromPath(FileTitle_Mondai, FilePath_Mondai_h);//ファイルパスからファイル名を取得
+
 	//ファイルパス関連//
 	static char FilePath_Settings[MAX_PATH];//スタイル等の設定ファイルのフルパス（問題ファイルを開く都度，問題ファイルと同じディレクトリ内の　"設定.txt"　ファイルのフルパスとなる）
 	static char FilePath_MsgBoxForm[MAX_PATH];//メッセージボックスコントロールファイルのフルパス（問題ファイルを開く都度，問題ファイルと同じディレクトリ内の　"MsgBoxForm.txt"　ファイルのフルパスとなる）
@@ -6115,12 +6125,12 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 
 		InputHandleMath = MakeKeyInput(100, TRUE, FALSE, FALSE);//新しいキー入力データの作成  ESCキーによるキャンセル機能の有無TRUE　半角文字のみの入力FALSE　数値文字のみの入力FALSE
 		SetActiveKeyInput(InputHandleMath);// 作成したキー入力ハンドルをアクティブにする
-		//タイトルバーのテキストの更新
-		strcpy(Titlebar_text, AppricationTitle);//アプリケーション名を代入
-		strcat(Titlebar_text, FileTitle_Mondai);//ディレクトリ名を連結
-		SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
+		//タイトルバーのテキストにファイル名付加
+		strcat(Titlebar_text, FileTitle_Mondai);
 
 	}
+	SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
+
 	//
 	if (*EditorMode_p / 100 == 1) {
 		ToolB[1].Active = 0; ToolB[2].Active = 0; ToolB[3].Active = 0; 
@@ -6323,7 +6333,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 					//メッセージの保存
 					OverwriteMondai(FilePath_Mondai_h, FileTitle_Mondai, MAX_PATH, MAX_PATH, &mondai);//上書き保存（または名前を付けて保存）
 					//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
-					strcpy(Titlebar_text, AppricationTitle);//アプリケーション名を代入
+					strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
 					strcat(Titlebar_text, FileTitle_Mondai);//ファイル名を連結
 					SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 					//メッセージボックスコントロールとメッセージボックスフォームの保存
@@ -6419,7 +6429,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 							GetGraphSize(Monster[i].Img, &MonsterImgWidth[i], &MonsterImgHeight[i]); //モンスターの画像の縦横サイズを取得してmonsterwide，monsterhightに書き出す
 						}
 						//タイトルバーのテキストの更新
-						strcpy(Titlebar_text, AppricationTitle);//アプリケーション名を代入
+						strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
 						strcat(Titlebar_text, FileTitle_Mondai);//ディレクトリ名を連結
 						SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 					}
@@ -7311,7 +7321,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 						//メッセージの保存
 						OverwriteMondai(FilePath_Mondai_h, FileTitle_Mondai, MAX_PATH, MAX_PATH, &mondai);//上書き保存（または名前を付けて保存）
 						//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
-						strcpy(Titlebar_text, AppricationTitle);//アプリケーション名を代入
+						strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
 						strcat(Titlebar_text, FileTitle_Mondai);//ファイル名を連結
 						SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 						//メッセージボックスコントロールとメッセージボックスフォームの保存
@@ -7367,7 +7377,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						SaveAsNewMondai(FilePath_Mondai_h, FileTitle_Mondai, MAX_PATH, MAX_PATH, &mondai); //名前を付けて保存
 						//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
-						strcpy(Titlebar_text, AppricationTitle);//アプリケーション名を代入
+						strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
 						strcat(Titlebar_text, FileTitle_Mondai);//ファイル名を連結
 						SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 						//メッセージボックスコントロールとメッセージボックスフォームの保存
@@ -7455,7 +7465,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 								GetGraphSize(Monster[i].Img, &MonsterImgWidth[i], &MonsterImgHeight[i]); //モンスターの画像の縦横サイズを取得してmonsterwide，monsterhightに書き出す
 							}
 							//タイトルバーのテキストの更新
-							strcpy(Titlebar_text, AppricationTitle);//アプリケーション名を代入
+							strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
 							strcat(Titlebar_text, FileTitle_Mondai);//ディレクトリ名を連結
 							SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 						}
@@ -8026,10 +8036,14 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h//, struct AREACONTRO
 
 
 
-
-	//タイトル表示
-	const char AppricationTitle[MAX_PATH] = "Active Math - メッセージ編集モード - ";
+	//モードのテキスト
+	char AppMode_text[MAX_PATH];
+	strcpy(AppMode_text, ApplicationTitle);//アプリケーション名を代入
+	strcat(AppMode_text, " - メッセージ編集モード - ");//モード名を連結
+	//タイトルバー
 	char Titlebar_text[MAX_PATH];
+	strcpy(Titlebar_text, AppMode_text);
+	//
 	char FileTitle_Message[MAX_PATH] = { 0 };//メッセージファイル名を取得する変数
 	if (FilePath_Message_h[0] != '\0') GetTitleFromPath(FileTitle_Message, FilePath_Message_h);//これロードの前に移動できる？？？616　//ファイルパスからファイル名を取得（ファイルパスが"新規"のときはファイル名も"新規"）
 	//ファイルパス関連//
@@ -8119,12 +8133,10 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h//, struct AREACONTRO
 
 		InputHandleMath = MakeKeyInput(100, TRUE, FALSE, FALSE);//新しいキー入力データの作成  ESCキーによるキャンセル機能の有無TRUE　半角文字のみの入力FALSE　数値文字のみの入力FALSE
 		SetActiveKeyInput(InputHandleMath);// 作成したキー入力ハンドルをアクティブにする
-		//タイトルバーのテキストの更新
-		strcpy(Titlebar_text, AppricationTitle);//アプリケーション名を代入
-		strcat(Titlebar_text, FileTitle_Message);//ファイル名を連結
-		SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
-
+		//タイトルバーのテキストにファイル名を不可
+		strcat(Titlebar_text, FileTitle_Message);
 	}
+	SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 
 
 
@@ -8277,7 +8289,7 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h//, struct AREACONTRO
 					SaveFontTagSetPath(".\\FontTagSettings.txt");//スタイルセットの保存
 
 					//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
-					strcpy(Titlebar_text, AppricationTitle);//アプリケーション名を代入
+					strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
 					strcat(Titlebar_text, FileTitle_Message);//ファイル名を連結
 					SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 				}
@@ -8522,7 +8534,7 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h//, struct AREACONTRO
 						SaveFontTagSetPath(".\\FontTagSettings.txt");//スタイルセットの保存
 
 						//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
-						strcpy(Titlebar_text, AppricationTitle);//アプリケーション名を代入
+						strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
 						strcat(Titlebar_text, FileTitle_Message);//ファイル名を連結
 						SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 					}
@@ -8542,7 +8554,7 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h//, struct AREACONTRO
 						SaveFontTagSetPath(".\\FontTagSettings.txt");//スタイルセットの保存
 
 						//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
-						strcpy(Titlebar_text, AppricationTitle);//アプリケーション名を代入
+						strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
 						strcat(Titlebar_text, FileTitle_Message);//ファイル名を連結
 						SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 					}
@@ -8806,32 +8818,32 @@ int Editor(int* EditorMode_p) {
 			PadPreviewMode(EditorMode_p, FilePath);//, PadArea, ButtonForm, Index, IndexKosuu, Button_ph, ButtonKosuu, BaseButton, BaseButtonKosuu);
 			//（パッドモードのときは毎回更新するのでLocalDirのリセットは不要）
 		}
-		else if (*EditorMode_p == 111) {//メッセージのサンプルを開く
+		else if (*EditorMode_p == 101) {//メッセージのサンプルを開く
 			GetFullPathName(".\\System\\Sample\\Message\\01\\Sample_Msg01.txt", MAX_PATH, FilePath, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
 			EditMessage(EditorMode_p, FilePath);//, PadArea, ButtonForm, Index, IndexKosuu, Button_ph, ButtonKosuu, BaseButton, BaseButtonKosuu);//, ActiveDirectory
 			//ホームに戻る（メッセージがサイズオーバーで開けずに関数から抜けてきたとき，繰り返し同じサンプルを開くのを防ぐ）エラー発生時にファイルパスは消去されるが，また同じファイルパスが指定されるため
 			break;
 		}
-		else if (*EditorMode_p == 112) {//メッセージのサンプルを開く
+		else if (*EditorMode_p == 102) {//メッセージのサンプルを開く
 			GetFullPathName(".\\System\\Sample\\Message\\02\\Sample_Msg02.txt", MAX_PATH, FilePath, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
 			EditMessage(EditorMode_p, FilePath);//, PadArea, ButtonForm, Index, IndexKosuu, Button_ph, ButtonKosuu, BaseButton, BaseButtonKosuu);//, ActiveDirectory
 			//ホームに戻る（メッセージがサイズオーバーで開けずに関数から抜けてきたとき，繰り返し同じサンプルを開くのを防ぐ）エラー発生時にファイルパスは消去されるが，また同じファイルパスが指定されるため
 			break;
 		}
-		else if (*EditorMode_p == 113) {//メッセージのサンプルを開く
+		else if (*EditorMode_p == 103) {//メッセージのサンプルを開く
 			GetFullPathName(".\\System\\Sample\\Message\\03\\Sample_Msg03.txt", MAX_PATH, FilePath, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
 			EditMessage(EditorMode_p, FilePath);//, PadArea, ButtonForm, Index, IndexKosuu, Button_ph, ButtonKosuu, BaseButton, BaseButtonKosuu);//, ActiveDirectory
 			//ホームに戻る（メッセージがサイズオーバーで開けずに関数から抜けてきたとき，繰り返し同じサンプルを開くのを防ぐ）エラー発生時にファイルパスは消去されるが，また同じファイルパスが指定されるため
 			break;
 		}
 
-		else if (*EditorMode_p == 121) {//問題のサンプルを開く
+		else if (*EditorMode_p == 111) {//問題のサンプルを開く
 			GetFullPathName(".\\System\\Sample\\Mondai\\Sample_Mondai01.txt", MAX_PATH, FilePath, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
 			EditMondai(EditorMode_p, FilePath);//, PadArea, ButtonForm, Index, IndexKosuu, Button_ph, ButtonKosuu, BaseButton, BaseButtonKosuu);
 			//ホームに戻る（エラーで関数から抜けてきたとき，繰り返し同じサンプルを開くのを防ぐ）エラー発生時にファイルパスは消去されるが，また同じファイルパスが指定されるため
 			break;
 		}
-		else if (*EditorMode_p == 131) {//パッドのサンプルを開く
+		else if (*EditorMode_p == 121) {//パッドのサンプルを開く
 			GetFullPathName(".\\System\\Sample\\Pad\\Sample_Pad01.csv", MAX_PATH, FilePath, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
 			PadPreviewMode(EditorMode_p, FilePath);//, PadArea, ButtonForm, Index, IndexKosuu, Button_ph, ButtonKosuu, BaseButton, BaseButtonKosuu);
 			//ホームに戻る（エラーで関数から抜けてきたとき，繰り返し同じサンプルを開くのを防ぐ）エラー発生時にファイルパスは消去されるが，また同じファイルパスが指定されるため
@@ -8841,7 +8853,7 @@ int Editor(int* EditorMode_p) {
 	}//whileの終わり
 
 	//各モードから抜けてwhileから抜けてきたとき，または，ProcessMessage()がエラーでwhileから抜けてきたとき
-	SetMainWindowText("Active Math");//タイトルバーの書き換え
+	SetMainWindowText(ApplicationTitle);//タイトルバーの書き換え
 	return 0;
 }
 
@@ -8854,7 +8866,6 @@ int Editor(int* EditorMode_p) {
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//［起動時の設定］　
 	//SetOutApplicationLogValidFlag(FALSE); //ログ出力を行うか否かのフラグ(TRUE:行う FALSE : 行わない)
-	char ApplicationTitle[] = "Avtive Math";
 	SetMainWindowText(ApplicationTitle);//タイトルバーの書き換え
 	//●DXライブラリの設定↓////
 	SetWaitVSyncFlag(FALSE);//垂直同期信号をオフ
@@ -9168,30 +9179,30 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 				///////メッセージ編集モードのサンプル
 				if (ClickedNo == 0) {
-					EditorMode = 111;//メッセージ編集モード
+					EditorMode = 101;//
 					Editor(&EditorMode);
 					break;
 				}
 				else if (ClickedNo == 1) {
-					EditorMode = 112;//問題編集モード
+					EditorMode = 102;//
 					Editor(&EditorMode);
 					break;
 				}
 				else if (ClickedNo == 2) {
-					EditorMode = 113;//問題編集モード
+					EditorMode = 103;//
 					Editor(&EditorMode);
 					break;
 				}
 
 				///////問題編集モードのサンプル
 				else if (ClickedNo == 3) {
-					EditorMode = 121;//問題編集モード
+					EditorMode = 111;//問題編集モード
 					Editor(&EditorMode);
 					break;
 				}
 				///////パッドビューアのサンプル
 				else if (ClickedNo == 4) {
-					EditorMode = 131;//パッドビューア
+					EditorMode = 121;//パッドビューア
 					Editor(&EditorMode);
 					break;
 				}
