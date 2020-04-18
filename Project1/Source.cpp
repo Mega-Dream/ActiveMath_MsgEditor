@@ -17,7 +17,7 @@
 
 
 //●グローバル変数
-char ApplicationTitle[] = "Avtive Math Message Editor";
+char ApplicationTitle[] = "Avtive Math Message Editor1";
 
 int FPS = 60;
 int WindowWidth = 1000, WindowHeight = 750 + 24 + 24, ColorBitNum = 32;//PCモニターは1920 * 1080
