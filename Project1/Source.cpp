@@ -1,9 +1,9 @@
-#define _CRT_SECURE_NO_WARNINGS//strcpyのバッファオーバーの警告を止めるためにある。
+//#define _CRT_SECURE_NO_WARNINGS//strcpyのバッファオーバーの警告を止めるためにある。
 //strcpy_sというのは使えるのか？使えたら_CRT_SECURE_NO_WARNINGSではなくstrcpy_sにしたほうがいい？
-#include "DxLib.h"
+//#include "DxLib.h"
 #include "ActiveMath.h"
-#include <string.h>//文字列用？
-#include <stdlib.h>//終了時のexit()関数が入っている itoa関数（intからcharへの変換）
+//#include <string.h>//文字列用？
+//#include <stdlib.h>//終了時のexit()関数が入っている itoa関数（intからcharへの変換）
 //#include <stdio.h>
 //#define _USE_MATH_DEFINES//
 //#include <math.h>//_USE_MATH_DEFINES を定義してから、cmath（ｃ++用） や math.h（c言語用） をインクルードする必要があります。
@@ -13,11 +13,11 @@
 
 #include <shlwapi.h>//PathRelativePathToで使用
 #pragma comment( lib, "Shlwapi.lib" )//PathRelativePathToで使用
-//
+#include <shlobj.h> //このアプリで定義されたGetOpenDirectoryName関連で使用
 
 
 //●グローバル変数
-char ApplicationTitle[] = "Avtive Math Message Editor";
+char ApplicationTitle[] = "Active Math Message Editor";
 
 int FPS = 60;
 int WindowWidth = 1000, WindowHeight = 750 + 24 + 24, ColorBitNum = 32;//PCモニターは1920 * 1080
@@ -188,7 +188,6 @@ BOOL GetOpenFileNameT(const TCHAR* initialdir_h, TCHAR *FilePath_h, TCHAR *FileT
 		return 0;////ユーザーが OK ボタンを押さなかったら０を返す
 	}
 }
-#include <shlobj.h>
 static
 int CALLBACK SHBrowseProc(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
 {
@@ -239,23 +238,24 @@ BOOL GetOpenDirectoryName(LPCTSTR lpszDefaultFolder, LPTSTR lpszBuffer, DWORD dw
 	return FALSE;
 }
 ////////ダイアログの準備と実行
-BOOL GetOpenFileNameText(const TCHAR *initialdir_h, TCHAR *FilePath_h, TCHAR *FileTitle_h, const int mf, const int mft) {
+BOOL GetOpenFileNameACM(const TCHAR *initialdir_h, TCHAR *FilePath_h, TCHAR *FileTitle_h, const int mf, const int mft) {
 	TCHAR filepath[MAX_PATH] = { _T('\0') };//GetOpenFileNameは，ダイアログでOKを押さなかったときカラになるため，直接FilePath_hに代入しない
 	TCHAR filetitle[MAX_PATH] = { _T('\0') };//GetOpenFileNameは，ダイアログでOKを押さなかったときカラになるため，直接FileTitle_hに代入しない
 	//GetOpenFileNameは，ダイアログでOKを押さなかったとき，ディレクトリは元のまま
 	OPENFILENAME o;
 	ZeroMemory(&o, sizeof(o));
 	o.lStructSize = sizeof(o);		//	構造体サイズ
-									//o.hwndOwner = hWnd;				//	親ウィンドウのハンドル
-
-									//strcat(initialdir_h, "\\問題");//\\問題DataFile
+	//o.hwndOwner = hWnd;				//	親ウィンドウのハンドル
+	//strcat(initialdir_h, "\\問題");//\\問題DataFile
 	o.lpstrInitialDir = _TEXT(initialdir_h);	//	初期フォルダー
 	o.lpstrFile = filepath;			//	取得したフルパスを保存するバッファ
 	o.nMaxFile = mf;				//	取得したフルパスを保存するバッファサイズ
 	o.lpstrFileTitle = filetitle;			//	取得したファイル名を保存するバッファ
 	o.nMaxFileTitle = mft;				//	取得したファイル名を保存するバッファサイズ
-	o.lpstrFilter = _TEXT("TEXTファイル(*.txt)\0*.txt\0") _TEXT("全てのファイル(*.*)\0*.*\0");//？？？(*.txt;*.csv)のところは、本当にこれで良いの？適当にやったらうまくいっただけだから確認要
-	o.lpstrDefExt = _TEXT("txt");
+	//o.lpstrFilter = _TEXT("TEXTファイル(*.txt)\0*.txt;*.csv\0") _TEXT("全てのファイル(*.*)\0*.*\0");//？？？(*.txt;*.csv)のところは、本当にこれで良いの？適当にやったらうまくいっただけだから確認要
+	//o.lpstrDefExt = _TEXT("txt");
+	o.lpstrFilter = _TEXT("ACMファイル(*.acm)\0*.acm\0") _TEXT("全てのファイル(*.*)\0*.*\0");//？？？(*.acm;*.csv)のところは、本当にこれで良いの？適当にやったらうまくいっただけだから確認要
+	o.lpstrDefExt = _TEXT("acm");
 	o.lpstrTitle = _TEXT("ファイルを開く");
 	o.nFilterIndex = 1;
 	if (int aaa = GetOpenFileName(&o)) {//GetOpenFileName(&o)はユーザーが OK ボタンを押せば 0 以外（実際は１）、そうでなければ 0 が返る
@@ -263,10 +263,59 @@ BOOL GetOpenFileNameText(const TCHAR *initialdir_h, TCHAR *FilePath_h, TCHAR *Fi
 		strcpy(FilePath_h, filepath); strcpy(FileTitle_h, filetitle);
 		return 1;//ユーザーが OK ボタンを押したら0 以外（実際は１）を返す
 	}
-	else {
-		return 0;////ユーザーが OK ボタンを押さなかったら０を返す
-	}
+	else return 0;////ユーザーが OK ボタンを押さなかったら０を返す
 }
+BOOL GetOpenFileNameACK(const TCHAR *initialdir_h, TCHAR *FilePath_h, TCHAR *FileTitle_h, const int mf, const int mft) {
+	TCHAR filepath[MAX_PATH] = { _T('\0') };//GetOpenFileNameは，ダイアログでOKを押さなかったときカラになるため，直接FilePath_hに代入しない
+	TCHAR filetitle[MAX_PATH] = { _T('\0') };//GetOpenFileNameは，ダイアログでOKを押さなかったときカラになるため，直接FileTitle_hに代入しない
+	//GetOpenFileNameは，ダイアログでOKを押さなかったとき，ディレクトリは元のまま
+	OPENFILENAME o;
+	ZeroMemory(&o, sizeof(o));
+	o.lStructSize = sizeof(o);		//	構造体サイズ
+	//o.hwndOwner = hWnd;				//	親ウィンドウのハンドル
+	//strcat(initialdir_h, "\\問題");//\\問題DataFile
+	o.lpstrInitialDir = _TEXT(initialdir_h);	//	初期フォルダー
+	o.lpstrFile = filepath;			//	取得したフルパスを保存するバッファ
+	o.nMaxFile = mf;				//	取得したフルパスを保存するバッファサイズ
+	o.lpstrFileTitle = filetitle;			//	取得したファイル名を保存するバッファ
+	o.nMaxFileTitle = mft;				//	取得したファイル名を保存するバッファサイズ
+	o.lpstrFilter = _TEXT("ACKファイル(*.ack)\0*.ack\0") _TEXT("全てのファイル(*.*)\0*.*\0");
+	o.lpstrDefExt = _TEXT("ack");
+	o.lpstrTitle = _TEXT("ファイルを開く");
+	o.nFilterIndex = 1;
+	if (GetOpenFileName(&o)) {//GetOpenFileName(&o)はユーザーが OK ボタンを押せば 0 以外（実際は１）、そうでなければ 0 が返る
+		//問題ファイルパスと問題ファイル名を取得
+		strcpy(FilePath_h, filepath); strcpy(FileTitle_h, filetitle);
+		return 1;//ユーザーが OK ボタンを押したら0 以外（実際は１）を返す
+	}
+	else return 0;////ユーザーが OK ボタンを押さなかったら０を返す
+}
+BOOL GetOpenFileNameACP(const TCHAR *initialdir_h, TCHAR *FilePath_h, TCHAR *FileTitle_h, const int mf, const int mft) {
+	TCHAR filepath[MAX_PATH] = { _T('\0') };//GetOpenFileNameは，ダイアログでOKを押さなかったときカラになるため，直接FilePath_hに代入しない
+	TCHAR filetitle[MAX_PATH] = { _T('\0') };//GetOpenFileNameは，ダイアログでOKを押さなかったときカラになるため，直接FileTitle_hに代入しない
+	//GetOpenFileNameは，ダイアログでOKを押さなかったとき，ディレクトリは元のまま
+	OPENFILENAME o;
+	ZeroMemory(&o, sizeof(o));
+	o.lStructSize = sizeof(o);		//	構造体サイズ
+	//o.hwndOwner = hWnd;				//	親ウィンドウのハンドル
+	//strcat(initialdir_h, "\\問題");//\\問題DataFile
+	o.lpstrInitialDir = _TEXT(initialdir_h);	//	初期フォルダー
+	o.lpstrFile = filepath;			//	取得したフルパスを保存するバッファ
+	o.nMaxFile = mf;				//	取得したフルパスを保存するバッファサイズ
+	o.lpstrFileTitle = filetitle;			//	取得したファイル名を保存するバッファ
+	o.nMaxFileTitle = mft;				//	取得したファイル名を保存するバッファサイズ
+	o.lpstrFilter = _TEXT("ACPファイル(*.acp)\0*.acp\0") _TEXT("全てのファイル(*.*)\0*.*\0");
+	o.lpstrDefExt = _TEXT("acp");
+	o.lpstrTitle = _TEXT("ファイルを開く");
+	o.nFilterIndex = 1;
+	if (GetOpenFileName(&o)) {//GetOpenFileName(&o)はユーザーが OK ボタンを押せば 0 以外（実際は１）、そうでなければ 0 が返る
+		//問題ファイルパスと問題ファイル名を取得
+		strcpy(FilePath_h, filepath); strcpy(FileTitle_h, filetitle);
+		return 1;//ユーザーが OK ボタンを押したら0 以外（実際は１）を返す
+	}
+	else return 0;////ユーザーが OK ボタンを押さなかったら０を返す
+}
+
 
 
 
@@ -285,7 +334,7 @@ BOOL GetOpenFileNameCsv(const TCHAR *initialdir_h, TCHAR *FilePath_h, TCHAR *Fil
 	o.nMaxFile = mf;				//	取得したフルパスを保存するバッファサイズ
 	o.lpstrFileTitle = filetitle;			//	取得したファイル名を保存するバッファ
 	o.nMaxFileTitle = mft;				//	取得したファイル名を保存するバッファサイズ
-	o.lpstrFilter = _TEXT("csvファイル(*.csv)\0*.csv\0") _TEXT("全てのファイル(*.*)\0*.*\0");//？？？(*.txt;*.csv)のところは、本当にこれで良いの？適当にやったらうまくいっただけだから確認要
+	o.lpstrFilter = _TEXT("CSVファイル(*.csv)\0*.csv\0") _TEXT("全てのファイル(*.*)\0*.*\0");//？？？(*.txt;*.csv)のところは、本当にこれで良いの？適当にやったらうまくいっただけだから確認要
 	o.lpstrDefExt = _TEXT("csv");
 	o.lpstrTitle = _TEXT("ファイルを開く");
 	o.nFilterIndex = 1;
@@ -380,12 +429,24 @@ int MonsterImgChange(char* MonsterDir_h, char* MonsterImgPath_h, int* MonsterImg
 
 
 ////////////ダイアログで問題ファイルのロード////////////
-int EditorModeChecker(int *EditorMode_p, char *FilePath_h, char *FileTitle_p) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
+int EditorModeChecker(int *EditorMode_p, char *FilePath_h) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
 	//現在のディレクトリの確認
 	char DrectoryCheck[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, DrectoryCheck);//チェック用
-	//ファイルタイトルで識別することもあるかもしれないのでFileTitle_pを引数として残しておく
 
+	char Kakuchoshi[5] = {0};//
+	int mojisuu = strlen(FilePath_h);
+	Kakuchoshi[0] = FilePath_h[mojisuu - 3];
+	Kakuchoshi[1] = FilePath_h[mojisuu - 2];
+	Kakuchoshi[2] = FilePath_h[mojisuu - 1];
+
+
+	if (strcmp(Kakuchoshi, "acm") == 0) *EditorMode_p = 0;//０：メッセージ編集モード
+	else if (strcmp(Kakuchoshi, "ack") == 0) *EditorMode_p = 1;//１：問題編集モード
+	else if (strcmp(Kakuchoshi, "acp") == 0) *EditorMode_p = 2;//２：パッド編集モード
+	else return -2;//どのモードにも該当しない
+
+	/*
 	//メッセージタイプのロード
 	char MessageType[100];
 	FILE *fp = fopen(FilePath_h, "r");//テキストファイルを開く
@@ -409,41 +470,56 @@ int EditorModeChecker(int *EditorMode_p, char *FilePath_h, char *FileTitle_p) {/
 	else if (strcmp(MessageType, "Mondai") == 0) *EditorMode_p = 1;//１：問題編集モード
 	else if (strcmp(MessageType, "AreaN") == 0) *EditorMode_p = 2;//２：パッド編集モード
 	else return -2;//どのモードにも該当しない
+	*/
+
 	///////////////////
 	return 0;//成功
 }
 //■設定のセーブ（フォント，フォント画像，タグ設定のセーブ）
 int SaveJoypadSetPath(const TCHAR* file_h) {
-	FILE *fp = fopen(file_h, "w");//テキストファイルを開く
-	if (fp == NULL) {//エラーが起きたらNULLを返す（該当するファイルが存在しない）
+	if (strcmp(FileTitle_Joypad_rw, "なし") == 0) {//新規作成しない
+		return -2;
+	}
+	FILE *fp = fopen(file_h, "w");//テキストファイルを開く//ファイルがなければ新規作成
+	if (fp == NULL) {//エラーが起きたらNULLを返す
 		return -1;
 	}
-	fputs(FilePath_JoypadAssignment, fp); //フォントセットのファイル名の保存
-	fputs("\n", fp); //改行を入れる
-	fclose(fp);//ファイルを閉じる
+	fputs("Dir_Joypad_rw,", fp); fputs(Dir_Joypad_rw, fp); fputs("\n", fp); //ジョイパッドのディレクトリの保存
+	fputs("FileTitle_Joypad_rw,", fp); fputs(FileTitle_Joypad_rw, fp); fputs("\n", fp); //ジョイパッドのファイル名の保存
 
+	fclose(fp);//ファイルを閉じる
 	return 0;
 }
 
 //■設定のセーブ（フォント，フォント画像，タグ設定のセーブ）
 int SaveFontTagSetPath(const TCHAR* file_h) {
-	FILE *fp = fopen(file_h, "w");//テキストファイルを開く
-	if (fp == NULL) {//エラーが起きたらNULLを返す（該当するファイルが存在しない）
+	if (strcmp(FileTitle_Font_rw, "なし") == 0){//新規作成しない
+		return -2;
+	}
+	FILE *fp = fopen(file_h, "w");//テキストファイルを開く//ファイルがなければ新規作成
+	if (fp == NULL) {//エラーが起きたらNULLを返す
 		return -1;
 	}
-	fputs(FilePath_Font, fp); //フォントセットのファイル名の保存
-	fputs("\n", fp); //改行を入れる
-	fputs(FilePath_FontImg, fp); //フォント画像セットのファイル名の保存
-	fputs("\n", fp); //改行を入れる
-	fputs(FilePath_Tag, fp); //タグセットのファイル名の保存
-	fputs("\n", fp); //改行を入れる
+	fputs("Dir_FontSet_rw,", fp); fputs(Dir_FontSet_rw, fp); fputs("\n", fp); //フォントセットのディレクトリの保存
+	fputs("FileTitle_Font_rw,", fp); fputs(FileTitle_Font_rw, fp); fputs("\n", fp); //フォントセットのファイル名の保存
+
+	fputs("Dir_FontImgSet_rw,", fp); fputs(Dir_FontImgSet_rw, fp); fputs("\n", fp); //フォント画像セットのディレクトリの保存
+	fputs("FileTitle_FontImg_rw,", fp); fputs(FileTitle_FontImg_rw, fp); fputs("\n", fp); //フォント画像セットのファイル名の保存
+
+	fputs("Dir_TagSet_rw,", fp); fputs(Dir_TagSet_rw, fp); fputs("\n", fp); //タグセットのディレクトリの保存
+	fputs("FileTitle_Tag_rw,", fp); fputs(FileTitle_Tag_rw, fp); fputs("\n", fp); //タグセットのファイル名の保存
+
+	fputs("Dir_AppImg_rw,", fp); fputs(Dir_AppImg_rw, fp); fputs("\n", fp); //アプリ共有画像のディレクトリの保存
+
+	fputs("Dir_AppSound_rw,", fp); fputs(Dir_AppSound_rw, fp); fputs("\n", fp); //アプリ共有音声のディレクトリの保存
+
 	fclose(fp);//ファイルを閉じる
 	return 0;
 }
 //■メッセージボックスコントロールのセーブ
 int SaveMsgBoxForm(const TCHAR *file_h, struct MsgBoxForm *MsgBoxForm_p, struct MsgBoxForm_RGB_SoundPath *MsgBoxForm_RGB_SoundPath_p, int MsgBoxForm_Kosuu) {
-	FILE *fp = fopen(file_h, "w");//テキストファイルを開く
-	if (fp == NULL) {//エラーが起きたらNULLを返す（該当するファイルが存在しない）
+	FILE *fp = fopen(file_h, "w");//テキストファイルを開く//ファイルがなければ新規作成
+	if (fp == NULL) {//エラーが起きたらNULLを返す
 		return -1;
 	}
 	char textbuff[100];
@@ -623,7 +699,7 @@ int SaveMsgBoxCtrl(const TCHAR *file_h, struct MsgBoxCtrl *MsgBoxCtrl_p, int Msg
 
 
 ////////名前を付けて保存ダイアログの準備と実行
-BOOL GetSaveFileNameM(const TCHAR* InitialDir_h, TCHAR* File_h, TCHAR* FileTitle_h, const int mf, const int mft) {
+BOOL GetSaveFileNameACM(const TCHAR* InitialDir_h, TCHAR* File_h, TCHAR* FileTitle_h, const int mf, const int mft) {
 	OPENFILENAME o;
 	File_h[0] = _T('\0');
 	FileTitle_h[0] = _T('\0');
@@ -635,8 +711,8 @@ BOOL GetSaveFileNameM(const TCHAR* InitialDir_h, TCHAR* File_h, TCHAR* FileTitle
 	o.nMaxFile = mf;				//	取得したフルパスを保存するバッファサイズ
 	o.lpstrFileTitle = FileTitle_h;			//	取得したファイル名を保存するバッファ
 	o.nMaxFileTitle = mft;				//	取得したファイル名を保存するバッファサイズ
-	o.lpstrFilter = _TEXT("テキストファイル(*.txt)\0*.txt\0") _TEXT("全てのファイル(*.*)\0*.*\0");
-	o.lpstrDefExt = _TEXT("txt");
+	o.lpstrFilter = _TEXT("ACMファイル(*.acm)\0*.acm\0") _TEXT("全てのファイル(*.*)\0*.*\0");
+	o.lpstrDefExt = _TEXT("acm");
 	o.lpstrTitle = _TEXT("名前を付けて保存");
 	o.nFilterIndex = 1;
 	o.Flags = OFN_OVERWRITEPROMPT;//上書きの確認メッセージを表示する
@@ -670,11 +746,7 @@ int SaveMondai(const TCHAR* FilePath_h, const struct Kadai* Mondai_p) {
 }
 ////////問題　名前をつけて保存（ダイアログ＋問題のセーブ）
 int SaveAsNewMondai(TCHAR *FilePath_h, TCHAR *FileTitle_h, const int mf, const int mft, const struct Kadai *Mondai_p) {
-//	char filepath[MAX_PATH];	char filetitle[MAX_PATH];
-
-	if (GetSaveFileNameM(LocalDir, FilePath_h, FileTitle_h, mf, mft)) {
-	//if (GetSaveFileNameM(LocalDir, filepath, filetitle, mf, mft)) {　ファイルパスとファイル名を直接GetSaveFileNameMで取得するから不要だと思う
-		//strcpy(FilePath_h, filepath); strcpy(FileTitle_h, filetitle);
+	if (GetSaveFileNameACM(LocalDir, FilePath_h, FileTitle_h, mf, mft)) {
 		SaveMondai(FilePath_h, Mondai_p);//ダイアログで切り替わったディレクトリでファイルを開く
 	}
 	return 0;
@@ -706,11 +778,8 @@ int SaveMessage(const char* File_h, const char* Message_h, const int TagKosuu) {
 }
 ////////メッセージ　名前をつけて保存（ダイアログ＋問題のセーブ）
 int SaveAsNewMessage(CHAR* FilePath_h, TCHAR* FileTitle_h, const int mf, const int mft, const char* Message_h, const int TagNumMax) {
-	//char filepath[MAX_PATH];	char filetitle[MAX_PATH];
 
-	if (GetSaveFileNameM(LocalDir, FilePath_h, FileTitle_h, mf, mft)) {//ダイアログによるファイル名の取得
-	//if (GetSaveFileNameM(LocalDir, filepath, filetitle, mf, mft)) {//ダイアログによるファイル名の取得
-		//strcpy(FilePath_h, filepath); strcpy(FileTitle_h, filetitle);
+	if (GetSaveFileNameACM(LocalDir, FilePath_h, FileTitle_h, mf, mft)) {//ダイアログによるファイル名の取得
 		SaveMessage(FilePath_h, Message_h, TagNumMax);//ダイアログで切り替わったディレクトリでファイルを開く
 	}
 	return 0;
@@ -2084,7 +2153,8 @@ int MsgBoxCtrlReset_message(struct MsgBoxCtrl* MsgBoxCtrl, int* MessageDisplatAr
 
 //プレビューモードの設定（プレビューモードで，基準線の色，基準線の位置，背景色，背景画像の変更
 //※メッセージモードは実質，自動的にプレビューモードに進むのでこの関数　※基準線の位置はディスプレイエリアの左パディングと右パディング　
-int SettingPreviewMode(const TCHAR *FilePath_h, struct AREACONTROL *DisplayArea_p, int(*BorderColorRGB_h)[3], int(*BackColorRGB_h)[3], char(*BackImgPath_h)[MAX_PATH], int Area_Kosuu, int AreaNum, int *EditorSettingsFlag_p) {
+int SettingPreviewMode(const TCHAR *FilePath_h, struct AREACONTROL *DisplayArea_p, int(*BorderColorRGB_h)[3], int(*BackColorRGB_h)[3], char(*BackImgPath_h)[MAX_PATH], 
+	int Area_Kosuu, int AreaNum, int *EditorSettingsFlag_p) {
 
 	static struct AREACONTROL PropertyArea = { 0 };
 	static struct BUTTONFORM PropertyBtnForm = { 0 };
@@ -2371,7 +2441,7 @@ int SettingPreviewMode(const TCHAR *FilePath_h, struct AREACONTROL *DisplayArea_
 }
 
 //各モードで，背景色，背景画像の変更　※メッセージモードは実質，自動的にプレビューモードに進むのでこの関数ではなくSettingPreviewModeを使う
-int SettingEditorBack(struct AREACONTROL *DisplayArea_p, int(*BorderColorRGB_h)[3], int(*BackColorRGB_h)[3], char(*BackImgPath_h)[MAX_PATH], int Area_Kosuu, int *EditorSettingsFlag_p) {
+int SettingEditorBack(struct AREACONTROL *DisplayArea_p, int(*BorderColorRGB_h)[3], int(*BackColorRGB_h)[3], char(*BackImgPath_h)[MAX_PATH], int Area_Kosuu, int *EditorSettingsFlag_p){
 
 	static struct AREACONTROL PropertyArea = { 0 };
 	static struct BUTTONFORM PropertyBtnForm = { 0 };
@@ -2590,7 +2660,6 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 	char *Message_h, int MsgSize, char *DisplayArea_Preview_FilePath_h, struct AREACONTROL *DisplayArea_p, int(*BorderColorRGB_h)[3], int(*BackColorRGB_h)[3], char(*BackImgPath_h)[MAX_PATH], int Area_Kosuu, int AreaNumber,
 	char *FilePath_h, char *FileTitle_h, struct Kadai *mondai_p, int *EditorMode_p, int *ExitModeFlag_p
 ) {
-
 	//■直後のScreenFlipから，各モードの０フレームのScreenFlipまでの待ち時間（ファイルのロードなど）に表示するもの↓
 	//（これがないと各モードから抜けてきたときに，なぜかScreenFlipされていて途中が書き出されてしまう）
 	const static char Msg[] = "お待ちください";
@@ -2789,7 +2858,7 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 	strcpy(List0Row[6].Title, "アプリケーションの終了");
 
 	//■カスタマイズのプルダウンリスト
-	const int List1RowKosuu = 5;
+	const int List1RowKosuu = 6;
 	ListStrWidth = GetDrawStringWidth("フォームとコントロールの表示/非表示", strlen("フォームとコントロールの表示/非表示"));//最大文字数の項目からリストの幅を取得
 	static struct LISTCONTROL List1 = { 0 };
 	List1.ParentButton_p = &ToolA[1];//ファイルボタン
@@ -2814,7 +2883,8 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 	strcpy(List1Row[1].Title, "フォントセットの変更");
 	strcpy(List1Row[2].Title, "フォント画像セットの変更");
 	strcpy(List1Row[3].Title, "タグセットの変更");
-	strcpy(List1Row[4].Title, "フォームとコントロールの表示/非表示");
+	strcpy(List1Row[4].Title, "ジョイパッドの割り当ての変更");
+	strcpy(List1Row[5].Title, "フォームとコントロールの表示/非表示");
 
 
 	//■設定のプルダウンリスト
@@ -3230,8 +3300,8 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 	//モードのテキストの更新
 	char AppMode_text[MAX_PATH];
 	strcpy(AppMode_text, ApplicationTitle);//アプリケーション名を代入
-	if (*EditorMode_p % 100 / 10 == 0) strcat(AppMode_text, " - メッセージ編集モード - ");//
-	else if (*EditorMode_p % 100 / 10 == 1) strcat(AppMode_text, " - 問題編集モード - ");
+	if (*EditorMode_p == 0) strcat(AppMode_text, " - メッセージ編集モード - ");//
+	else if (*EditorMode_p == 1) strcat(AppMode_text, " - 問題編集モード - ");
 	else strcat(AppMode_text, " - パッドビューア - ");//if (*EditorMode_p == 2) 
 	//タイトルバーのテキストの更新
 	char Titlebar_text[MAX_PATH];
@@ -3263,19 +3333,6 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 
 	int flag_mode = 1;//１：編集モード　２：実行モード
 	int flag_paramata = -1;//-1：パラメータ非表示　１：パラメータ表示
-
-	//
-	if (*EditorMode_p / 100 == 1) {
-		Tool[2].Active = 0; Tool[3].Active = 0; Tool[4].Active = 0;
-		//
-		List0Row[0].Active = 0;
-		List0Row[1].Active = 0;
-		List0Row[2].Active = 0;
-		List0Row[3].Active = 0;
-		/////
-		List1Row[0].Active = 0;
-	}
-
 
 	//メッセージプレビューのクリアループ
 	int ParameterFlag = 0;
@@ -3400,12 +3457,13 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 				}
 				//●新規作成ボタン
 				else if (ClickedNo == 2) {
-					char FirstDir[MAX_PATH];
 					char GetDir[MAX_PATH];
 					//ダイアログからディレクトリの選択
-					strcpy(FirstDir, AppDir);
-					strcat(FirstDir, "\\OriginalFile\\MessageData");
-					if (GetOpenDirectoryName(FirstDir, GetDir, MAX_PATH)) {
+					if (LocalDir[0] == '\0') {
+						strcpy(LocalDir, AppDir);
+						strcat(LocalDir, "\\OriginalFile\\MessageData");
+					}
+					if (GetOpenDirectoryName(LocalDir, GetDir, MAX_PATH)) {
 						strcpy(FilePath_h, GetDir);//) strcpy(FileTitle_Mondai, "無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
 						strcat(FilePath_h, "\\無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
 						//（拡張子なしなので注意。ディレクトリ内に「無題.txt」があればそれを開いてしまうため）
@@ -3420,20 +3478,18 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 				}
 				//●ファイルを開くボタン
 				else if (ClickedNo == 3) {
-					char FirstDir[MAX_PATH];
 					//ダイアログからファイル名を取得
 					if (LocalDir[0] == '\0') {
-						strcpy(FirstDir, AppDir);
-						strcat(FirstDir, "\\OriginalFile\\MessageData");
+						strcpy(LocalDir, AppDir);
+						strcat(LocalDir, "\\OriginalFile\\MessageData");
 					}
-					else strcpy(FirstDir, LocalDir);
 					char filepath[MAX_PATH]; char filetitle[MAX_PATH];
-					if (GetOpenFileNameText(FirstDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+					if (GetOpenFileNameACM(LocalDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 					//※終了時のカレントディレクトリはメッセージファイルがあるディレクトリ。「～\\OriginalFile\\MessageData」とは限らないので注意。
 					//※キャンセルしたときはパスとタイトルは変わらない。このとき相対パスのままなので下記の相対パス取得の処理はしないこと。
 						//開いたファイルのモードを調べる
 						ClearDrawScreen();
-						switch (int Value = EditorModeChecker(EditorMode_p, filepath, filetitle)) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
+						switch (int Value = EditorModeChecker(EditorMode_p, filepath)) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
 						case 0://成功時，ロードせずに問題編集モードから抜けて，入りなおす
 							strcpy(FilePath_h, filepath);//ファイルパスの確定
 							for (int i = 0; i < 3; i++) EditorPadArea[i].Active = 1;//インデックスエリア，ボタンエリア，ベースボタンエリアを待機状態に戻す（プルダウンリストのとき，非アクティブのままreturnで抜けてしまわないように）
@@ -3497,7 +3553,7 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 				}
 				//●スクロールメッセージ（ジョイパッド[1]）の代用ボタン
 				else if (ClickedNo == 8) {
-					ActiveMath::Joypad[ActiveMath::ActionNum[Act_ScrollMsg]] += 1;
+					ActiveMath::Joypad[Action[Act_ScrollMsg]] += 1;
 				}
 			}
 			//●ディスプレイエリア
@@ -3532,17 +3588,15 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 
 					char Dir[MAX_PATH] = { 0 };//ディレクトリを指定するための変数
 					int FileType = 0;//画像ファイル
-					int FileCopy = 0;
 					//ディレクトリの決定
 					if (!strcmp(PadManager.InputButton_p->PutText, "#img_lm{") || !strcmp(PadManager.InputButton_p->PutText, "#img_le{")) {//
 						strcpy(Dir, LocalDir); strcat(Dir, "\\Img");//ディレクトリは，メッセージディレクトリ\\Imgとなる
 					}
 					else if (!strcmp(PadManager.InputButton_p->PutText, "#img_am{") || !strcmp(PadManager.InputButton_p->PutText, "#img_ae{")) {//
-						strcpy(Dir, AppDir); strcat(Dir, "\\Img");//ディレクトリは，ルートディレクトリ\\Imgとなる
+						strcpy(Dir, Dir_AppImg);
 					}
 					else if (!strcmp(PadManager.InputButton_p->PutText, "#img_nm{") || !strcmp(PadManager.InputButton_p->PutText, "#img_ne{")) {//
-						strcpy(Dir, "C:"); //ディレクトリは，　　　　仮でルートディレクトリ　　　となる★
-						FileCopy = 1;//ファイルのコピーを作成する
+						strcpy(Dir, MsgDir);
 					}
 
 					else if (!strcmp(PadManager.InputButton_p->PutText, "#sound_l{")) {//
@@ -3550,47 +3604,52 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 						FileType = 1;//音声ファイル
 					}
 					else if (!strcmp(PadManager.InputButton_p->PutText, "#sound_a{")) {//
-						strcpy(Dir, AppDir); strcat(Dir, "\\Sound");//ディレクトリは，ルートディレクトリ\\Imgとなる
+						strcpy(Dir, Dir_AppSound);
 						FileType = 1;//音声ファイル
 					}
 					else if (!strcmp(PadManager.InputButton_p->PutText, "#sound_n{")) {//
-						strcpy(Dir, "C:"); //ディレクトリは，　　　　仮でルートディレクトリ　　　となる★
-						FileCopy = 1;//ファイルのコピーを作成する
+						strcpy(Dir, MsgDir);
 						FileType = 1;//音声ファイル
 					}
+					//ディレクトリの作成
+					CreateDirectory(Dir, NULL);//Dirのディレクトリがなければ作成。あればエラーとなるだけで，Dir内の既存のファイルは消えない。
 
 					//ファイル選択ダイアログ
 					char FilePath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
 					char FileTitle[MAX_PATH];//ファイル名を取得する変数
 					if (*Dir != '\0' && GetImgFileName(Dir, FilePath, FileTitle, MAX_PATH, MAX_PATH, FileType)) {//ダイアログによる問題ファイル名の取得（カレントディレクトリが選択画像のディレクトリに変わるので注意）
 						char SoutaiPath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
-						//#img_lm　#img_le　#img_am　#img_aeのとき　ファイル取得に成功したらDir（LocalDirまたはdirectory）からみたファイルの相対パスを取得
-						if (FileCopy == 0) {
-							PathRelativePathTo(SoutaiPath, Dir, FILE_ATTRIBUTE_DIRECTORY, FilePath, FILE_ATTRIBUTE_ARCHIVE);
-						}
-						//#img_nmのとき　ファイル取得に成功したらファイルをコピーして，kDirからみたコピーファイルの相対パスを取得
-						else {//FileCopy == 1
-							//MsgDirのディレクトリがなければ作成。あればエラーとなるだけで，MsgDir内の既存のファイルは消えない。
-							CreateDirectory(MsgDir, NULL);
-
-							//コピーしたファイルのファイルパスを作成
-							char CopyFilePath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
-							strcpy(CopyFilePath, MsgDir);
-							strcat(CopyFilePath, "\\");
-							strcat(CopyFilePath, FileTitle);
+						//ファイル取得に成功したらファイルをコピーして，Dirからみたコピーファイルの相対パス（つまり実質はファイル名）を取得
+						//コピーしたファイルのファイルパスを作成
+						char CopyFilePath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
+						strcpy(CopyFilePath, Dir);
+						strcat(CopyFilePath, "\\");
+						strcat(CopyFilePath, FileTitle);
+						if (strcmp(FilePath, CopyFilePath)) {
+							char CopyFilePath2[MAX_PATH] = { 0 };
+							strcpy(CopyFilePath2, CopyFilePath);
 							//ファイルをコピー
-							for (int i = 0; i < 10; i++) {
-								if (CopyFile(FilePath, CopyFilePath, TRUE)) break;
-								int point;
-								for (point = strlen(CopyFilePath); CopyFilePath[point] != '.'; point--) {
-									CopyFilePath[point + 3] = CopyFilePath[point];
-								}
-								CopyFilePath[point] = '('; CopyFilePath[point + 1] = '2'; CopyFilePath[point + 2] = ')'; CopyFilePath[point + 3] = '.';
+							for (int num = 1; num < 10; num++) {//（1～9までの同名ファイルを作成可能）
+								if (CopyFile(FilePath, CopyFilePath2, TRUE)) break;
+								strcpy(CopyFilePath2, CopyFilePath);
+								int point = strlen(CopyFilePath2);
+								while (CopyFilePath2[point] != '.') point--;
+								char kakuchoshi[5] = { 0 };
+								for (int i = 0; CopyFilePath2[point + i] != '\0'; i++) kakuchoshi[i] = CopyFilePath2[point + i];
+								CopyFilePath2[point] = '(';
+								CopyFilePath2[point + 1] = '\0';
+								char number[100];
+								_itoa(num + 1, number, 10);
+								strcat(CopyFilePath2, number);
+								strcat(CopyFilePath2, ")");
+								strcat(CopyFilePath2, kakuchoshi);
 							}
-							//ファイルのコピーに成功したらMsgDirからみたコピーファイルの相対パスを取得
-							PathRelativePathTo(SoutaiPath, MsgDir, FILE_ATTRIBUTE_DIRECTORY, CopyFilePath, FILE_ATTRIBUTE_ARCHIVE);
-							////////////////////////////////////////////////////////////////////////////////////
+							//相対パスを取得  ※(9)まで存在しているならコードには(10)が書き込まれるが画像は作成されない。
+							PathRelativePathTo(SoutaiPath, Dir, FILE_ATTRIBUTE_DIRECTORY, CopyFilePath2, FILE_ATTRIBUTE_ARCHIVE);
 						}
+						else strcpy(SoutaiPath, FileTitle);//MsgDir内の画像を選択した場合は画像をコピーせず，FileTitleが相対パスとなる
+
+						////////////////////////////////////////////////////////////////////////////////////
 						//挿入する文字列の作成
 						char PutText[150];
 						strcpy(PutText, PadManager.InputButton_p->PutText);
@@ -4130,32 +4189,36 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 
 			//●ステータスバー
 			ShowArea(&Statusbar, 1);
-		//	DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "メッセージフォーム番号:%d　　コンディション:%d　　時刻:%d　　経過時間:%d", MsgFormNo, MsgBoxCtrl.Condition, MsgBoxCtrl.Time, MsgBoxCtrl.ElapsedTime);
-			//DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "ﾌｫﾝﾄｾｯﾄのﾌｧｲﾙ名:%s　　ｼﾞｮｲﾊﾟｯﾄﾞのﾌｧｲﾙ名:%s　　ﾛｰｶﾙﾃﾞｨﾚｸﾄﾘ:%s", FileTitle_Font, FileTitle_JoypadAssignment, LocalDir);
 			static int StatusNumber = 0;//パッドモードのステータスバーの表示内容を変更（コントロール＋S）
 			if (ActiveMath::Key[KEY_INPUT_S] == 1 && (ActiveMath::Key[KEY_INPUT_LCONTROL] > 0 || ActiveMath::Key[KEY_INPUT_RCONTROL] > 0)) {//
 				StatusNumber += 1;//
-				if (StatusNumber == 7) StatusNumber = 0;
+				if (StatusNumber == 9) StatusNumber = 0;
 			}
 			if (StatusNumber == 0) {
 				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "メッセージフォーム番号: %d  /  コンディション: %d", MsgFormNo, MsgBoxCtrl.Condition);
 			}
 			else if (StatusNumber == 1) {
-				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "フォントセット: %s  /  フォント画像セット: %s  /  タグセット: %s", FileTitle_Font, FileTitle_FontImg, FileTitle_Tag);
+				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "フォントセット_rw: %s  /  フォント画像セット_rw: %s  /  タグセット_rw: %s", FileTitle_Font_rw, FileTitle_FontImg_rw, FileTitle_Tag_rw);
 			}
 			else if (StatusNumber == 2) {
-				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "ジョイパッド: %s", FileTitle_JoypadAssignment);
+				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "フォントセット: %s  /  フォント画像セット: %s  /  タグセット: %s", FileTitle_Font, FileTitle_FontImg, FileTitle_Tag);
 			}
 			else if (StatusNumber == 3) {
-				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "ファイルパス: %s", FilePath_h);//ファイルパス
+				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "ジョイパッド_rw: %s", FileTitle_Joypad_rw);
 			}
 			else if (StatusNumber == 4) {
-				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "AppDir: %s", AppDir);//アプリケーションディレクトリ
+				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "ジョイパッド: %s", FileTitle_Joypad);
 			}
 			else if (StatusNumber == 5) {
-				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "LocalDir: %s", LocalDir);//ローカルディレクトリ
+				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "ファイルパス: %s", FilePath_h);//ファイルパス
 			}
 			else if (StatusNumber == 6) {
+				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "AppDir: %s", AppDir);//アプリケーションディレクトリ
+			}
+			else if (StatusNumber == 7) {
+				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "LocalDir: %s", LocalDir);//ローカルディレクトリ
+			}
+			else if (StatusNumber == 8) {
 				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "MsgDir: %s", MsgDir);//メッセージディレクトリ
 			}
 
@@ -4187,12 +4250,13 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {//クリックしたときの処理
-						char FirstDir[MAX_PATH];
 						char GetDir[MAX_PATH];
 						//ダイアログからディレクトリの選択
-						strcpy(FirstDir, AppDir);
-						strcat(FirstDir, "\\OriginalFile\\MessageData");
-						if (GetOpenDirectoryName(FirstDir, GetDir, MAX_PATH)) {
+						if (LocalDir[0] == '\0') {
+							strcpy(LocalDir, AppDir);
+							strcat(LocalDir, "\\OriginalFile\\MessageData");
+						}
+						if (GetOpenDirectoryName(LocalDir, GetDir, MAX_PATH)) {
 							strcpy(FilePath_h, GetDir);//) strcpy(FileTitle_Mondai, "無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
 							strcat(FilePath_h, "\\無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
 							//（拡張子なしなので注意。ディレクトリ内に「無題.txt」があればそれを開いてしまうため）
@@ -4217,20 +4281,18 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-						char FirstDir[MAX_PATH];
 						//ダイアログからファイル名を取得
 						if (LocalDir[0] == '\0') {
-							strcpy(FirstDir, AppDir);
-							strcat(FirstDir, "\\OriginalFile\\MessageData");
+							strcpy(LocalDir, AppDir);
+							strcat(LocalDir, "\\OriginalFile\\MessageData");
 						}
-						else strcpy(FirstDir, LocalDir);
 						char filepath[MAX_PATH]; char filetitle[MAX_PATH];
-						if (GetOpenFileNameText(FirstDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						if (GetOpenFileNameACM(LocalDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時のカレントディレクトリはメッセージファイルがあるディレクトリ。「～\\OriginalFile\\MessageData」とは限らないので注意。
 						//※キャンセルしたときはパスとタイトルは変わらない。このとき相対パスのままなので下記の相対パス取得の処理はしないこと。
 							//開いたファイルのモードを調べる
 							ClearDrawScreen();
-							switch (int Value = EditorModeChecker(EditorMode_p, filepath, filetitle)) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
+							switch (int Value = EditorModeChecker(EditorMode_p, filepath)) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
 							case 0://成功時，ロードせずに問題編集モードから抜けて，入りなおす
 								strcpy(FilePath_h, filepath);//ファイルパスの確定
 								for (int i = 0; i < 3; i++) EditorPadArea[i].Active = 1;//インデックスエリア，ボタンエリア，ベースボタンエリアを待機状態に戻す（プルダウンリストのとき，非アクティブのままreturnで抜けてしまわないように）
@@ -4416,7 +4478,7 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						SetCurrentDirectory(LocalDir);
 						SaveFontTagSetPath(".\\FontTagSettings.txt");//スタイルセットの保存
-						SaveJoypadSetPath(".\\JoypadSettings.txt");//スタイルセットの保存　　★★★現状，ジョイパットの設定はエディターでは変更できないが，できるようにするときのため。
+						SaveJoypadSetPath(".\\JoypadSettings.txt");//スタイルセットの保存
 					}
 				}
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
@@ -4430,12 +4492,22 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログでフォントセットのファイルパスを取得
-						char dir[MAX_PATH]; strcpy(dir, AppDir); strcat(dir, "\\フォントセット");
-						if (GetOpenFileNameCsv(dir, ActiveMath::FilePath_Font, ActiveMath::FileTitle_Font, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-						//※終了時は「～\フォントセット」//※キャンセルしたときはパスとタイトルは変わらない（この場合は相対パスのままなのでこの相対パスの取得処理は除外）
+						char SourcePath[MAX_PATH] = { 0 };
+						if (GetOpenFileNameCsv(Dir_FontSet, SourcePath, FileTitle_Font, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						//※終了時はDir_FontSetがカレントディレクトリとなる
+							//rwの書き換え
+							if (strcmp(FileTitle_Font_rw, "なし") == 0) {//FontTagSettingsがないとき
+								strcpy(FileTitle_FontImg_rw, "未設定"); strcpy(FileTitle_Tag_rw, "未設定");
+								strcpy(Dir_FontSet_rw, "未設定"); strcpy(Dir_FontImgSet_rw, "未設定"); strcpy(Dir_TagSet_rw, "未設定");
+								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
+							}
+							strcpy(FileTitle_Font_rw, FileTitle_Font);
+							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
+							char FilePath[MAX_PATH];
+							strcpy(FilePath, Dir_FontSet); strcat(FilePath, "\\"); strcat(FilePath, FileTitle_Font);
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
 							//フォントセットのロード
-							LoadFontSet(ActiveMath::FilePath_Font);//絶対パスでロード
-							PathRelativePathTo(ActiveMath::FilePath_Font, AppDir, FILE_ATTRIBUTE_DIRECTORY, ActiveMath::FilePath_Font, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得
+							LoadFontSet(FilePath);//絶対パスでロード
 							nukeru = 1;//タグを再読み込みするため（文字幅で関係あると思う）
 						}
 					}
@@ -4451,12 +4523,22 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログでフォント画像セットのファイルパスを取得
-						char dir[MAX_PATH]; strcpy(dir, AppDir); strcat(dir, "\\フォント画像セット");
-						if (GetOpenFileNameCsv(dir, ActiveMath::FilePath_FontImg, ActiveMath::FileTitle_FontImg, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-						//※終了時は「～\\フォント画像セット」//※キャンセルしたときはパスとタイトルは変わらない（この場合は相対パスのままなのでこの相対パスの取得処理は除外）
+						char SourcePath[MAX_PATH] = { 0 };
+						if (GetOpenFileNameCsv(Dir_FontImgSet, SourcePath, FileTitle_FontImg, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						//※終了時はDir_FontImgSetがカレントディレクトリとなる
+							//rwの書き換え
+							if (strcmp(FileTitle_Font_rw, "なし") == 0) {//FontTagSettingsがないとき
+								strcpy(FileTitle_Font_rw, "未設定"); strcpy(FileTitle_Tag_rw, "未設定");
+								strcpy(Dir_FontSet_rw, "未設定"); strcpy(Dir_FontImgSet_rw, "未設定"); strcpy(Dir_TagSet_rw, "未設定");
+								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
+							}
+							strcpy(FileTitle_FontImg_rw, FileTitle_FontImg);
+							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
+							char FilePath[MAX_PATH];
+							strcpy(FilePath, Dir_FontImgSet); strcat(FilePath, "\\"); strcat(FilePath, FileTitle_FontImg);
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
 							//フォント画像セットのロード
-							LoadFontImgSet(ActiveMath::FilePath_FontImg);//絶対パスでロード
-							PathRelativePathTo(ActiveMath::FilePath_FontImg, AppDir, FILE_ATTRIBUTE_DIRECTORY, ActiveMath::FilePath_FontImg, FILE_ATTRIBUTE_ARCHIVE);//絶対パスから相対パスを取得
+							LoadFontImgSet(FilePath);//絶対パスでロード
 							nukeru = 1;//タグを再読み込みするため（画像の幅で関係あると思う）
 						}
 					}
@@ -4472,13 +4554,51 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログでタグセットのファイルパスを取得
-						char dir[MAX_PATH]; strcpy(dir, AppDir); strcat(dir, "\\タグセット");
-						if (GetOpenFileNameCsv(dir, ActiveMath::FilePath_Tag, ActiveMath::FileTitle_Tag, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-						//※終了時は「～\\タグセット」  //※キャンセルしたときはパスとタイトルは変わらない（この場合は相対パスのままなのでこの相対パスの取得処理は除外）
+						char SourcePath[MAX_PATH] = { 0 };
+						if (GetOpenFileNameCsv(Dir_TagSet, SourcePath, FileTitle_Tag, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						//※終了時はDir_TagSetがカレントディレクトリとなる
+							//rwの書き換え
+							if (strcmp(FileTitle_Font_rw, "なし") == 0) {//FontTagSettingsがないとき
+								strcpy(FileTitle_Font_rw, "未設定"); strcpy(FileTitle_FontImg_rw, "未設定");
+								strcpy(Dir_FontSet_rw, "未設定"); strcpy(Dir_FontImgSet_rw, "未設定"); strcpy(Dir_TagSet_rw, "未設定");
+								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
+							}
+							strcpy(FileTitle_Tag_rw, FileTitle_Tag);
+							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
+							char FilePath[MAX_PATH];
+							strcpy(FilePath, Dir_TagSet); strcat(FilePath, "\\"); strcat(FilePath, FileTitle_Tag);
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
 							//タグセットのロード
-							LoadTagSet(ActiveMath::FilePath_Tag);//絶対パスでロード
-							PathRelativePathTo(ActiveMath::FilePath_Tag, AppDir, FILE_ATTRIBUTE_DIRECTORY, ActiveMath::FilePath_Tag, FILE_ATTRIBUTE_ARCHIVE);//絶対パスから相対パスを取得
+							LoadTagSet(FilePath);//絶対パスでロード
 							nukeru = 1;//タグを再読み込みするため
+						}
+					}
+				}
+				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
+				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
+				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
+				List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
+				////ジョイパッドの割り当て
+				r++;
+				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
+					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
+					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
+					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
+						//ダイアログでジョイパッドの割り当てのファイルパスを取得
+						char SourcePath[MAX_PATH] = { 0 };
+						if (GetOpenFileNameCsv(Dir_Joypad, SourcePath, FileTitle_Joypad, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						//※終了時はDir_Joypadがカレントディレクトリとなる
+							if (strcmp(FileTitle_Joypad_rw, "なし") == 0) {//JoypadSettingsがないとき
+								strcpy(Dir_Joypad_rw, "未設定");
+							}
+							strcpy(FileTitle_Joypad_rw, FileTitle_Joypad);
+							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
+							char FilePath[MAX_PATH];
+							strcpy(FilePath, Dir_Joypad); strcat(FilePath, "\\"); strcat(FilePath, FileTitle_Joypad);
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
+							//ジョイパッドの割り当てのロード
+							LoadJoypadAssignment(FilePath);//絶対パスでロード
+							//タグの再読み込みは必要なし
 						}
 					}
 				}
@@ -4585,9 +4705,7 @@ int MessagePreviewMode(struct MsgBoxCtrl *MsgBoxCtrl_p, int MsgBoxCtrl_Kosuu, in
 
 
 //パッドビューア
-int PadPreviewMode(int *EditorMode_p, char* FilePath_Pad_h//, struct AREACONTROL *EditorPadArea_p, struct BUTTONFORM *EditorButtonForm,
-	//struct BUTTONCONTROL *EditorIndex, int EditorIndexKosuu, struct INPUTTEXTBUTTONCTRL **EditorButton_ph, int *EditorButtonKosuu, struct INPUTTEXTBUTTONCTRL *EditorBaseButton, int EditorBaseButtonKosuu
-) {//, char* ActiveDirectory_h
+int PadPreviewMode(int *EditorMode_p, char* FilePath_Pad_h) {
 	//char Directory_PadSet[MAX_PATH];//問題用ディレクトリを記録
 	//GetCurrentDirectory(MAX_PATH, Directory_PadSet);
 	SetCurrentDirectory(AppDir);
@@ -4865,8 +4983,8 @@ int PadPreviewMode(int *EditorMode_p, char* FilePath_Pad_h//, struct AREACONTROL
 	strcpy(List0Row[2].Title, "アプリケーションの終了");
 
 	//■スタイルのプルダウンリスト
-	const int List1RowKosuu = 4;
-	ListStrWidth = GetDrawStringWidth("フォント画像セットの変更", strlen("フォント画像セットの変更"));//最大文字数の項目からリストの幅を取得
+	const int List1RowKosuu = 5;
+	ListStrWidth = GetDrawStringWidth("ジョイパッドの割り当ての変更", strlen("ジョイパッドの割り当ての変更"));//最大文字数の項目からリストの幅を取得
 	static struct LISTCONTROL List1 = { 0 };
 	List1.ParentButton_p = &ToolA[1];//ファイルボタン
 	List1.BorderThickness = 1;
@@ -4890,8 +5008,7 @@ int PadPreviewMode(int *EditorMode_p, char* FilePath_Pad_h//, struct AREACONTROL
 	strcpy(List1Row[1].Title, "フォントセットの変更");
 	strcpy(List1Row[2].Title, "フォント画像セットの変更");
 	strcpy(List1Row[3].Title, "タグセットの変更");
-
-
+	strcpy(List1Row[4].Title, "ジョイパッドの割り当ての変更");
 
 	//■設定のプルダウンリスト
 	const int List2RowKosuu = 1;
@@ -5014,7 +5131,7 @@ int PadPreviewMode(int *EditorMode_p, char* FilePath_Pad_h//, struct AREACONTROL
 			Index, &IndexKosuu, IndexMax,
 			Button_ph, ButtonKosuu, ButtonMax,
 			BaseButton, &BaseButtonKosuu, BaseButtonMax,
-			Message_Master, MsgCharMax, 1, &MsgBoxForm, MsgBoxForm_Kosuu, &MsgBoxCtrl_Master, MsgBoxCtrl_Kosuu, 1, 11
+			Message_Master, MsgCharMax, 1, &MsgBoxForm, MsgBoxForm_Kosuu, &MsgBoxCtrl_Master, MsgBoxCtrl_Kosuu, 1, 1
 		)) {
 
 		//case -1: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "エリアセットのファイルが存在しません。", black, gray60); break;
@@ -5057,18 +5174,6 @@ int PadPreviewMode(int *EditorMode_p, char* FilePath_Pad_h//, struct AREACONTROL
 		SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 
 	}
-
-
-	//
-	if (*EditorMode_p / 100 == 1) {
-		ToolB[1].Active = 0;
-		//
-		List0Row[0].Active = 0;
-		/////
-		List1Row[0].Active = 0;
-	}
-
-
 
 	int ExitModeFlag = 0;
 	while (!ExitModeFlag && ProcessMessage() == 0) {
@@ -5173,22 +5278,22 @@ int PadPreviewMode(int *EditorMode_p, char* FilePath_Pad_h//, struct AREACONTROL
 				///////ファイルを開く
 				else if (ClickedNo == 1) {
 					//ダイアログでパッドセットのファイルパスを取得
-					if (*PadDir == '\0') {
+					if (PadDir == '\0') {
 						strcpy(PadDir, AppDir);
 						strcat(PadDir, "\\OriginalFile\\PadData");
 					}
 					//PadDirはパッドファイルがあるディレクトリ。PadDirがカラのときは「～\\パッドセット」
 					char filepath[MAX_PATH]; char filetitle[MAX_PATH];
-					if (GetOpenFileNameCsv(PadDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+					if (GetOpenFileNameACP(PadDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時のカレントディレクトリはパッドセット（エリアのファイル）があるディレクトリ。「～\\パッドセット」とは限らないので注意。
 						//※キャンセルしたときはパスとタイトルは変わらない。このとき相対パスのままなので下記の相対パス取得の処理はしないこと。
 						//開いたファイルのモードを調べる
 						ClearDrawScreen();
-						switch (int Value = EditorModeChecker(EditorMode_p, filepath, filetitle)) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
+						switch (int Value = EditorModeChecker(EditorMode_p, filepath)) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
 						case 0://成功時，ロードせずに問題編集モードから抜けて，入りなおす
 							strcpy(FilePath_Pad_h, filepath);//ファイルパスの確定
-							if (*EditorMode_p != 2) PadDir[0] = '\0';//違うモードに進んだあと，このモードに戻ってきたときに，フォント・タグ設定を再ロードしたいため。
-							return 0;//問題編集モードから抜ける
+							//if (*EditorMode_p != 2) PadDir[0] = '\0';//違うモードに進んだあと，このモードに戻ってきたときに，フォント・タグ設定を再ロードしたいため。
+							return 0;//パッドプレビューモードから抜ける
 						case -1:
 							ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "ファイルが存在しません。", black, gray60);
 							WaitKey(); break;
@@ -5372,15 +5477,15 @@ int PadPreviewMode(int *EditorMode_p, char* FilePath_Pad_h//, struct AREACONTROL
 						}
 						//PadDireはパッドファイルがあるディレクトリ。PadDireがカラのときは「～\\パッドセット」
 						char filepath[MAX_PATH]; char filetitle[MAX_PATH];
-						if (GetOpenFileNameCsv(PadDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						if (GetOpenFileNameACP(PadDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時のカレントディレクトリはパッドセット（エリアのファイル）があるディレクトリ。「～\\パッドセット」とは限らないので注意。
 						//※キャンセルしたときはパスとタイトルは変わらない。このとき相対パスのままなので下記の相対パス取得の処理はしないこと。
 							//開いたファイルのモードを調べる
 							ClearDrawScreen();
-							switch (int Value = EditorModeChecker(EditorMode_p, filepath, filetitle)) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
+							switch (int Value = EditorModeChecker(EditorMode_p, filepath)) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
 							case 0://成功時，ロードせずに問題編集モードから抜けて，入りなおす
 								strcpy(FilePath_Pad_h, filepath);//ファイルパスの確定
-								if (*EditorMode_p != 2) PadDir[0] = '\0';//違うモードに進んだあと，このモードに戻ってきたときに，フォント・タグ設定を再ロードしたいため。
+								//if (*EditorMode_p != 2) PadDir[0] = '\0';//違うモードに進んだあと，このモードに戻ってきたときに，フォント・タグ設定を再ロードしたいため。
 								//for (int i = 0; i < 3; i++) PadArea[i].Active = 1;//インデックスエリア，ボタンエリア，ベースボタンエリアを待機状態に戻す（プルダウンリストのとき，非アクティブのままreturnで抜けてしまわないように）
 								return 0;//問題編集モードから抜ける
 							case -1:
@@ -5477,13 +5582,12 @@ int PadPreviewMode(int *EditorMode_p, char* FilePath_Pad_h//, struct AREACONTROL
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログでフォントセットのファイルパスを取得
-						char dir[MAX_PATH]; strcpy(dir, AppDir); strcat(dir, "\\フォントセット");
-						if (GetOpenFileNameCsv(dir, ActiveMath::FilePath_Font, ActiveMath::FileTitle_Font, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-						//※終了時は「～\フォントセット」//※キャンセルしたときはパスとタイトルは変わらない（この場合は相対パスのままなのでこの相対パスの取得処理は除外）
-							//フォントセットのロード
-							LoadFontSet(ActiveMath::FilePath_Font);//絶対パスでロード
-							PathRelativePathTo(ActiveMath::FilePath_Font, AppDir, FILE_ATTRIBUTE_DIRECTORY, ActiveMath::FilePath_Font, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得
-							nukeru = 1;
+						char SourcePath[MAX_PATH] = { 0 };
+						if (GetOpenFileNameCsv(Dir_FontSet, SourcePath, FileTitle_Font, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						//※終了時はDir_FontSetがカレントディレクトリとなる
+
+							//★★★メッセージプレビューのが完成したら書き写す
+
 						}
 					}
 				}
@@ -5498,13 +5602,12 @@ int PadPreviewMode(int *EditorMode_p, char* FilePath_Pad_h//, struct AREACONTROL
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログでフォント画像セットのファイルパスを取得
-						char dir[MAX_PATH]; strcpy(dir, AppDir); strcat(dir, "\\フォント画像セット");
-						if (GetOpenFileNameCsv(dir, ActiveMath::FilePath_FontImg, ActiveMath::FileTitle_FontImg, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-						//※終了時は「～\\フォント画像セット」//※キャンセルしたときはパスとタイトルは変わらない（この場合は相対パスのままなのでこの相対パスの取得処理は除外）
-							//フォント画像セットのロード
-							LoadFontImgSet(ActiveMath::FilePath_FontImg);//絶対パスでロード
-							PathRelativePathTo(ActiveMath::FilePath_FontImg, AppDir, FILE_ATTRIBUTE_DIRECTORY, ActiveMath::FilePath_FontImg, FILE_ATTRIBUTE_ARCHIVE);//絶対パスから相対パスを取得
-							nukeru = 1;
+						char SourcePath[MAX_PATH] = { 0 };
+						if (GetOpenFileNameCsv(Dir_FontImgSet, SourcePath, FileTitle_FontImg, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						//※終了時はDir_FontImgSetがカレントディレクトリとなる
+
+							//★★★メッセージプレビューのが完成したら書き写す
+
 						}
 					}
 				}
@@ -5519,13 +5622,32 @@ int PadPreviewMode(int *EditorMode_p, char* FilePath_Pad_h//, struct AREACONTROL
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログでタグセットのファイルパスを取得
-						char dir[MAX_PATH]; strcpy(dir, AppDir); strcat(dir, "\\タグセット");
-						if (GetOpenFileNameCsv(dir, ActiveMath::FilePath_Tag, ActiveMath::FileTitle_Tag, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-						//※終了時は「～\\タグセット」  //※キャンセルしたときはパスとタイトルは変わらない（この場合は相対パスのままなのでこの相対パスの取得処理は除外）
-							//タグセットのロード
-							LoadTagSet(ActiveMath::FilePath_Tag);//絶対パスでロード
-							PathRelativePathTo(ActiveMath::FilePath_Tag, AppDir, FILE_ATTRIBUTE_DIRECTORY, ActiveMath::FilePath_Tag, FILE_ATTRIBUTE_ARCHIVE);//絶対パスから相対パスを取得
-							nukeru = 1;
+						char SourcePath[MAX_PATH] = { 0 };
+						if (GetOpenFileNameCsv(Dir_TagSet, SourcePath, FileTitle_Tag, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						//※終了時はDir_TagSetがカレントディレクトリとなる
+
+							//★★★メッセージプレビューのが完成したら書き写す
+
+						}
+					}
+				}
+				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
+				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
+				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
+				List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
+				////ジョイパッドの割り当て
+				r++;
+				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
+					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
+					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
+					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
+						//ダイアログでジョイパッドの割り当てのファイルパスを取得
+						char SourcePath[MAX_PATH] = { 0 };
+						if (GetOpenFileNameCsv(Dir_Joypad, SourcePath, FileTitle_Joypad, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						//※終了時はDir_TagSetがカレントディレクトリとなる
+
+							//★★★メッセージプレビューのが完成したら書き写す
+
 						}
 					}
 				}
@@ -5677,9 +5799,7 @@ int StatusShow(int LocationX, int LocationY, struct MsgBoxCtrl *MsgBoxCtrl_p, in
 
 
 /////↓問題編集モード↓////////////↓問題編集モード↓////////////↓問題編集モード↓////////////↓問題編集モード↓//////
-int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL *PadArea_p, struct BUTTONFORM *ButtonForm,
-	//struct BUTTONCONTROL *Index, int IndexKosuu, struct INPUTTEXTBUTTONCTRL **Button_ph, int *ButtonKosuu, struct INPUTTEXTBUTTONCTRL *BaseButton, int BaseButtonKosuu
-) {
+int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 	int MonsterFlag = 1;//－１：非表示　０：無効　１：待機　２：選択
 						 ////システム状態に関する変数の宣言と初期化////
 	int activesyoumonH = -1;//アクティブな小問（-1：非アクティブ）
@@ -5890,8 +6010,8 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 	strcpy(List0Row[6].Title, "アプリケーションの終了");
 
 	//■カスタマイズのプルダウンリスト
-	const int List1RowKosuu = 4;
-	ListStrWidth = GetDrawStringWidth("フォント画像セットの変更", strlen("フォント画像セットの変更"));//最大文字数の項目からリストの幅を取得
+	const int List1RowKosuu = 5;
+	ListStrWidth = GetDrawStringWidth("ジョイパッドの割り当ての変更", strlen("ジョイパッドの割り当ての変更"));//最大文字数の項目からリストの幅を取得
 	static struct LISTCONTROL List1 = { 0 };
 	List1.ParentButton_p = &ToolA[1];//カスタマイズボタン
 	List1.BorderThickness = 1;
@@ -5915,6 +6035,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 	strcpy(List1Row[1].Title, "フォントセットの変更");
 	strcpy(List1Row[2].Title, "フォント画像セットの変更");
 	strcpy(List1Row[3].Title, "タグセットの変更");
+	strcpy(List1Row[4].Title, "ジョイパッドの割り当ての変更");
 
 
 	//■設定のプルダウンリスト
@@ -6022,12 +6143,11 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 		//char LocalDir_Befor[MAX_PATH];
 		//strcpy(LocalDir_Befor, LocalDir);
 
-			//問題のロードと小問数の取得
+		//問題のロードと小問数の取得
 		int LoadMondaiError;
-			//LocalDirを取得するためMondaiDirは必ず絶対パスとすること
+		//LocalDirを取得するためMondaiDirは必ず絶対パスとすること
 		switch (LoadMondaiError = LoadMondai(FilePath_Mondai_h, &mondai, &syoumonsuu, 1)) {//１：LocalDir，MsgDirの取得
 		//case -1: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "問題のファイルが存在しません。", black, gray60); break;
-
 		case -2: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターIDがサイズオーバーしています。", black, gray60); break;
 		case -3: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "大問がサイズオーバーしています。", black, gray60); break;
 		case -4: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "大問正解がサイズオーバーしています。", black, gray60); break;
@@ -6042,57 +6162,50 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 		}
 		//	}
 
+		//////問題セットのロード
 		int Error;
-		//ディレクトリが前回と異なっているとき || LocalDir_Befor[0] == '\0'
-		//if (strcmp(LocalDir_Befor, LocalDir)) {
-			//////（ロード）
+		switch (Error = LoadMondaiSet(LocalDir, MsgBoxForm, MsgBoxForm_Kosuu, MsgBoxCtrl_Master, MsgBoxCtrl_Kosuu,
+				Monster, MONSTER_MAX, &Monster_Kosuu, &MaxMonsterID, ColumnTitle, &Column_Kosuu, 1, 1//フォントタグ設定をロードする，ジョイパッド設定をロードする
+		)) {
+		//モードから抜ける
+		//case -1: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージフォームのファイルが存在しません。", black, gray60); break;
+		case -2: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージフォームのパラメータが足りません。", black, gray60); break;//　（ない）
+		case -3: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージフォームの個数がサイズオーバーしています。", black, gray60); break;//　（ない）
+		//case -11: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージコントロールのファイルが存在しません。", black, gray60); break;
+		case -12: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージコントロールのパラメータが足りません。", black, gray60); break;//　（ない）
+		case -13: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージコントロールの個数がサイズオーバーしています。", black, gray60); break;//　（ない）
+		//case -21: FontTagSettingsCreateFlag = 0;//スタイル保存時に新規作成しないように//ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "フォント・タグ設定のファイルが存在しません。", black, gray60); break;
+		//case -22: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "フォント・タグ設定のパラメータが足りません。", black, gray60); break;//　（ない）
+		//case -31: JoypadSettingsCreateFlag = 0;//スタイル保存時に新規作成しないように//ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "ジョイパッド設定のファイルが存在しません。", black, gray60); break;
+		//case -32: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "ジョイパッド設定のパラメータが足りません。", black, gray60); break;//　（ない）
 
-			switch (Error = LoadMondaiSet(LocalDir, MsgBoxForm, MsgBoxForm_Kosuu,
-				MsgBoxCtrl_Master, MsgBoxCtrl_Kosuu,
-				Monster, MONSTER_MAX, &Monster_Kosuu, &MaxMonsterID, ColumnTitle, &Column_Kosuu, 1, 0
-			)) {
-			//モードから抜ける
-			//case -1: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージフォームのファイルが存在しません。", black, gray60); break;
-			case -2: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージフォームのパラメータが足りません。", black, gray60); break;//　（ない）
-			case -3: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージフォームの個数がサイズオーバーしています。", black, gray60); break;//　（ない）
-			//case -11: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージコントロールのファイルが存在しません。", black, gray60); break;
-			case -12: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージコントロールのパラメータが足りません。", black, gray60); break;//　（ない）
-			case -13: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージコントロールの個数がサイズオーバーしています。", black, gray60); break;//　（ない）
-			//case -21: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "フォント・タグ設定のファイルが存在しません。", black, gray60); break;
-			case -22: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "フォント・タグ設定のパラメータが足りません。", black, gray60); break;//　（ない）
-			//case -31: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのファイルが存在しません。", black, gray60); break;
-			//そのまま続行
-			case -32: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのID用カラムのタイトルがサイズオーバーしています。", black, gray60); break;
-			case -35: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのカラムのタイトルがサイズオーバーしています。", black, gray60); break;
-			case -37: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのID用カラムがサイズオーバーしています。", black, gray60); break;
-			case -38: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのモンスター名がサイズオーバーしています。", black, gray60); break;
-			case -39: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのモンスター画像パスがサイズオーバーしています。", black, gray60); break;
-			case -40: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのカラムがサイズオーバーしています。", black, gray60);
-			}
-			if (Error <= -32) DxLib::WaitKey();//サイズオーバーでもそのまま続ける（-32～-40）
-			else if (Error < -1 && Error != -11 && Error != -21 && Error != -31) {//モードから抜ける（-1～-31）
-				DxLib::WaitKey();
-				FilePath_Mondai_h[0] = '\0';//ファイルパスを消す
-				ClearDrawScreen();
-				return -1;
-			}
-			//※終了時はモンスターディレクトリ
-
-			for (int i = 0; i < MsgBoxCtrl_Kosuu; i++) {
-				MsgBoxFormNumber[i] = MsgBoxCtrl_Master[i].MsgBoxForm_p - MsgBoxForm;
-			}
-			if (Monster_Kosuu > TableMax) tablesuu = TableMax;//
-			else tablesuu = Monster_Kosuu;
-
-			SetCurrentDirectory(LocalDir);//
-			//MsgBoxForm2rのロード（色の値，音のパス）
-			LoadMsgBoxForm_RGB_SoundPath(".\\MsgBoxForm.txt", MsgBoxForm_RGB_SoundPath, MsgBoxForm_Kosuu);//フォームのセーブがあるからForm2もロードしておく必要がある。
-
-			//モンスター画像パスのロード
-			LoadMonsterImgPath(".\\Monster\\monstertable.csv", MonsterImg_Path, MONSTER_MAX);
-
-		//}
-
+		//case -41: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのファイルが存在しません。", black, gray60); break;
+		//そのまま続行
+		case -42: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのID用カラムのタイトルがサイズオーバーしています。", black, gray60); break;
+		case -45: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのカラムのタイトルがサイズオーバーしています。", black, gray60); break;
+		case -47: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのID用カラムがサイズオーバーしています。", black, gray60); break;
+		case -48: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのモンスター名がサイズオーバーしています。", black, gray60); break;
+		case -49: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのモンスター画像パスがサイズオーバーしています。", black, gray60); break;
+		case -50: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのカラムがサイズオーバーしています。", black, gray60);
+		}
+		if (Error <= -42) DxLib::WaitKey();//サイズオーバーでもそのまま続ける（-42～-50）
+		else if (Error < -1 && Error != -11 && Error != -21 && Error != -31 && Error != -41) {//モードから抜ける（-1～-41）
+			DxLib::WaitKey();
+			FilePath_Mondai_h[0] = '\0';//ファイルパスを消す
+			ClearDrawScreen();
+			return -1;
+		}
+		//※終了時はモンスターディレクトリ
+		for (int i = 0; i < MsgBoxCtrl_Kosuu; i++) {
+			MsgBoxFormNumber[i] = MsgBoxCtrl_Master[i].MsgBoxForm_p - MsgBoxForm;
+		}
+		if (Monster_Kosuu > TableMax) tablesuu = TableMax;//
+		else tablesuu = Monster_Kosuu;
+		SetCurrentDirectory(LocalDir);//
+		//MsgBoxForm2rのロード（色の値，音のパス）
+		LoadMsgBoxForm_RGB_SoundPath(".\\MsgBoxForm.txt", MsgBoxForm_RGB_SoundPath, MsgBoxForm_Kosuu);//フォームのセーブがあるからForm2もロードしておく必要がある。
+		//モンスター画像パスのロード
+		LoadMonsterImgPath(".\\Monster\\monstertable.csv", MonsterImg_Path, MONSTER_MAX);
 		//char DirectoryNow1[MAX_PATH];
 		//GetCurrentDirectory(MAX_PATH, DirectoryNow1);//チェック用
 
@@ -6130,19 +6243,6 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 
 	}
 	SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
-
-	//
-	if (*EditorMode_p / 100 == 1) {
-		ToolB[1].Active = 0; ToolB[2].Active = 0; ToolB[3].Active = 0; 
-		//
-		List0Row[0].Active = 0;
-		List0Row[1].Active = 0;
-		List0Row[2].Active = 0;
-		List0Row[3].Active = 0;
-		/////
-		List1Row[0].Active = 0;
-	}
-
 
 	int SyoumonCutFlag = 0;//小問切り取り時，小問最終ツールボタンがずれ込んでこないように，小問数を随時減らさず，フラグを使って次のフレームで減らす。
 						//※最終の小問切り取り時に「切り取り」ボタンが，小問最終ツールボタンの「小問追加」と重なってしまうのも防げる
@@ -6273,12 +6373,13 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 				}
 				///////新規作成//アクティブなディレクトリ（取得），ファイルパス（NULL），ファイルタイトル（無題），エディターモード（現状ママ）でメッセージ編集モードから抜ける
 				else if (ClickedNo == 1) {
-					char FirstDir[MAX_PATH];
 					char GetDir[MAX_PATH];
-					//ダイアログからディレクトリを取得
-					strcpy(FirstDir, AppDir);
-					strcat(FirstDir, "\\OriginalFile\\MondaiData");
-					if (GetOpenDirectoryName(FirstDir, GetDir, MAX_PATH)) {
+					//ダイアログからディレクトリの選択
+					if (LocalDir[0] == '\0') {
+						strcpy(LocalDir, AppDir);
+						strcat(LocalDir, "\\OriginalFile\\MondaiData");
+					}
+					if (GetOpenDirectoryName(LocalDir, GetDir, MAX_PATH)) {
 						strcpy(FilePath_Mondai_h, GetDir);//) strcpy(FileTitle_Mondai, "無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
 						strcat(FilePath_Mondai_h, "\\無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
 						//（拡張子なしなので注意。ディレクトリ内に「無題.txt」があればそれを開いてしまうため）
@@ -6296,21 +6397,19 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 				}
 				///////ファイルを開く
 				else if (ClickedNo == 2) {
-					char FirstDir[MAX_PATH];
 					//ダイアログからファイル名を取得
 					if (LocalDir[0] == '\0') {
-						strcpy(FirstDir, AppDir);
-						strcat(FirstDir, "\\OriginalFile\\MondaiData");
+						strcpy(LocalDir, AppDir);
+						strcat(LocalDir, "\\OriginalFile\\MondaiData");
 					}
-					else strcpy(FirstDir, LocalDir);
 					//LocalDirは現時点で開いているファイルのディレクトリ。それがないときは「～\\OriginalFile\\MondaiData」
 					char filepath[MAX_PATH]; char filetitle[MAX_PATH];
-					if (GetOpenFileNameText(FirstDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+					if (GetOpenFileNameACK(LocalDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 					//※終了時のカレントディレクトリは問題ファイルがあるディレクトリ。「～\\OriginalFile\\MondaiData」とは限らないので注意。MondaiDirは元のまま
 					//※キャンセルしたときはパスとタイトルは変わらない。このとき相対パスのままなので下記の相対パス取得の処理はしないこと。
 						//開いたファイルのモードを調べる
 						ClearDrawScreen();
-						switch (int Value = EditorModeChecker(EditorMode_p, filepath, filetitle)) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
+						switch (int Value = EditorModeChecker(EditorMode_p, filepath)) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
 						case 0://成功時，ロードせずに問題編集モードから抜けて，入りなおす
 							strcpy(FilePath_Mondai_h, filepath);//ファイルパスの確定
 							//if (*EditorMode_p != 1) LocalDir[0] = '\0';//違うモードに進んだあと，このモードに戻ってきたときに，フォント・タグ設定を再ロードしたいため。
@@ -6456,17 +6555,15 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 
 					char Dir[MAX_PATH] = { 0 };//ディレクトリを指定するための変数
 					int FileType = 0;//画像ファイル
-					int FileCopy = 0;
 					//ディレクトリの決定
 					if (!strcmp(PadManager.InputButton_p->PutText, "#img_lm{") || !strcmp(PadManager.InputButton_p->PutText, "#img_le{")) {//
 						strcpy(Dir, LocalDir); strcat(Dir, "\\Img");//ディレクトリは，メッセージディレクトリ\\Imgとなる
 					}
 					else if (!strcmp(PadManager.InputButton_p->PutText, "#img_am{") || !strcmp(PadManager.InputButton_p->PutText, "#img_ae{")) {//
-						strcpy(Dir, AppDir); strcat(Dir, "\\Img");//ディレクトリは，ルートディレクトリ\\Imgとなる
+						strcpy(Dir, Dir_AppImg);
 					}
 					else if (!strcmp(PadManager.InputButton_p->PutText, "#img_nm{") || !strcmp(PadManager.InputButton_p->PutText, "#img_ne{")) {//
-						strcpy(Dir, "C:"); //ディレクトリは，　　　　仮でルートディレクトリ　　　となる★
-						FileCopy = 1;//ファイルのコピーを作成する
+						strcpy(Dir, MsgDir);
 					}
 
 					else if (!strcmp(PadManager.InputButton_p->PutText, "#sound_l{")) {//
@@ -6474,47 +6571,52 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 						FileType = 1;//音声ファイル
 					}
 					else if (!strcmp(PadManager.InputButton_p->PutText, "#sound_a{")) {//
-						strcpy(Dir, AppDir); strcat(Dir, "\\Sound");//ディレクトリは，ルートディレクトリ\\Imgとなる
+						strcpy(Dir, Dir_AppSound);
 						FileType = 1;//音声ファイル
 					}
 					else if (!strcmp(PadManager.InputButton_p->PutText, "#sound_n{")) {//
-						strcpy(Dir, "C:"); //ディレクトリは，　　　　仮でルートディレクトリ　　　となる★
-						FileCopy = 1;//ファイルのコピーを作成する
+						strcpy(Dir, MsgDir);
 						FileType = 1;//音声ファイル
 					}
+					//ディレクトリの作成
+					CreateDirectory(Dir, NULL);//Dirのディレクトリがなければ作成。あればエラーとなるだけで，Dir内の既存のファイルは消えない。
 
 					//ファイル選択ダイアログ
 					char FilePath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
 					char FileTitle[MAX_PATH];//ファイル名を取得する変数
 					if (*Dir != '\0' && GetImgFileName(Dir, FilePath, FileTitle, MAX_PATH, MAX_PATH, FileType)) {//ダイアログによる問題ファイル名の取得（カレントディレクトリが選択画像のディレクトリに変わるので注意）
 						char SoutaiPath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
-						//#img_lm　#img_le　#img_am　#img_aeのとき　ファイル取得に成功したらDir（LocalDirまたはdirectory）からみたファイルの相対パスを取得
-						if (FileCopy == 0) {
-							PathRelativePathTo(SoutaiPath, Dir, FILE_ATTRIBUTE_DIRECTORY, FilePath, FILE_ATTRIBUTE_ARCHIVE);
-						}
-						//#img_nmのとき　ファイル取得に成功したらファイルをコピーして，kDirからみたコピーファイルの相対パスを取得
-						else {//FileCopy == 1
-							//MsgDirのディレクトリがなければ作成。あればエラーとなるだけで，MsgDir内の既存のファイルは消えない。
-							CreateDirectory(MsgDir, NULL);
-
-							//コピーしたファイルのファイルパスを作成
-							char CopyFilePath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
-							strcpy(CopyFilePath, MsgDir);
-							strcat(CopyFilePath, "\\");
-							strcat(CopyFilePath, FileTitle);
+						//ファイル取得に成功したらファイルをコピーして，Dirからみたコピーファイルの相対パス（つまり実質はファイル名）を取得
+						//コピーしたファイルのファイルパスを作成
+						char CopyFilePath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
+						strcpy(CopyFilePath, Dir);
+						strcat(CopyFilePath, "\\");
+						strcat(CopyFilePath, FileTitle);
+						if (strcmp(FilePath, CopyFilePath)) {
+							char CopyFilePath2[MAX_PATH] = { 0 };
+							strcpy(CopyFilePath2, CopyFilePath);
 							//ファイルをコピー
-							for (int i = 0; i < 10; i++) {
-								if (CopyFile(FilePath, CopyFilePath, TRUE)) break;
-								int point;
-								for (point = strlen(CopyFilePath); CopyFilePath[point] != '.'; point--) {
-									CopyFilePath[point + 3] = CopyFilePath[point];
-								}
-								CopyFilePath[point] = '('; CopyFilePath[point + 1] = '2'; CopyFilePath[point + 2] = ')'; CopyFilePath[point + 3] = '.';
+							for (int num = 1; num < 10; num++) {//（1～9までの同名ファイルを作成可能）
+								if (CopyFile(FilePath, CopyFilePath2, TRUE)) break;
+								strcpy(CopyFilePath2, CopyFilePath);
+								int point = strlen(CopyFilePath2);
+								while (CopyFilePath2[point] != '.') point--;
+								char kakuchoshi[5] = { 0 };
+								for (int i = 0; CopyFilePath2[point + i] != '\0'; i++) kakuchoshi[i] = CopyFilePath2[point + i];
+								CopyFilePath2[point] = '(';
+								CopyFilePath2[point + 1] = '\0';
+								char number[100];
+								_itoa(num + 1, number, 10);
+								strcat(CopyFilePath2, number);
+								strcat(CopyFilePath2, ")");
+								strcat(CopyFilePath2, kakuchoshi);
 							}
-							//ファイルのコピーに成功したらMsgDirからみたコピーファイルの相対パスを取得
-							PathRelativePathTo(SoutaiPath, MsgDir, FILE_ATTRIBUTE_DIRECTORY, CopyFilePath, FILE_ATTRIBUTE_ARCHIVE);
-							////////////////////////////////////////////////////////////////////////////////////
+							//相対パスを取得  ※(9)まで存在しているならコードには(10)が書き込まれるが画像は作成されない。
+							PathRelativePathTo(SoutaiPath, Dir, FILE_ATTRIBUTE_DIRECTORY, CopyFilePath2, FILE_ATTRIBUTE_ARCHIVE);
 						}
+						else strcpy(SoutaiPath, FileTitle);//MsgDir内の画像を選択した場合は画像をコピーせず，FileTitleが相対パスとなる
+
+						////////////////////////////////////////////////////////////////////////////////////
 						//挿入する文字列の作成
 						char PutText[150];
 						strcpy(PutText, PadManager.InputButton_p->PutText);
@@ -7246,12 +7348,13 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-						char FirstDir[MAX_PATH];
 						char GetDir[MAX_PATH];
-						//ダイアログからディレクトリを取得
-						strcpy(FirstDir, AppDir);
-						strcat(FirstDir, "\\OriginalFile\\MondaiData");
-						if (GetOpenDirectoryName(FirstDir, GetDir, MAX_PATH)) {
+						//ダイアログからディレクトリの選択
+						if (LocalDir[0] == '\0') {
+							strcpy(LocalDir, AppDir);
+							strcat(LocalDir, "\\OriginalFile\\MondaiData");
+						}
+						if (GetOpenDirectoryName(LocalDir, GetDir, MAX_PATH)) {
 							strcpy(FilePath_Mondai_h, GetDir);//) strcpy(FileTitle_Mondai, "無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
 							strcat(FilePath_Mondai_h, "\\無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
 							//（拡張子なしなので注意。ディレクトリ内に「無題.txt」があればそれを開いてしまうため）
@@ -7278,20 +7381,18 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-						char FirstDir[MAX_PATH];
 						//ダイアログからファイル名を取得
 						if (LocalDir[0] == '\0') {
-							strcpy(FirstDir, AppDir);
-							strcat(FirstDir, "\\OriginalFile\\MondaiData");
+							strcpy(LocalDir, AppDir);
+							strcat(LocalDir, "\\OriginalFile\\MondaiData");
 						}
-						else strcpy(FirstDir, LocalDir);
 						char filepath[MAX_PATH]; char filetitle[MAX_PATH];
-						if (GetOpenFileNameText(FirstDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						if (GetOpenFileNameACK(LocalDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時のカレントディレクトリは問題ファイルがあるディレクトリ。「～\\OriginalFile\\MondaiData」とは限らないので注意。
 						//※キャンセルしたときはパスとタイトルは変わらない。このとき相対パスのままなので下記の相対パス取得の処理はしないこと。
 							//開いたファイルのモードを調べる
 							ClearDrawScreen();
-							switch (int Value = EditorModeChecker(EditorMode_p, filepath, filetitle)) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
+							switch (int Value = EditorModeChecker(EditorMode_p, filepath)) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
 							case 0://成功時，ロードせずに問題編集モードから抜けて，入りなおす
 								strcpy(FilePath_Mondai_h, filepath);//ファイルパスの確定
 								//if (*EditorMode_p != 1) LocalDir[0] = '\0';//違うモードに進んだあと，このモードに戻ってきたときに，フォント・タグ設定を再ロードしたいため。
@@ -7559,13 +7660,12 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログでフォントセットのファイルパスを取得
-						char dir[MAX_PATH]; strcpy(dir, AppDir); strcat(dir, "\\フォントセット");
-						if (GetOpenFileNameCsv(dir, ActiveMath::FilePath_Font, ActiveMath::FileTitle_Font, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-						//※終了時は「～\フォントセット」//※キャンセルしたときはパスとタイトルは変わらない（この場合は相対パスのままなのでこの相対パスの取得処理は除外）
-							//フォントセットのロード
-							LoadFontSet(ActiveMath::FilePath_Font);//絶対パスでロード
-							PathRelativePathTo(ActiveMath::FilePath_Font, AppDir, FILE_ATTRIBUTE_DIRECTORY, ActiveMath::FilePath_Font, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得
-							nukeru = 1;
+						char SourcePath[MAX_PATH] = { 0 };
+						if (GetOpenFileNameCsv(Dir_FontSet, SourcePath, FileTitle_Font, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						//※終了時はDir_FontSetがカレントディレクトリとなる
+
+							//★★★メッセージプレビューのが完成したら書き写す
+
 						}
 					}
 				}
@@ -7580,13 +7680,12 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログでフォント画像セットのファイルパスを取得
-						char dir[MAX_PATH]; strcpy(dir, AppDir); strcat(dir, "\\フォント画像セット");
-						if (GetOpenFileNameCsv(dir, ActiveMath::FilePath_FontImg, ActiveMath::FileTitle_FontImg, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-						//※終了時は「～\\フォント画像セット」//※キャンセルしたときはパスとタイトルは変わらない（この場合は相対パスのままなのでこの相対パスの取得処理は除外）
-							//フォント画像セットのロード
-							LoadFontImgSet(ActiveMath::FilePath_FontImg);//絶対パスでロード
-							PathRelativePathTo(ActiveMath::FilePath_FontImg, AppDir, FILE_ATTRIBUTE_DIRECTORY, ActiveMath::FilePath_FontImg, FILE_ATTRIBUTE_ARCHIVE);//絶対パスから相対パスを取得
-							nukeru = 1;
+						char SourcePath[MAX_PATH] = { 0 };
+						if (GetOpenFileNameCsv(Dir_FontImgSet, SourcePath, FileTitle_FontImg, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						//※終了時はDir_FontImgSetがカレントディレクトリとなる
+
+							//★★★メッセージプレビューのが完成したら書き写す
+
 						}
 					}
 				}
@@ -7601,13 +7700,32 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログでタグセットのファイルパスを取得
-						char dir[MAX_PATH]; strcpy(dir, AppDir); strcat(dir, "\\タグセット");
-						if (GetOpenFileNameCsv(dir, ActiveMath::FilePath_Tag, ActiveMath::FileTitle_Tag, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-						//※終了時は「～\\タグセット」  //※キャンセルしたときはパスとタイトルは変わらない（この場合は相対パスのままなのでこの相対パスの取得処理は除外）
-							//タグセットのロード
-							LoadTagSet(ActiveMath::FilePath_Tag);//絶対パスでロード
-							PathRelativePathTo(ActiveMath::FilePath_Tag, AppDir, FILE_ATTRIBUTE_DIRECTORY, ActiveMath::FilePath_Tag, FILE_ATTRIBUTE_ARCHIVE);//絶対パスから相対パスを取得
-							nukeru = 1;
+						char SourcePath[MAX_PATH] = { 0 };
+						if (GetOpenFileNameCsv(Dir_TagSet, SourcePath, FileTitle_Tag, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						//※終了時はDir_TagSetがカレントディレクトリとなる
+
+							//★★★メッセージプレビューのが完成したら書き写す
+
+						}
+					}
+				}
+				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
+				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
+				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
+				List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
+				////ジョイパッドの割り当て
+				r++;
+				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
+					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
+					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
+					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
+						//ダイアログでジョイパッドの割り当てのファイルパスを取得
+						char SourcePath[MAX_PATH] = { 0 };
+						if (GetOpenFileNameCsv(Dir_Joypad, SourcePath, FileTitle_Joypad, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						//※終了時はDir_TagSetがカレントディレクトリとなる
+
+							//★★★メッセージプレビューのが完成したら書き写す
+
 						}
 					}
 				}
@@ -7810,12 +7928,8 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h//, struct AREACONTROL 
 
 
 /////↓メッセージ編集モード↓////////////↓メッセージ編集モード↓////////////↓メッセージ編集モード↓////////////↓メッセージ編集モード↓//////
-int EditMessage(int* EditorMode_p, char* FilePath_Message_h//, struct AREACONTROL *PadArea_p, struct BUTTONFORM *ButtonForm,
-	//struct BUTTONCONTROL *Index, int IndexKosuu, struct INPUTTEXTBUTTONCTRL **Button_ph, int *ButtonKosuu, struct INPUTTEXTBUTTONCTRL *BaseButton, int BaseButtonKosuu
-) {
+int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 	int InputHandleMath = MakeKeyInput(100, TRUE, FALSE, FALSE);//新しいキー入力データの作成  ESCキーによるキャンセル機能の有無TRUE　半角文字のみの入力FALSE　数値文字のみの入力FALSE
-
-	////////////////////////////////////////
 	//////////ツールボタン////////////
 	//■ツールバー
 	static struct AREACONTROL Toolbar[2] = { 0 };
@@ -8079,11 +8193,12 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h//, struct AREACONTRO
 
 	//メッセージ，設定，背景画像，メッセージプロパティのロード
 	if (FilePath_Message_h[0] != '\0') {
-		//（メッセージ編集モード）
+		//メッセージのロード
+		char buff2[256];
+		strcpy(buff2, LocalDir);
 		int LoadMsgError;
 		switch (LoadMsgError = LoadMsg(FilePath_Message_h, Message, MsgCharMax + 1, 1)) {//１：LocalDir，MsgDirの取得
 		//case -1: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージのファイルが存在しません。", black, gray60); break;
-
 		case -2: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージがサイズオーバーしています。", black, gray60);
 		}
 		if (LoadMsgError < -1) {//-1：メッセージのファイルが存在しないのはエラーとしない（新規作成のときファイルが存在しないに該当するため）
@@ -8092,40 +8207,37 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h//, struct AREACONTRO
 			ClearDrawScreen();
 			return -1;
 		}
-
-		/**/
-		//ディレクトリが前回と異なっているとき
-		//if (strcmp(LocalDir_Befor, LocalDir)) {
-			int Error;
-			//MsgBoxForm，MsgBoxCtrl，FontTagSettingsのロード（MessageDirも取得）
-			switch (Error = LoadMsgSet(LocalDir, &MsgBoxForm, MsgBoxForm_Kosuu,
-				&MsgBoxCtrl_Master, MsgBoxCtrl_Kosuu, 1, 0
-			)) {
-			//case -1: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージフォームのファイルが存在しません。", black, gray60); break;
-			case -2: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージフォームのパラメータが足りません。", black, gray60); break;//　（ない）
-			case -3: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージフォームの個数がサイズオーバーしています。", black, gray60); break;//　（ない）
-			//case -11: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージコントロールのファイルが存在しません。", black, gray60); break;
-			case -12: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージコントロールのパラメータが足りません。", black, gray60); break;//　（ない）
-			case -13: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージコントロールの個数がサイズオーバーしています。", black, gray60); break;//　（ない）
-			//case -21: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "フォント・タグ設定のファイルが存在しません。", black, gray60); break;
-			case -22: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "フォント・タグ設定のパラメータが足りません。", black, gray60);//　（ない）
-			}
-			if (Error < -1 && Error != -11 && Error != -21) {//-1, -11, -21はエラーとしない
-				DxLib::WaitKey();
-				FilePath_Message_h[0] = '\0';//ファイルパスを消す
-				ClearDrawScreen();
-				return -1;
-			}
-			//※終了時はモンスターディレクトリ
+		char buff1[256];
+		strcpy(buff1, LocalDir);
+		//メッセージセット（MsgBoxForm，MsgBoxCtrl，FontTagSettings）のロード（MessageDirも取得）
+		int Error;
+		switch (Error = LoadMsgSet(LocalDir, &MsgBoxForm, MsgBoxForm_Kosuu, &MsgBoxCtrl_Master, MsgBoxCtrl_Kosuu, 1, 1)) {
+		//case -1: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージフォームのファイルが存在しません。", black, gray60); break;
+		case -2: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージフォームのパラメータが足りません。", black, gray60); break;//　（ない）
+		case -3: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージフォームの個数がサイズオーバーしています。", black, gray60); break;//　（ない）
+		//case -11: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージコントロールのファイルが存在しません。", black, gray60); break;
+		case -12: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージコントロールのパラメータが足りません。", black, gray60); break;//　（ない）
+		case -13: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージコントロールの個数がサイズオーバーしています。", black, gray60);//　（ない）
+		//case -21: FontTagSettingsCreateFlag = 0;//スタイル保存時に新規作成しない//ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "フォント・タグ設定のファイルが存在しません。", black, gray60); break;
+		//case -22: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "フォント・タグ設定のパラメータが足りません。", black, gray60); break;//　（ない）
+		//case -31: JoypadSettingsCreateFlag = 0;//ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "ジョイパッド設定のファイルが存在しません。", black, gray60); break;
+		//case -32: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "ジョイパッド設定のパラメータが足りません。", black, gray60);//　（ない）
+		}
+		if (Error < -1 && Error != -11 && Error != -21 && Error != -31) {//-1, -11, -21，31はエラーとしない
+			DxLib::WaitKey();
+			FilePath_Message_h[0] = '\0';//ファイルパスを消す
+			ClearDrawScreen();
+			return -1;
+		}
 
 
-			//MsgBoxForm_RGB_SoundPath_Masterの取得（色の値，音のパス）
-			char Path[MAX_PATH];
-			strcpy(Path, LocalDir);
-			strcat(Path, "\\MsgBoxForm.txt");
-			LoadMsgBoxForm_RGB_SoundPath(Path, &MsgBoxForm_RGB_SoundPath, MsgBoxForm_Kosuu);//ファームのセーブがあるため，LoadMsgBoxForm_RGB_SoundPathもロードしておく必要がある。
-		//}
+		//※終了時はモンスターディレクトリ
 
+		//MsgBoxForm_RGB_SoundPath_Masterの取得（色の値，音のパス）
+		char Path[MAX_PATH];
+		strcpy(Path, LocalDir);
+		strcat(Path, "\\MsgBoxForm.txt");
+		LoadMsgBoxForm_RGB_SoundPath(Path, &MsgBoxForm_RGB_SoundPath, MsgBoxForm_Kosuu);//ファームのセーブがあるため，LoadMsgBoxForm_RGB_SoundPathもロードしておく必要がある。
 		//char DirectoryNow1[MAX_PATH];
 		//GetCurrentDirectory(MAX_PATH, DirectoryNow1);//チェック用
 
@@ -8260,12 +8372,12 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h//, struct AREACONTRO
 					}
 					else strcpy(FirstDir, LocalDir);
 					char filepath[MAX_PATH]; char filetitle[MAX_PATH];
-					if (GetOpenFileNameText(FirstDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+					if (GetOpenFileNameACM(FirstDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 					//※終了時のカレントディレクトリはメッセージファイルがあるディレクトリ。「～\\OriginalFile\\MessageData」とは限らないので注意。
 					//※キャンセルしたときはパスとタイトルは変わらない。このとき相対パスのままなので下記の相対パス取得の処理はしないこと。
 						//開いたファイルのモードを調べる
 						ClearDrawScreen();
-						switch (int Value = EditorModeChecker(EditorMode_p, filepath, filetitle)) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
+						switch (int Value = EditorModeChecker(EditorMode_p, filepath)) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
 						case 0://成功時，ロードせずに問題編集モードから抜けて，入りなおす
 							strcpy(FilePath_Message_h, filepath);//ファイルパスの確定
 							return 0;//問題編集モードから抜ける
@@ -8320,17 +8432,15 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h//, struct AREACONTRO
 
 					char Dir[MAX_PATH] = { 0 };//ディレクトリを指定するための変数
 					int FileType = 0;//画像ファイル
-					int FileCopy = 0;
 					//ディレクトリの決定
 					if (!strcmp(PadManager.InputButton_p->PutText, "#img_lm{") || !strcmp(PadManager.InputButton_p->PutText, "#img_le{")) {//
 						strcpy(Dir, LocalDir); strcat(Dir, "\\Img");//ディレクトリは，メッセージディレクトリ\\Imgとなる
 					}
 					else if (!strcmp(PadManager.InputButton_p->PutText, "#img_am{") || !strcmp(PadManager.InputButton_p->PutText, "#img_ae{")) {//
-						strcpy(Dir, AppDir); strcat(Dir, "\\Img");//ディレクトリは，ルートディレクトリ\\Imgとなる
+						strcpy(Dir, Dir_AppImg);
 					}
 					else if (!strcmp(PadManager.InputButton_p->PutText, "#img_nm{") || !strcmp(PadManager.InputButton_p->PutText, "#img_ne{")) {//
-						strcpy(Dir, "C:"); //ディレクトリは，　　　　仮でルートディレクトリ　　　となる★
-						FileCopy = 1;//ファイルのコピーを作成する
+						strcpy(Dir, MsgDir);
 					}
 
 					else if (!strcmp(PadManager.InputButton_p->PutText, "#sound_l{")) {//
@@ -8338,47 +8448,52 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h//, struct AREACONTRO
 						FileType = 1;//音声ファイル
 					}
 					else if (!strcmp(PadManager.InputButton_p->PutText, "#sound_a{")) {//
-						strcpy(Dir, AppDir); strcat(Dir, "\\Sound");//ディレクトリは，ルートディレクトリ\\Imgとなる
+						strcpy(Dir, Dir_AppSound);
 						FileType = 1;//音声ファイル
 					}
 					else if (!strcmp(PadManager.InputButton_p->PutText, "#sound_n{")) {//
-						strcpy(Dir, "C:"); //ディレクトリは，　　　　仮でルートディレクトリ　　　となる★
-						FileCopy = 1;//ファイルのコピーを作成する
+						strcpy(Dir, MsgDir);
 						FileType = 1;//音声ファイル
 					}
+					//ディレクトリの作成
+					CreateDirectory(Dir, NULL);//Dirのディレクトリがなければ作成。あればエラーとなるだけで，Dir内の既存のファイルは消えない。
 
 					//ファイル選択ダイアログ
 					char FilePath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
 					char FileTitle[MAX_PATH];//ファイル名を取得する変数
 					if (*Dir != '\0' && GetImgFileName(Dir, FilePath, FileTitle, MAX_PATH, MAX_PATH, FileType)) {//ダイアログによる問題ファイル名の取得（カレントディレクトリが選択画像のディレクトリに変わるので注意）
 						char SoutaiPath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
-						//#img_lm　#img_le　#img_am　#img_aeのとき　ファイル取得に成功したらDir（LocalDirまたはdirectory）からみたファイルの相対パスを取得
-						if (FileCopy == 0) {
-							PathRelativePathTo(SoutaiPath, Dir, FILE_ATTRIBUTE_DIRECTORY, FilePath, FILE_ATTRIBUTE_ARCHIVE);
-						}
-						//#img_nmのとき　ファイル取得に成功したらファイルをコピーして，kDirからみたコピーファイルの相対パスを取得
-						else {//FileCopy == 1
-							//MsgDirのディレクトリがなければ作成。あればエラーとなるだけで，MsgDir内の既存のファイルは消えない。
-							CreateDirectory(MsgDir, NULL);
-
-							//コピーしたファイルのファイルパスを作成
-							char CopyFilePath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
-							strcpy(CopyFilePath, MsgDir);
-							strcat(CopyFilePath, "\\");
-							strcat(CopyFilePath, FileTitle);
+						//ファイル取得に成功したらファイルをコピーして，Dirからみたコピーファイルの相対パス（つまり実質はファイル名）を取得
+						//コピーしたファイルのファイルパスを作成
+						char CopyFilePath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
+						strcpy(CopyFilePath, Dir);
+						strcat(CopyFilePath, "\\");
+						strcat(CopyFilePath, FileTitle);
+						if (strcmp(FilePath, CopyFilePath)) {
+							char CopyFilePath2[MAX_PATH] = { 0 };
+							strcpy(CopyFilePath2, CopyFilePath);
 							//ファイルをコピー
-							for (int i = 0; i < 10; i++) {
-								if (CopyFile(FilePath, CopyFilePath, TRUE)) break;
-								int point;
-								for (point = strlen(CopyFilePath); CopyFilePath[point] != '.'; point--) {
-									CopyFilePath[point + 3] = CopyFilePath[point];
-								}
-								CopyFilePath[point] = '('; CopyFilePath[point + 1] = '2'; CopyFilePath[point + 2] = ')'; CopyFilePath[point + 3] = '.';
+							for (int num = 1; num < 10; num++) {//（1～9までの同名ファイルを作成可能）
+								if (CopyFile(FilePath, CopyFilePath2, TRUE)) break;
+								strcpy(CopyFilePath2, CopyFilePath);
+								int point = strlen(CopyFilePath2);
+								while (CopyFilePath2[point] != '.') point--;
+								char kakuchoshi[5] = { 0 };
+								for (int i = 0; CopyFilePath2[point + i] != '\0'; i++) kakuchoshi[i] = CopyFilePath2[point + i];
+								CopyFilePath2[point] = '(';
+								CopyFilePath2[point + 1] = '\0';
+								char number[100];
+								_itoa(num + 1, number, 10);
+								strcat(CopyFilePath2, number);
+								strcat(CopyFilePath2, ")");
+								strcat(CopyFilePath2, kakuchoshi);
 							}
-							//ファイルのコピーに成功したらMsgDirからみたコピーファイルの相対パスを取得
-							PathRelativePathTo(SoutaiPath, MsgDir, FILE_ATTRIBUTE_DIRECTORY, CopyFilePath, FILE_ATTRIBUTE_ARCHIVE);
-							////////////////////////////////////////////////////////////////////////////////////
+							//相対パスを取得  ※(9)まで存在しているならコードには(10)が書き込まれるが画像は作成されない。
+							PathRelativePathTo(SoutaiPath, Dir, FILE_ATTRIBUTE_DIRECTORY, CopyFilePath2, FILE_ATTRIBUTE_ARCHIVE);
 						}
+						else strcpy(SoutaiPath, FileTitle);//MsgDir内の画像を選択した場合は画像をコピーせず，FileTitleが相対パスとなる
+
+						////////////////////////////////////////////////////////////////////////////////////
 						//挿入する文字列の作成
 						char PutText[150];
 						strcpy(PutText, PadManager.InputButton_p->PutText);
@@ -8498,12 +8613,12 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h//, struct AREACONTRO
 						}
 						else strcpy(FirstDir, LocalDir);
 						char filepath[MAX_PATH]; char filetitle[MAX_PATH];
-						if (GetOpenFileNameText(FirstDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						if (GetOpenFileNameACM(FirstDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時のカレントディレクトリはメッセージファイルがあるディレクトリ。「～\\OriginalFile\\MessageData」とは限らないので注意。
 						//※キャンセルしたときはパスとタイトルは変わらない。このとき相対パスのままなので下記の相対パス取得の処理はしないこと。
 							//開いたファイルのモードを調べる
 							ClearDrawScreen();
-							switch (int Value = EditorModeChecker(EditorMode_p, filepath, filetitle)) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
+							switch (int Value = EditorModeChecker(EditorMode_p, filepath)) {//成功：０　失敗：０以外（-1：該当ファイルなし　-2：どのモードにも該当しない）
 							case 0://成功時，ロードせずに問題編集モードから抜けて，入りなおす
 								strcpy(FilePath_Message_h, filepath);//ファイルパスの確定
 								for (int i = 0; i < 3; i++) EditorPadArea[i].Active = 1;//インデックスエリア，ボタンエリア，ベースボタンエリアを待機状態に戻す（プルダウンリストのとき，非アクティブのままreturnで抜けてしまわないように）
@@ -8629,13 +8744,12 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h//, struct AREACONTRO
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログでフォントセットのファイルパスを取得
-						char dir[MAX_PATH]; strcpy(dir, AppDir); strcat(dir, "\\フォントセット");
-						if (GetOpenFileNameCsv(dir, ActiveMath::FilePath_Font, ActiveMath::FileTitle_Font, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-						//※終了時は「～\フォントセット」//※キャンセルしたときはパスとタイトルは変わらない（この場合は相対パスのままなのでこの相対パスの取得処理は除外）
-							//フォントセットのロード
-							LoadFontSet(ActiveMath::FilePath_Font);//絶対パスでロード
-							PathRelativePathTo(ActiveMath::FilePath_Font, AppDir, FILE_ATTRIBUTE_DIRECTORY, ActiveMath::FilePath_Font, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得
-							nukeru = 1;
+						char SourcePath[MAX_PATH] = { 0 };
+						if (GetOpenFileNameCsv(Dir_FontSet, SourcePath, FileTitle_Font, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						//※終了時はDir_FontSetがカレントディレクトリとなる
+
+							//★★★メッセージプレビューのが完成したら書き写す
+
 						}
 					}
 				}
@@ -8647,13 +8761,12 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h//, struct AREACONTRO
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログでフォント画像セットのファイルパスを取得
-						char dir[MAX_PATH]; strcpy(dir, AppDir); strcat(dir, "\\フォント画像セット");
-						if (GetOpenFileNameCsv(dir, ActiveMath::FilePath_FontImg, ActiveMath::FileTitle_FontImg, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-						//※終了時は「～\\フォント画像セット」//※キャンセルしたときはパスとタイトルは変わらない（この場合は相対パスのままなのでこの相対パスの取得処理は除外）
-							//フォント画像セットのロード
-							LoadFontImgSet(ActiveMath::FilePath_FontImg);//絶対パスでロード
-							PathRelativePathTo(ActiveMath::FilePath_FontImg, AppDir, FILE_ATTRIBUTE_DIRECTORY, ActiveMath::FilePath_FontImg, FILE_ATTRIBUTE_ARCHIVE);//絶対パスから相対パスを取得
-							nukeru = 1;
+						char SourcePath[MAX_PATH] = { 0 };
+						if (GetOpenFileNameCsv(Dir_FontImgSet, SourcePath, FileTitle_FontImg, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						//※終了時はDir_FontImgSetがカレントディレクトリとなる
+
+							//★★★メッセージプレビューのが完成したら書き写す
+
 						}
 					}
 				}
@@ -8665,13 +8778,12 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h//, struct AREACONTRO
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログでタグセットのファイルパスを取得
-						char dir[MAX_PATH]; strcpy(dir, AppDir); strcat(dir, "\\タグセット");
-						if (GetOpenFileNameCsv(dir, ActiveMath::FilePath_Tag, ActiveMath::FileTitle_Tag, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-						//※終了時は「～\\タグセット」  //※キャンセルしたときはパスとタイトルは変わらない（この場合は相対パスのままなのでこの相対パスの取得処理は除外）
-							//タグセットのロード
-							LoadTagSet(ActiveMath::FilePath_Tag);//絶対パスでロード
-							PathRelativePathTo(ActiveMath::FilePath_Tag, AppDir, FILE_ATTRIBUTE_DIRECTORY, ActiveMath::FilePath_Tag, FILE_ATTRIBUTE_ARCHIVE);//絶対パスから相対パスを取得
-							nukeru = 1;
+						char SourcePath[MAX_PATH] = { 0 };
+						if (GetOpenFileNameCsv(Dir_TagSet, SourcePath, FileTitle_Tag, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
+						//※終了時はDir_TagSetがカレントディレクトリとなる
+
+							//★★★メッセージプレビューのが完成したら書き写す
+
 						}
 					}
 				}
@@ -8778,10 +8890,10 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h//, struct AREACONTRO
 //////////↑メッセージ編集モードの終わり↑//////////////////↑メッセージ編集モードの終わり↑//////////↑メッセージ編集モードの終わり↑///////////↑メッセージ編集モードの終わり↑/////////
 
 ////編集モード
-int Editor(int* EditorMode_p) {
+int Editor(int *EditorMode_p, char *FilePath_p) {
 
-	char FilePath[MAX_PATH] = { 0 };
-
+	//char FilePath[MAX_PATH] = { 0 };
+	//strcpy(FilePath, FilePath_p);
 	//static int LoadEditorPadFlag = 0;
 	LocalDir[0] = '\0';//ホーム画面のディレクトリーが残らないようにリセット（各モードのファイルを開くで，初期フォルダーが正しくするため）
 
@@ -8803,53 +8915,36 @@ int Editor(int* EditorMode_p) {
 		/////////////////
 			/////////////////
 		SetCurrentDirectory(AppDir);//
+		//●フォント・タグ，およびジョイパッドの初期設定
+		LoadFontTagSettings(".\\System\\File\\FontTagSettings.txt"); //フォント，フォント画像，タグの設定のロード
+		LoadJoypadSettings(".\\System\\File\\JoypadSettings.txt"); //ジョイパッドの設定のロード
+		/*
+		strcpy(Dir_FontSet, ".\\Setting\\フォントセット");
+		GetFullPathName(Dir_FontSet, MAX_PATH, Dir_FontSet, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
+		strcpy(Dir_FontImgSet, ".\\Setting\\フォント画像セット");
+		GetFullPathName(Dir_FontImgSet, MAX_PATH, Dir_FontImgSet, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
+		strcpy(Dir_TagSet, ".\\Setting\\タグセット");
+		GetFullPathName(Dir_TagSet, MAX_PATH, Dir_TagSet, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
+		strcpy(Dir_Joypad, ".\\Setting\\ジョイパッド");
+		GetFullPathName(Dir_Joypad, MAX_PATH, Dir_Joypad, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
+		*/
 
 		if (*EditorMode_p == 0) {//メッセージ編集モードへ進む
-			EditMessage(EditorMode_p, FilePath);// , PadArea, ButtonForm, Index, IndexKosuu, Button_ph, ButtonKosuu, BaseButton, BaseButtonKosuu);
-			//if (*EditorMode_p != 0) LocalDir[0] = '\0';//違うモードに進むときはディレクトリをリセット
-			//（同じモードのときはリセットせず，#imgや#soundなどのタグの読取り，フォントタグ設定のロードの省略，ファイルを開くの初期フォルダとして使う）
+			EditMessage(EditorMode_p, FilePath_p);
 		}
 		else if (*EditorMode_p == 1) {//問題編集モードへ進む
-			EditMondai(EditorMode_p, FilePath);//, PadArea, ButtonForm, Index, IndexKosuu, Button_ph, ButtonKosuu, BaseButton, BaseButtonKosuu);
+			EditMondai(EditorMode_p, FilePath_p);//, PadArea, ButtonForm, Index, IndexKosuu, Button_ph, ButtonKosuu, BaseButton, BaseButtonKosuu);
 			//if (*EditorMode_p != 1) LocalDir[0] = '\0';//違うモードに進むときはディレクトリをリセットしておくことで，フォントタグ設定のロードなどと一緒に更新。
 			//（同じモードのときはリセットせず，#imgや#soundなどのタグの読取り，フォントタグ設定のロードの省略，ファイルを開くの初期フォルダとして使う）
 		}
 		else if (*EditorMode_p == 2) {//パッドビューアへ進む
-			PadPreviewMode(EditorMode_p, FilePath);//, PadArea, ButtonForm, Index, IndexKosuu, Button_ph, ButtonKosuu, BaseButton, BaseButtonKosuu);
+			PadPreviewMode(EditorMode_p, FilePath_p);//, PadArea, ButtonForm, Index, IndexKosuu, Button_ph, ButtonKosuu, BaseButton, BaseButtonKosuu);
 			//（パッドモードのときは毎回更新するのでLocalDirのリセットは不要）
 		}
-		else if (*EditorMode_p == 101) {//メッセージのサンプルを開く
-			GetFullPathName(".\\System\\Sample\\Message\\01\\Sample_Msg01.txt", MAX_PATH, FilePath, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
-			EditMessage(EditorMode_p, FilePath);//, PadArea, ButtonForm, Index, IndexKosuu, Button_ph, ButtonKosuu, BaseButton, BaseButtonKosuu);//, ActiveDirectory
-			//ホームに戻る（メッセージがサイズオーバーで開けずに関数から抜けてきたとき，繰り返し同じサンプルを開くのを防ぐ）エラー発生時にファイルパスは消去されるが，また同じファイルパスが指定されるため
-			break;
+		else {
+			FilePath_p[0] = '\0';
+			break;//ホームへ戻る(*EditorMode_p == 99（99：ホームへ戻る）も含む)
 		}
-		else if (*EditorMode_p == 102) {//メッセージのサンプルを開く
-			GetFullPathName(".\\System\\Sample\\Message\\02\\Sample_Msg02.txt", MAX_PATH, FilePath, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
-			EditMessage(EditorMode_p, FilePath);//, PadArea, ButtonForm, Index, IndexKosuu, Button_ph, ButtonKosuu, BaseButton, BaseButtonKosuu);//, ActiveDirectory
-			//ホームに戻る（メッセージがサイズオーバーで開けずに関数から抜けてきたとき，繰り返し同じサンプルを開くのを防ぐ）エラー発生時にファイルパスは消去されるが，また同じファイルパスが指定されるため
-			break;
-		}
-		else if (*EditorMode_p == 103) {//メッセージのサンプルを開く
-			GetFullPathName(".\\System\\Sample\\Message\\03\\Sample_Msg03.txt", MAX_PATH, FilePath, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
-			EditMessage(EditorMode_p, FilePath);//, PadArea, ButtonForm, Index, IndexKosuu, Button_ph, ButtonKosuu, BaseButton, BaseButtonKosuu);//, ActiveDirectory
-			//ホームに戻る（メッセージがサイズオーバーで開けずに関数から抜けてきたとき，繰り返し同じサンプルを開くのを防ぐ）エラー発生時にファイルパスは消去されるが，また同じファイルパスが指定されるため
-			break;
-		}
-
-		else if (*EditorMode_p == 111) {//問題のサンプルを開く
-			GetFullPathName(".\\System\\Sample\\Mondai\\Sample_Mondai01.txt", MAX_PATH, FilePath, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
-			EditMondai(EditorMode_p, FilePath);//, PadArea, ButtonForm, Index, IndexKosuu, Button_ph, ButtonKosuu, BaseButton, BaseButtonKosuu);
-			//ホームに戻る（エラーで関数から抜けてきたとき，繰り返し同じサンプルを開くのを防ぐ）エラー発生時にファイルパスは消去されるが，また同じファイルパスが指定されるため
-			break;
-		}
-		else if (*EditorMode_p == 121) {//パッドのサンプルを開く
-			GetFullPathName(".\\System\\Sample\\Pad\\Sample_Pad01.csv", MAX_PATH, FilePath, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
-			PadPreviewMode(EditorMode_p, FilePath);//, PadArea, ButtonForm, Index, IndexKosuu, Button_ph, ButtonKosuu, BaseButton, BaseButtonKosuu);
-			//ホームに戻る（エラーで関数から抜けてきたとき，繰り返し同じサンプルを開くのを防ぐ）エラー発生時にファイルパスは消去されるが，また同じファイルパスが指定されるため
-			break;
-		}
-		else break;//ホームへ戻る(*EditorMode_p == 99（99：ホームへ戻る）も含む)
 	}//whileの終わり
 
 	//各モードから抜けてwhileから抜けてきたとき，または，ProcessMessage()がエラーでwhileから抜けてきたとき
@@ -8859,11 +8954,8 @@ int Editor(int* EditorMode_p) {
 
 
 
-/////↓戦闘モードの関数↓////////////↓戦闘モードの関数↓////////////↓戦闘モードの関数↓////////////↓戦闘モードの関数↓//////
-#define Action_InputText 5
-
 /////↓トップ画面↓////////////↓トップ画面↓////////////↓トップ画面↓////////////↓トップ画面↓//////
-int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 	//［起動時の設定］　
 	//SetOutApplicationLogValidFlag(FALSE); //ログ出力を行うか否かのフラグ(TRUE:行う FALSE : 行わない)
 	SetMainWindowText(ApplicationTitle);//タイトルバーの書き換え
@@ -8874,10 +8966,39 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//●スクリーン関係
 	SetDrawScreen(DX_SCREEN_BACK); // 描画先を裏画面に設定
 	SetGraphMode(WindowWidth, WindowHeight, ColorBitNum);//ウインドウサイズの指定(WindowWidth = 1000,WindowHeight = 798,ColorBitNum = 32)
-	//●プロジェクトのルートディレクトリの取得
-	GetCurrentDirectory(sizeof(AppDir) / sizeof(TCHAR), AppDir);//ディレクトリの取得
-	//int HomeBGI = LoadGraph(".\\System\\Fixed\\HomeBGI.png");//SetGraphModeの後では，同じ画像であっても再ロードしないとハンドルが使えない
-	//DrawGraph(0, 0, HomeBGI, TRUE);
+	//●AppDirの取得（プロジェクトのルートディレクトリ（現時点のカレントディレクトリ））（slnから起動時はsln，exeから起動時はexe，データファイルから起動時はデータファイルがあるディレクトリ）
+	//GetCurrentDirectory(sizeof(AppDir) / sizeof(TCHAR), AppDir);//ディレクトリの取得
+
+
+	//////////////////////////////////////////////////
+	//●実行ファイルのパスからAppDirを取得（sln，exe，データファイルからの起動に関わらず，exeがあるディレクトリ）してカレントディレクトリに指定
+	{
+		GetModuleFileName(NULL, AppDir, MAX_PATH); //実行ファイルのパスを取得
+		int Mojisuu = strlen(AppDir);
+		int Point;
+		for (Point = Mojisuu - 1; AppDir[Point] != '\\' && 0 <= Point; Point--); //（実行ファイル名の前の\\の位置を探す）
+		AppDir[Point] = '\0';//\\以下の文字列（実行ファイル名）を消去したものがAppDirとなる
+		SetCurrentDirectory(AppDir); //カレントディレクトリを指定
+	}
+	//////////////////////////////////////////////////
+	//●WinMainの第3引数からファイル名を取得
+	//strcpy(lpCmdLine, "\"ab cde\"");//確認用
+	char FilePath[MAX_PATH] = { 0 };
+	{
+		int Point = 1;
+		while (lpCmdLine[Point] != '\"' && lpCmdLine[Point] != '\0') Point++;
+		for (int i = 1; i < Point; i++) FilePath[i - 1] = lpCmdLine[i];
+	}
+	/*
+	//確認用
+	DrawFormatString(10, 10, white, "AppDir: %s", AppDir);
+	DrawFormatString(10, 30, white, "FilePath: %s", FilePath);
+	WaitKey();
+	DxLib_End();
+	return -1;
+	*/
+
+
 
 	//［ActiveMathの初期化］　
 	//●システムフォント関係の設定
@@ -8889,9 +9010,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	int TitleWidth = GetDrawStringWidth(ApplicationTitle, strlen(ApplicationTitle));//
 	DrawString((WindowWidth - TitleWidth) / 2, (WindowHeight - SystemFontSize) / 2, ApplicationTitle, white);//アプリケーションタイトルを表示
 
+
+
+
+
 	//●編集用パッドのロード（パッドエリア，入力用インデックス，入力用ボタン，入力用基本ボタン）
 	int Error;
-	switch (Error = LoadPad(".\\EditorPadSet\\EditorPadSet.csv", EditorPadArea, &EditorPadAreaKosuu, EditorPadAreaMax, NULL,//第5引数パッドエリアのParent
+	switch (Error = LoadPad(".\\EditorPadSet\\EditorPadSet.acp", EditorPadArea, &EditorPadAreaKosuu, EditorPadAreaMax, NULL,//第5引数パッドエリアのParent
+
 		EditorButtonForm, &EditorButtonFormKouu, EditorButtonFormMax,
 		EditorIndex, &EditorIndexKosuu, EditorIndexMax,
 		EditorButton_ph, EditorButtonKosuu, EditorButtonMax,
@@ -8911,6 +9037,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	case -32: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "編集用パッドのボタンのパラメータが足りません。", black, gray60); break;
 	case -33: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "編集用パッドのボタンの個数がサイズオーバーしています。", black, gray60); break;
 	case -41: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "編集用パッドのベースボタンセットのファイルが存在しません。", black, gray60); break;
+
 	case -42: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "編集用パッドのベースボタンのパラメータが足りません。", black, gray60); break;
 	case -43: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "編集用パッドのベースボタンの個数がサイズオーバーしています。", black, gray60); break;
 
@@ -8936,7 +9063,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 
-	int EditorMode = 0;
 
 	//［各エリア・ツールボタン類の初期化］　
 	//■ディスプレイエリア
@@ -9070,7 +9196,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	const int MsgSize = 2000;  //MsgSizeは終端文字を含まない。終端文字を含めた MsgSize + 1 は変数名MsgSizeEと表すこととする。
 	char Msg[MsgSize + 1] = { 0 }; //メッセージを入れる
 	char FilePath_Msg[MAX_PATH];
-	GetFullPathName(".\\System\\HomeMsg\\HomeMsg.txt", MAX_PATH, FilePath_Msg, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
+	GetFullPathName(".\\System\\HomeMsg\\HomeMsg.acm", MAX_PATH, FilePath_Msg, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
 	int LoadMsgError;
 	switch (LoadMsgError = LoadMsg(FilePath_Msg, Msg, MsgSize + 1, 1)) {
 	//case -1: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージのファイルが存在しません。", black, gray60); break;
@@ -9086,6 +9212,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char LocalDir_Copy[MAX_PATH];
 	strcpy(LocalDir_Copy, LocalDir);
 
+
+
 	while (!ProcessMessage()) {
 		//他のモードから移ってきたときに設定を再ロードをしたいから，LoadMsgSetはwhileの内側
 		//カレントディレクトリの指定
@@ -9094,7 +9222,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//メッセージ，設定，背景画像，メッセージプロパティのロード
 		int Error2;
 		switch (Error2 = LoadMsgSet(LocalDir, &MsgBoxForm, MsgBoxForm_kosuu,
-			&MsgBoxCtrl, MsgBoxCtrl_kosuu, 1,0
+			&MsgBoxCtrl, MsgBoxCtrl_kosuu, 1, 0//フォントタグ設定をロードする，ジョイパッド設定をロードしない
 		)) {
 		case -1: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージフォームのファイルが存在しません。", black, gray60); break;
 		case -2: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージフォームのパラメータが足りません。", black, gray60); break;//　（ない）
@@ -9104,6 +9232,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		case -13: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "メッセージコントロールの個数がサイズオーバーしています。", black, gray60); break;//　（ない）
 		case -21: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "フォント・タグ設定のファイルが存在しません。", black, gray60); break;
 		case -22: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "フォント・タグ設定のパラメータが足りません。", black, gray60);//　（ない）
+		case -31: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "ジョイパッド設定のファイルが存在しません。", black, gray60); break;//※ジョイパッド設定をロードしないのでここではエラーにならない
+		case -32: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "ジョイパッド設定のパラメータが足りません。", black, gray60);//　（ない）
+
 		}
 		if (Error2 < 0) {
 			DxLib::WaitKey();
@@ -9113,8 +9244,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 
 		//※終了時はモンスターディレクトリ
+		SetCurrentDirectory(AppDir);
+
+		//////////////
+
+
+
+
 		MsgBoxCtrl.ParentArea_p = &MenuArea;//エリアの指定
 		MsgBoxCtrl.Tag[0].PositionP = -1;//カーソル非表示のため。tag[0].PositionPはActiveElementを表す。
+		int EditorMode = -1;
 		//AreaControlShow(&DisplayArea, 1);//０ループ目用（なくてもあまり変わらない）
 
 		for (int frameH = 0; !ScreenFlip() && !ProcessMessage() && !ClearDrawScreen() && !MathgpUpdateMouse() && !MathgpUpdateKey(); frameH++) {//&& !MathgpUpdateJoypad() 
@@ -9132,34 +9271,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 					MenuArea.Nest[1] + TopMenuButton[i].Location[1] + TopMenuButtonForm.Margin[1] + 34, gray30, true
 				);
 			}
-			//●ツールボタン
+			//●編集モード選択ボタン
 			int ClickedNo = -1;//押されたボタン番号
 			int TopMenu_PushType = 0; int TopMenu_Prev = -2; int TopMenu_Next = -2;
 			// ButtonType（０：通常ボタン　１：インデックス）//ChangeType（０：マウス　１：十字キーで操作　２：[5][6]キーで操作　３：[5][6]キーで操作)
 			if (ShowButton(TopMenuButton, TopMenuButtonKosuu, &ClickedNo, TopMenu_PushType, TopMenu_Prev, TopMenu_Next) == 1) {
-				//（フォント・タグの標準設置，ジョイパッドの標準設定のロード。メッセージファイルを新規作成したときにHomeMsgで設定したものを標準設定に変えておくため）
-				SetCurrentDirectory(AppDir);
-				LoadFontTagSettings(".\\System\\Fixed\\FontTagSettings.txt");
-				LoadJoypadSettings(".\\System\\Fixed\\JoypadSettings.txt");
-				///////メッセージ編集モード
-				if (ClickedNo == 0) {
-					EditorMode = 0;//メッセージ編集モード
-					Editor(&EditorMode);
-					break;
-				}
-				///////問題編集モード
-				else if (ClickedNo == 1) {
-					EditorMode = 1;//問題編集モード
-					Editor(&EditorMode);
-					break;
-				}
-				///////パッドビューア
-				else if (ClickedNo == 2) {
-					EditorMode = 2;//パッドビューア
-					Editor(&EditorMode);
-					break;
-				}
+				//編集モード番号を確定
+				if (ClickedNo == 0)	EditorMode = 0;//メッセージ編集モード
+				else if (ClickedNo == 1) EditorMode = 1;//問題編集モード
+				else if (ClickedNo == 2) EditorMode = 2;//パッドビューア
 			}
+
 			int LocationX = TopMenuButton[0].Nest[0] + 10;
 			int LocationY = TopMenuButton[0].Nest[1] + 40;
 			DrawString(LocationX, LocationY, "数式を含む文章を作成する", black); //文字板の表示
@@ -9172,39 +9294,27 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			LocationX = TopMenuButton[2].Nest[0] + 10;//（LocationYは同じ値だから省略）LocationY = TopMenuButton[2].Nest[1] + 40;
 			DrawString(LocationX, LocationY, "数式の入力用パッドを確認", black); //文字板の表示
 			DrawString(LocationX, LocationY + 20, "することができます。", black); //文字板の表示
-
+			//●サンプル表示ボタン
 			if (ShowButton(SubMenuBtn, SubMenuBtnKosuu, &ClickedNo, TopMenu_PushType, TopMenu_Prev, TopMenu_Next) == 1) {
 				// ButtonType（０：通常ボタン　１：インデックス）//ChangeType（０：マウス　１：十字キーで操作　２：[5][6]キーで操作　３：[5][6]キーで操作)
-
-
 				///////メッセージ編集モードのサンプル
 				if (ClickedNo == 0) {
-					EditorMode = 101;//
-					Editor(&EditorMode);
-					break;
+					//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
+					GetFullPathName(".\\System\\Sample\\Message\\01\\Sample_Msg01.acm", MAX_PATH, FilePath, NULL);
 				}
 				else if (ClickedNo == 1) {
-					EditorMode = 102;//
-					Editor(&EditorMode);
-					break;
+					GetFullPathName(".\\System\\Sample\\Message\\02\\Sample_Msg02.acm", MAX_PATH, FilePath, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
 				}
 				else if (ClickedNo == 2) {
-					EditorMode = 103;//
-					Editor(&EditorMode);
-					break;
+					GetFullPathName(".\\System\\Sample\\Message\\03\\Sample_Msg03.acm", MAX_PATH, FilePath, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
 				}
-
 				///////問題編集モードのサンプル
 				else if (ClickedNo == 3) {
-					EditorMode = 111;//問題編集モード
-					Editor(&EditorMode);
-					break;
+					GetFullPathName(".\\System\\Sample\\Mondai\\Sample_Mondai01.ack", MAX_PATH, FilePath, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
 				}
 				///////パッドビューアのサンプル
 				else if (ClickedNo == 4) {
-					EditorMode = 121;//パッドビューア
-					Editor(&EditorMode);
-					break;
+					GetFullPathName(".\\System\\Sample\\Pad\\Sample_Pad01.acp", MAX_PATH, FilePath, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
 				}
 				///////アプリケーションの終了
 				else if (ClickedNo == 5) {
@@ -9212,6 +9322,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 					return 0;//ソフトの終了
 				}
 			}
+
+			//●モード番号の取得
+			if (FilePath[0] != '\0') EditorModeChecker(&EditorMode, FilePath);
+			//●編集モードの振り分けに進む
+			if (EditorMode == 0) { Editor(&EditorMode, FilePath); break;	}///////メッセージ編集モード
+			else if (EditorMode == 1) { Editor(&EditorMode, FilePath); break; }///////問題編集モード
+			else if (EditorMode == 2) { Editor(&EditorMode, FilePath); break; }///////パッドビューア
 
 			//メッセージ
 			int Value = ShowMsgBox(Msg, &MsgBoxCtrl);

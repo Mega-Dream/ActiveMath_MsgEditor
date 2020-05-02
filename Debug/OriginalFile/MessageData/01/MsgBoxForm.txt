@@ -1,0 +1,22 @@
+*** MsgBoxForm0 ***
+MaxLine,-1
+Margin[4],0,0,0,0
+Padding[4],17,4,17,19
+BorderColorRGB[3],255,255,255
+BorderThickness,5
+BorderType,1
+BackColorRGB[3],0,0,0
+BackGroundTransparency,50
+ActiveTagColorRGB[3],255,255,0
+ActiveTagColorTransparency,70
+ActiveMathColorRGB[3],204,255,255
+ActiveMathColorTransparency,80
+FontColorRGB[3],255,255,255
+Leading,5
+BlinkSpeed,120
+OutputSpeed,50
+ScrollSpeed,200
+Option,2445
+MessageSound,.\Cyber20-1.mp3
+ConfirmSound,.-1
+BackDelSound,.\button01a.mp3

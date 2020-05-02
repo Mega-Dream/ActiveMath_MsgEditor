@@ -1,0 +1,5 @@
+パッドメッセージ
+MsgBoxFormNumber,0
+Location[2],630,330
+Width,320
+Height,70

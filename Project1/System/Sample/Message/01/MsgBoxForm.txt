@@ -19,4 +19,4 @@ ScrollSpeed,200
 Option,2445
 MessageSound,.\Cyber20-1.mp3
 ConfirmSound,.\button01a.mp3
-BackDelSound,
+BackDelSound,-1

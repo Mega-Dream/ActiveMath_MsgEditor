@@ -1,0 +1,3 @@
+.\System\Setting\フォントセット\標準フォントセット.csv
+.\System\Setting\フォント画像セット\標準フォント画像セット.csv
+.\System\Setting\タグセット\標準タグセット.csv

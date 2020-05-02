@@ -1,0 +1,8 @@
+Dir_FontSet_rw,.\Setting\フォントセット
+FileTitle_Font_rw,標準フォントセット.csv
+Dir_FontImgSet_rw,.\Setting\フォント画像セット
+FileTitle_FontImg_rw,標準フォント画像セット.csv
+Dir_TagSet_rw,.\Setting\タグセット
+FileTitle_Tag_rw,標準タグセット.csv
+Dir_AppImg_rw,.\Setting\Img
+Dir_AppSound_rw,.\Setting\Sound
