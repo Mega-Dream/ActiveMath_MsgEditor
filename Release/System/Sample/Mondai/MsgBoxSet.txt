@@ -1,0 +1,16 @@
+‚Æ‚Î‚·
+MsgBoxFormNumber,0
+Width,600
+Height,150
+‚Æ‚Î‚·
+MsgBoxFormNumber,1
+Width,500
+Height,96
+‚Æ‚Î‚·
+MsgBoxFormNumber,2
+Width,500
+Height,100
+‚Æ‚Î‚·
+MsgBoxFormNumber,3
+Width,500
+Height,100

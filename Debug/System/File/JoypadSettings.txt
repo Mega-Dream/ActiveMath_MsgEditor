@@ -1,2 +1,0 @@
-Dir_Joypad_rw,.\Setting\ジョイパッド
-FileTitle_Joypad_rw,標準ジョイパッド.csv

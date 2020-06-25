@@ -1,5 +1,0 @@
-‚Æ‚Î‚·
-MsgBoxFormNumber,0
-Location[2],10,10
-Width,362
-Height,100
