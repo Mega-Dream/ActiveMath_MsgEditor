@@ -1,4 +1,4 @@
-メッセージ
+とばす
 MsgBoxFormNumber,0
 Width,500
 Height,130

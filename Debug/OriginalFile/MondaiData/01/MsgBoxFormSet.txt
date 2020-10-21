@@ -1,4 +1,4 @@
-*** MsgBoxForm0 ***
+#MsgBoxFormSet
 MaxLine,-1
 Margin[4],0,0,0,0
 Padding[4],17,4,17,4
@@ -8,19 +8,19 @@ BorderType,1
 BackColorRGB[3],0,0,0
 BackGroundTransparency,50
 ActiveTagColorRGB[3],255,255,0
-ActiveTagColorTransparency,70
+ActiveTagTransparency,70
 ActiveMathColorRGB[3],204,255,255
-ActiveMathColorTransparency,80
+ActiveMathTransparency,80
 FontColorRGB[3],255,255,255
 Leading,5
 BlinkSpeed,120
 OutputSpeed,50
 ScrollSpeed,200
-Option,41444
+Option,40444
 MsgSound,Cyber20-1.mp3
 ConfirmSound,
 BackDelSound,
-*** MsgBoxForm1 ***
+ナンバー1
 MaxLine,-1
 Margin[4],0,0,0,0
 Padding[4],17,4,17,4
@@ -30,19 +30,19 @@ BorderType,1
 BackColorRGB[3],0,0,0
 BackGroundTransparency,50
 ActiveTagColorRGB[3],255,255,0
-ActiveTagColorTransparency,70
+ActiveTagTransparency,70
 ActiveMathColorRGB[3],204,255,255
-ActiveMathColorTransparency,80
+ActiveMathTransparency,80
 FontColorRGB[3],255,255,255
 Leading,10
 BlinkSpeed,120
 OutputSpeed,-1
 ScrollSpeed,500
-Option,31444
+Option,32444
 MsgSound,
 ConfirmSound,
 BackDelSound,
-*** MsgBoxForm2 ***
+ナンバー2
 MaxLine,-1
 Margin[4],0,0,0,0
 Padding[4],17,4,17,4
@@ -52,19 +52,19 @@ BorderType,1
 BackColorRGB[3],0,0,0
 BackGroundTransparency,50
 ActiveTagColorRGB[3],255,255,0
-ActiveTagColorTransparency,70
+ActiveTagTransparency,70
 ActiveMathColorRGB[3],204,255,255
-ActiveMathColorTransparency,80
+ActiveMathTransparency,80
 FontColorRGB[3],255,255,255
 Leading,10
 BlinkSpeed,120
 OutputSpeed,-1
 ScrollSpeed,500
-Option,31444
+Option,30444
 MsgSound,
 ConfirmSound,
 BackDelSound,
-*** MsgBoxForm3 ***
+ナンバー3
 MaxLine,-1
 Margin[4],0,0,0,0
 Padding[4],17,4,17,4
@@ -74,15 +74,15 @@ BorderType,1
 BackColorRGB[3],0,0,0
 BackGroundTransparency,50
 ActiveTagColorRGB[3],255,255,0
-ActiveTagColorTransparency,70
+ActiveTagTransparency,70
 ActiveMathColorRGB[3],204,255,255
-ActiveMathColorTransparency,80
+ActiveMathTransparency,80
 FontColorRGB[3],255,255,255
 Leading,10
 BlinkSpeed,120
 OutputSpeed,-1
 ScrollSpeed,500
-Option,31444
+Option,32444
 MsgSound,
 ConfirmSound,
 BackDelSound,

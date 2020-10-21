@@ -1,4 +1,5 @@
-*** MsgBoxForm0 ***
+Åö
+#MsgBoxFormSet
 MaxLine,-1
 Margin[4],0,0,0,0
 Padding[4],17,4,17,4
@@ -16,7 +17,7 @@ Leading,25
 BlinkSpeed,90
 OutputSpeed,-2
 ScrollSpeed,400
-Option,444
+Option,2444
 MsgSound,.\swing1.mp3
 ConfirmSound,.\button67.mp3
 BackDelSound,.\swish1.mp3

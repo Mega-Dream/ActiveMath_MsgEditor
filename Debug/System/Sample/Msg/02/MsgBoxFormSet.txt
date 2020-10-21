@@ -1,4 +1,5 @@
-*** MsgBoxForm0 ***
+Åö
+#MsgBoxFormSet
 MaxLine,-1
 Margin[4],0,0,0,0
 Padding[4],17,4,17,4
@@ -11,12 +12,12 @@ ActiveTagColorRGB[3],255,255,0
 ActiveTagColorTransparency,70
 ActiveMathColorRGB[3],204,255,255
 ActiveMathColorTransparency,80
-FontColorRGB[3],0,51,102
+FontColorRGB[3],255,0,0
 Leading,5
 BlinkSpeed,120
 OutputSpeed,50
 ScrollSpeed,200
-Option,2444
+Option,1444
 MsgSound,.\Cyber20-1.mp3
 ConfirmSound,
 BackDelSound,

@@ -671,36 +671,9 @@ int EditorModeChecker(int *EditorMode_p, char *FilePath_h) {//成功：０　失敗：０
 	else if (strcmp(Kakuchoshi, "acp") == 0) *EditorMode_p = 2;//２：パッド編集モード
 	else return -2;//どのモードにも該当しない
 
-	/*
-	//メッセージタイプのロード
-	char MessageType[100];
-	FILE *fp = fopen(FilePath_h, "r");//テキストファイルを開く
-	if (fp == NULL) {//エラーが起きたらNULLを返す（該当ファイルが存在しない）
-		return -1;//該当ファイルなし
-	}
-	char buff;
-	char textbuff[MAX_PATH];//
-	//////
-	for (int k = 0; buff = fgetc(fp); k++) {
-		if (buff == ',' || buff == '\n' || buff == EOF) {
-			textbuff[k] = '\0';
-			break;
-		}
-		textbuff[k] = buff;
-	}
-	strcpy(MessageType, textbuff);
-	fclose(fp);//ファイルを閉じる
-			   //////////////////////
-	if (strcmp(MessageType, "Message") == 0) *EditorMode_p = 0;//０：メッセージ編集モード
-	else if (strcmp(MessageType, "Mondai") == 0) *EditorMode_p = 1;//１：問題編集モード
-	else if (strcmp(MessageType, "AreaN") == 0) *EditorMode_p = 2;//２：パッド編集モード
-	else return -2;//どのモードにも該当しない
-	*/
-
-	///////////////////
 	return 0;//成功
 }
-//■設定のセーブ（フォント，フォント画像，タグ設定のセーブ）
+//■設定のセーブ（ジョイパッドスタイルのリンクのセーブ）
 int SaveJoypadLink(const TCHAR* file_h) {
 	if (strcmp(Title_JoypadStyle_rw, "なし") == 0) {//新規作成しない
 		return -2;
@@ -709,6 +682,7 @@ int SaveJoypadLink(const TCHAR* file_h) {
 	if (fp == NULL) {//エラーが起きたらNULLを返す
 		return -1;
 	}
+	fputs("★", fp); fputs("\n", fp); //全角を入れておく
 	fputs("Dir_JoypadStyle_rw,", fp); fputs(Dir_JoypadStyle_rw, fp); fputs("\n", fp); //ジョイパッドのディレクトリの保存
 	fputs("Title_JoypadStyle_rw,", fp); fputs(Title_JoypadStyle_rw, fp); fputs("\n", fp); //ジョイパッドのファイル名の保存
 
@@ -716,7 +690,7 @@ int SaveJoypadLink(const TCHAR* file_h) {
 	return 0;
 }
 
-//■設定のセーブ（フォント，フォント画像，タグ設定のセーブ）
+//■メッセージコードリンクのセーブ（フォントスタイル，フォント画像スタイル，タグスタイルのリンクと，アプリ共有画僧ディレクトリ，アプリ共有音声ディレクトリのセーブ）
 int SaveMsgCodeLink(const TCHAR* file_h) {
 	if (strcmp(Title_FontStyle_rw, "なし") == 0){//新規作成しない
 		return -2;
@@ -725,6 +699,8 @@ int SaveMsgCodeLink(const TCHAR* file_h) {
 	if (fp == NULL) {//エラーが起きたらNULLを返す
 		return -1;
 	}
+	fputs("★", fp); fputs("\n", fp); //全角を入れておく
+
 	fputs("Dir_FontStyle_rw,", fp); fputs(Dir_FontStyle_rw, fp); fputs("\n", fp); //フォントスタイルのディレクトリの保存
 	fputs("Title_FontStyle_rw,", fp); fputs(Title_FontStyle_rw, fp); fputs("\n", fp); //フォントスタイルのファイル名の保存
 
@@ -742,18 +718,19 @@ int SaveMsgCodeLink(const TCHAR* file_h) {
 	return 0;
 }
 //■メッセージボックスコントロールのセーブ
-int SaveMsgBoxFormSet(const TCHAR *file_h, struct MSG_BOX_FORM *MsgBoxForm_p, MSG_BOX_RGB_SOUNDPATH *MsgBox_RGB_SoundPath_p, int MsgBoxForm_Kosuu) {
+int SaveMsgBoxFormSet(const TCHAR *file_h, struct MSG_BOX_FORM *MsgBoxForm_p, MSG_BOX_FORM_RGB_SOUNDPATH *MsgBoxForm_RGB_SoundPath_Set, int MsgBoxForm_Kosuu) {
 	FILE *fp = fopen(file_h, "w");//テキストファイルを開く//ファイルがなければ新規作成
 	if (fp == NULL) {//エラーが起きたらNULLを返す
 		return -1;
 	}
 	char textbuff[100];
+	fputs("★", fp); //全角を入れておく
+	fputs("\n", fp); //改行を入れる
+	//ヘッダー
+	fputs("#MsgBoxFormSet", fp); //ヘッダーの保存
+	fputs("\n", fp); //改行を入れる
+	//内容
 	for (int i = 0; i < MsgBoxForm_Kosuu; i++) {
-		//開始行（何も書かれていないと，ロード時に，これ以上フォームがないと判断されてしまう）
-		fputs("*** MsgBoxForm", fp);
-		_itoa(i, textbuff, 10);
-		fputs(textbuff, fp);
-		fputs(" ***\n", fp); //改行を入れる
 		//MaxLineのセーブ
 		fputs("MaxLine,", fp);
 		_itoa(MsgBoxForm_p[i].MaxLine, textbuff, 10);
@@ -780,7 +757,7 @@ int SaveMsgBoxFormSet(const TCHAR *file_h, struct MSG_BOX_FORM *MsgBoxForm_p, MS
 		fputs("BorderColorRGB[3]", fp);//項目名の保存
 		for (int c = 0; c < 3; c++) {
 			fputs(",", fp); //カンマを入れる
-			_itoa(MsgBox_RGB_SoundPath_p[i].BorderColorRGB[c], textbuff, 10);
+			_itoa(MsgBoxForm_RGB_SoundPath_Set[i].BorderColorRGB[c], textbuff, 10);
 			fputs(textbuff, fp);//データの保存
 		}
 		fputs("\n", fp); //改行を入れる
@@ -798,7 +775,7 @@ int SaveMsgBoxFormSet(const TCHAR *file_h, struct MSG_BOX_FORM *MsgBoxForm_p, MS
 		fputs("BackColorRGB[3]", fp);//項目名の保存
 		for (int c = 0; c < 3; c++) {
 			fputs(",", fp); //カンマを入れる
-			_itoa(MsgBox_RGB_SoundPath_p[i].BackColorRGB[c], textbuff, 10);
+			_itoa(MsgBoxForm_RGB_SoundPath_Set[i].BackColorRGB[c], textbuff, 10);
 			fputs(textbuff, fp);//データの保存
 		}
 		fputs("\n", fp); //改行を入れる
@@ -811,26 +788,26 @@ int SaveMsgBoxFormSet(const TCHAR *file_h, struct MSG_BOX_FORM *MsgBoxForm_p, MS
 		fputs("ActiveTagColorRGB[3]", fp);//項目名の保存
 		for (int c = 0; c < 3; c++) {
 			fputs(",", fp); //カンマを入れる
-			_itoa(MsgBox_RGB_SoundPath_p[i].ActiveTagColorRGB[c], textbuff, 10);
+			_itoa(MsgBoxForm_RGB_SoundPath_Set[i].ActiveTagColorRGB[c], textbuff, 10);
 			fputs(textbuff, fp);//データの保存
 		}
 		fputs("\n", fp); //改行を入れる
-		//ActiveTagColorTransparencyのセーブ
-		fputs("ActiveTagColorTransparency,", fp);//項目名の保存
-		_itoa(MsgBoxForm_p[i].ActiveTagColorTransparency, textbuff, 10);
+		//ActiveTagTransparencyのセーブ
+		fputs("ActiveTagTransparency,", fp);//項目名の保存
+		_itoa(MsgBoxForm_p[i].ActiveTagTransparency, textbuff, 10);
 		fputs(textbuff, fp);//データの保存
 		fputs("\n", fp); //改行を入れる
 		//ActiveMathColorRGBの
 		fputs("ActiveMathColorRGB[3]", fp);//項目名の保存
 		for (int c = 0; c < 3; c++) {
 			fputs(",", fp); //カンマを入れる
-			_itoa(MsgBox_RGB_SoundPath_p[i].ActiveMathColorRGB[c], textbuff, 10);
+			_itoa(MsgBoxForm_RGB_SoundPath_Set[i].ActiveMathColorRGB[c], textbuff, 10);
 			fputs(textbuff, fp);//データの保存
 		}
 		fputs("\n", fp); //改行を入れる
-		//ActiveMathColorTransparencyのセーブ
-		fputs("ActiveMathColorTransparency,", fp);//項目名の保存
-		_itoa(MsgBoxForm_p[i].ActiveMathColorTransparency, textbuff, 10);
+		//ActiveMathTransparencyのセーブ
+		fputs("ActiveMathTransparency,", fp);//項目名の保存
+		_itoa(MsgBoxForm_p[i].ActiveMathTransparency, textbuff, 10);
 		fputs(textbuff, fp);//データの保存
 		fputs("\n", fp); //改行を入れる
 		//FontColorRGBのセーブ
@@ -868,45 +845,46 @@ int SaveMsgBoxFormSet(const TCHAR *file_h, struct MSG_BOX_FORM *MsgBoxForm_p, MS
 		fputs("\n", fp); //改行を入れる
 		//Sound_Message（パカパカ音やスクロール音）のセーブ
 		fputs("MsgSound,", fp);//項目名の保存
-		fputs(MsgBox_RGB_SoundPath_p[i].MsgSoundPath, fp);//データの保存
+		fputs(MsgBoxForm_RGB_SoundPath_Set[i].MsgSoundPath, fp);//データの保存
 		fputs("\n", fp); //改行を入れる
 		//Sound_Move（カーソルの移動音）のセーブ
 		fputs("ConfirmSound,", fp);//項目名の保存
-		fputs(MsgBox_RGB_SoundPath_p[i].ConfirmSoundPath, fp);//データの保存
+		fputs(MsgBoxForm_RGB_SoundPath_Set[i].ConfirmSoundPath, fp);//データの保存
 		fputs("\n", fp); //改行を入れる
 		//Sound_Push（待機時（書き終え・満杯）のボタン押音）のセーブ
 		fputs("BackDelSound,", fp);//項目名の保存
-		fputs(MsgBox_RGB_SoundPath_p[i].BackDelSoundPath, fp);//データの保存
+		fputs(MsgBoxForm_RGB_SoundPath_Set[i].BackDelSoundPath, fp);//データの保存
 		fputs("\n", fp); //改行を入れる
+		//最終ループ（MsgBoxForm_Kosuu - 1）のときは書き込まない
+		if (i < MsgBoxForm_Kosuu - 1) {//次の番号の書き込み（何も書かれていないと，ロード時に，これ以上フォームがないと判断する）
+			fputs("ナンバー", fp);
+			_itoa(i + 1, textbuff, 10);//次の番号
+			fputs(textbuff, fp);
+			fputs("\n", fp); //改行を入れる
+		}
 	}
 	fclose(fp);//ファイルを閉じる
 	return 0;
 }
 //■メッセージボックスフォームのセーブ
 int SaveMsgBoxSet(const TCHAR *file_h, struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int *MsgBoxFormNumber_h) {
-	FILE *fp = fopen(file_h, "w");//テキストファイルを開く
-	if (fp == NULL) {//エラーが起きたらNULLを返す（該当するファイルが存在しない）
+	FILE *fp = fopen(file_h, "w");//テキストファイルを開く（該当するファイルが存在しないなら新規作成）
+	if (fp == NULL) {//エラーが起きたらNULLを返す
 		return -1;
 	}
 	char textbuff[100];
+	fputs("★", fp); //全角を入れておく
+	fputs("\n", fp); //改行を入れる
+	//ヘッダー
+	fputs("#MsgBoxSet", fp); //ヘッダーの保存
+	fputs("\n", fp); //改行を入れる
+	//内容
 	for (int i = 0; i < MsgBox_Kosuu; i++) {
-		fputs("とばす", fp); //とばす行の保存
-		fputs("\n", fp); //改行を入れる
 		//MsgBoxFormNumberのセーブ
 		fputs("MsgBoxFormNumber,", fp); //項目名の保存
 		_itoa(MsgBoxFormNumber_h[i], textbuff, 10);
 		fputs(textbuff, fp); //データの保存
 		fputs("\n", fp); //改行を入れる
-		/*
-		//Location[2]のセーブ
-		fputs("Location[2]", fp); //項目名の保存
-		for (int c = 0; c < 2; c++) {
-			fputs(",", fp); //カンマを入れる
-			_itoa(MsgBox_p[i].Location[c], textbuff, 10);
-			fputs(textbuff, fp); //データの保存
-		}
-		fputs("\n", fp); //改行を入れる
-		*/
 		//Widthのセーブ
 		fputs("Width,", fp);//項目名の保存
 		_itoa(MsgBox_p[i].Width, textbuff, 10);
@@ -917,6 +895,13 @@ int SaveMsgBoxSet(const TCHAR *file_h, struct MSG_BOX_CTRL *MsgBox_p, int MsgBox
 		_itoa(MsgBox_p[i].Height, textbuff, 10);
 		fputs(textbuff, fp);//データの保存
 		fputs("\n", fp); //改行を入れる
+		//最終ループ（MsgBox_Kosuu - 1）のときは書き込まない
+		if (i < MsgBox_Kosuu - 1) {//次の番号の書き込み（何も書かれていないと，ロード時に，これ以上メッセージボックスがないと判断する）
+			fputs("ナンバー", fp);
+			_itoa(i + 1, textbuff, 10);
+			fputs(textbuff, fp);
+			fputs("\n", fp); //改行を入れる
+		}
 	}
 	fclose(fp);//ファイルを閉じる
 	return 0;
@@ -964,7 +949,7 @@ int SaveMondai(const TCHAR* FilePath_h, const struct MONDAI_CTRL *Mondai_p) {
 		return -1;
 	}
 	char textbuff[20];
-	fputs("■Mondai", fp); //モンスターＩＤのセーブ
+	fputs("#Mondai", fp); //モンスターＩＤのセーブ
 	fputs("\n", fp); //改行を入れる
 	fputs("モンスターID", fp); //
 	fputs("\n", fp); //改行を入れる
@@ -997,24 +982,29 @@ int SaveMondai(const TCHAR* FilePath_h, const struct MONDAI_CTRL *Mondai_p) {
 	return 0;
 }
 ////////問題　名前をつけて保存（ダイアログ＋問題のセーブ）
-int SaveAsNewMondai(TCHAR *FilePath_h, TCHAR *FileTitle_h, const int mf, const int mft, const struct MONDAI_CTRL *Mondai_p) {
+int SaveAsNewMondai(TCHAR *FilePath_h, TCHAR *FileTitle_h, const int mf, const int mft, struct MONDAI_CTRL *Mondai_p) {
 	if (GetSaveFileNameACM(LocalDir, FilePath_h, FileTitle_h, mf, mft, 1)) {//［OK］ボタンをクリックすると、0 以外の値が返ってきて下記が実行される。キャンセルやエラーは0が返る
-		SaveMondai(FilePath_h, Mondai_p);//ダイアログで切り替わったディレクトリでファイルを開く
+		char LocalDirBefore[MAX_PATH];
+		strcpy(LocalDirBefore, LocalDir);//元のディレクトリを控える
+		////
 		SetLocalDirFromMsgPath(FilePath_h);
 		SetMsgDirFromMsgPath(FilePath_h);
+		////
+		if (strcmp(LocalDirBefore, LocalDir)) Mondai_p->monsterID = 0;//異なるディレクトリに保存するときはをmonsterIDを0（未設定）にする
+		SaveMondai(FilePath_h, Mondai_p);//ダイアログで切り替わったディレクトリでファイルを開く
 		return 0;
 	}
 	else return - 1;//エラー
 }
 ////////問題　上書き保存（保存または名前を付けて保存）
-int OverwriteMondai(TCHAR *FilePath_h, TCHAR *FileTitle_h, const int mf, const int mft, const struct MONDAI_CTRL *Mondai_p) {
+int OverwriteMondai(TCHAR *FilePath_h, TCHAR *FileTitle_h, const int mf, const int mft, struct MONDAI_CTRL *Mondai_p) {
 	//SetCurrentDirectory(LocalDir);//ディレクトリを変更する。絶対パスで管理しているからもう不要だと思う。
 	if (strcmp(FileTitle_h, "無題")) SaveMondai(FilePath_h, Mondai_p);////拡張子なしの「無題」のとき以外は上書き保存
 	else SaveAsNewMondai(FilePath_h, FileTitle_h, mf, mft, Mondai_p);//拡張子なしの「無題」は，名前を付けて保存
 	return 0;
 }
 ////////メッセージの保存
-int SaveMessage(const TCHAR *FilePath_h, const TCHAR *Msg_h, int Tag_Kosuu) {
+int SaveMsgCode(const TCHAR *FilePath_h, const TCHAR *MsgCode, int Tag_Kosuu) {
 	if (FilePath_h ==nullptr) return -2;
 	FILE *fp = fopen(FilePath_h, "w");//
 	if (fp == NULL) {//エラーが起きたらNULLを返す
@@ -1022,13 +1012,16 @@ int SaveMessage(const TCHAR *FilePath_h, const TCHAR *Msg_h, int Tag_Kosuu) {
 	}
 	char textbuff[4];
 	//１行目
-	fputs("■Msg,", fp); 
+	fputs("タグ個数=", fp);
 	_itoa(Tag_Kosuu, textbuff, 10);
 	fputs(textbuff, fp); //タグの個数のセーブ
 	fputs("\n", fp); //改行を入れる
+	fputs("<msg>\n", fp); // > "#MsgCode\n", fp);
 	//メッセージのセーブ
-	fputs(Msg_h, fp);
+	fputs(MsgCode, fp);
 	fputs("\n", fp); //改行を入れる
+	fputs("</msg>\n", fp);
+
 	////////
 	fclose(fp);//ファイルを閉じる
 ////////
@@ -1064,21 +1057,21 @@ int SaveMessage(const TCHAR *FilePath_h, const TCHAR *Msg_h, int Tag_Kosuu) {
 	return 0;
 }
 ////////メッセージ　名前をつけて保存（ダイアログ＋問題のセーブ）
-int SaveAsNewMessage(TCHAR *FilePath_h, TCHAR *FileTitle_h, int mf, int mft, const char *Message_h, int TagNumMax) {
+int SaveAsNewMsg(TCHAR *FilePath_h, TCHAR *FileTitle_h, int mf, int mft, const char* MsgCode, int TagNumMax) {
 	//ダイアログによるファイル名の取得
 	if (GetSaveFileNameACM(LocalDir, FilePath_h, FileTitle_h, mf, mft, 0)) {//［OK］ボタンをクリックすると、0 以外の値が返ってきて下記が実行される。キャンセルやエラーは0が返る
 		SetLocalDirFromMsgPath(FilePath_h);
 		SetMsgDirFromMsgPath(FilePath_h);
-		SaveMessage(FilePath_h, Message_h, TagNumMax);//ダイアログで切り替わったディレクトリでファイルを開く
+		SaveMsgCode(FilePath_h, MsgCode, TagNumMax);//ダイアログで切り替わったディレクトリでファイルを開く
 		return 0;
 	}
 	else return -1;//エラー
 }
 ////////メッセージ　上書き保存（保存または名前を付けて保存）
-int OverwriteMessage(TCHAR* FilePath_h, TCHAR* FileTitle_h, const int mf, const int mft, const char* Message_h, const int TagNumMax) {
+int OverwriteMsg(TCHAR* FilePath_h, TCHAR* FileTitle_h, const int mf, const int mft, const char* MsgCode, const int TagNumMax) {
 	//SetCurrentDirectory(LocalDir);//ディレクトリを変更する
-	if (strcmp(FileTitle_h, "無題")) SaveMessage(FilePath_h, Message_h, TagNumMax);////拡張子なしの「無題」のとき以外は上書き保存
-	else SaveAsNewMessage(FilePath_h, FileTitle_h, mf, mft, Message_h, TagNumMax);//拡張子なしの「無題」は，名前を付けて保存
+	if (strcmp(FileTitle_h, "無題")) SaveMsgCode(FilePath_h, MsgCode, TagNumMax);////拡張子なしの「無題」のとき以外は上書き保存
+	else SaveAsNewMsg(FilePath_h, FileTitle_h, mf, mft, MsgCode, TagNumMax);//拡張子なしの「無題」は，名前を付けて保存
 	return 0;
 }
 
@@ -1096,21 +1089,24 @@ int SaveMonster(const char* FilePath_h, struct MONSTER_CTRL *Monster, const int 
 	}
 	char textbuff[20];
 	fputs("発行済み最大ID", fp);//カラム０のタイトル（モンスターID）の書き込み
-	fputs(",", fp);//カンマの書き込み
+	fputs("=", fp);//カンマの書き込み
 	_itoa(IssuedMoonsterID_p, textbuff, 10);//モンスターIDを文字列に変換
 	fputs(textbuff, fp);//カラム０のタイトル（モンスターID）の書き込み
 	fputs("\n", fp);//改行文字の書き込み
-
+	//■#Monsterの書き込み
+	fputs("#Monster", fp);//カラム０のタイトル（モンスターID）の書き込み
+	fputs("\n", fp);//改行文字の書き込み
 	//■カラムタイトルの書き込み
 	fputs(ColumnTitle[0], fp);//カラム０のタイトル（モンスターID）の書き込み
 	fputs(",", fp);//カンマの書き込み
 	fputs("名前", fp);//モンスター名のタイトルの書き込み
 	fputs(",", fp);//カンマの書き込み
 	fputs("画像", fp);//画像パスのタイトルの書き込み
-	fputs(",", fp);//カンマの書き込み
+	//fputs(",", fp);//カンマの書き込み
 	for (int i = 1; i < Column_Kosuu; i++) {//カラム１～最終カラムのタイトルの書き込み
+		//if (i < Column_Kosuu - 1) 
+		fputs(",", fp);//カンマの書き込み
 		fputs(ColumnTitle[i], fp);//カラムタイトルｉ番の書き込み
-		if (i < Column_Kosuu - 1) fputs(",", fp);//カンマの書き込み
 	}
 	fputs("\n", fp);//改行文字の書き込み
 
@@ -1127,11 +1123,12 @@ int SaveMonster(const char* FilePath_h, struct MONSTER_CTRL *Monster, const int 
 		fputs(Monster[k].Name, fp);//モンスターｋ番のモンスター名の書き込み
 		fputs(",", fp);//カンマの書き込み
 		fputs(MonsterImgPath[k], fp);//モンスターｋ番のモンスター画像パスの書き込み
-		fputs(",", fp);//カンマの書き込み
+		//fputs(",", fp);//カンマの書き込み
 		for (int i = 1; i < Column_Kosuu; i++) {
+			//if (i < Column_Kosuu - 1) 
+			fputs(",", fp);//カンマの書き込み
 			_itoa(Monster[k].Column[i], textbuff, 10);//カラムを文字列に変換
 			fputs(textbuff, fp);//モンスターｋ番のカラムｉ番の書き込み
-			if (i < Column_Kosuu - 1) fputs(",", fp);//カンマの書き込み
 		}
 		fputs("\n", fp);//改行文字の書き込み
 	}
@@ -1576,21 +1573,22 @@ int monstertableallsyokika(int x, int y, struct MonsterTableAll *monstertableall
 
 }
 
-
+//モンスターの編集
 int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *Monster_Kosuu_p,
 	int *MaxMonsterID_p, char(*ColumnTitle_h)[MONSTER_COLUMNTITLEFIELDMAX + 1], int* Column_Kosuu_p, char(*MonsterImgTitle_h)[MAX_PATH], int BackImg
 ) {//
 	/////↓変数の宣言と初期化の始まり↓////////////↓変数の宣言と初期化の始まり↓////////////↓変数の宣言と初期化の始まり↓////////////↓変数の宣言と初期化の始まり↓//////
-	if (*FilePath_Monster_h == '\0') return -1;//ファイル名がなければすぐに抜ける
+
+	char FilePath_Full_Monster[MAX_PATH];
+	char *FileTitle_Monster;//ファイル名のアドレス（FilePath_Full_Monsterの中での位置を示す。ファイル名を変更したらフルパスも変わる）
+	if (*FilePath_Monster_h == '\0') return -1;//ファイルパスがなければすぐに抜ける
+	else GetFullPathName(FilePath_Monster_h, MAX_PATH, FilePath_Full_Monster, &FileTitle_Monster);//相対パスから絶対パスとファイル名のアドレスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
 
 	//■直後のScreenFlipから，各モードの０フレームのScreenFlipまでの待ち時間（ファイルのロードなど）に表示するもの↓
 	//（これがないと各モードから抜けてきたときに，なぜかScreenFlipされていて途中が書き出されてしまう）
 	const static char Msg[] = "お待ちください";
 	const static int MsgWidth = GetDrawStringWidth(Msg, strlen(Msg));//最大文字数の項目からリストの幅を取得
 	DrawBox(0, 0, WindowWidth, WindowHeight, WaitBackColor, true);
-	//SetCurrentDirectory(AppDir);
-	//static int ImgHandle = LoadGraph(".//025.jpg");//モードが切り替わるとき（ファイルを開いたとき）に一瞬表示される　画像は仮の設定なので変えたほうが良い
-	//DrawGraph(0, 0, ImgHandle, TRUE);
 	DrawString((WindowWidth - MsgWidth) / 2, (WindowHeight - SystemFontSize) / 2, Msg, white);
 	ScreenFlip();
 
@@ -1609,12 +1607,14 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 	static struct BTN_FORM ToolBForm = { 0 };
 	for (int i = 0; i < 4; i++) ToolBForm.Margin[i] = 1;
 	ToolBForm.CursorColor = GetColor(132, 183, 234);
+
+
 	//■ツールボタンB
 	SetCurrentDirectory(AppDir);
 	const int ToolBKosuu = 4;//ボタン配列の個数　兼　配列要素数（Maxはない）
 	static struct BTN_CTRL ToolB[ToolBKosuu] = { 0 };
 
-	strcpy(ToolB[0].String, "問題編集モードに戻る");
+	strcpy(ToolB[0].String, "上書き保存して戻る");
 	if (ToolB[0].WaitingImg == -1) {
 		ToolB[0].WaitingImg = LoadGraph(".\\System\\Fixed\\back24.png");
 		ToolB[0].CursorImg = LoadGraph(".\\System\\Fixed\\back24b.png");
@@ -1702,9 +1702,7 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 
 	struct MonsterTableAll monstertableall[tablesuuMax];
 	int monsterwide[MONSTER_MAX] = { 0 };	int monsterhight[MONSTER_MAX] = { 0 };//モンスターの画像の縦横サイズを取得するための変数
-	///////////////////////////////旧
-	char FileTitle_Monster[MAX_PATH] = { 0 };
-	static char directory_Monster_buff[MAX_PATH] = { 0 };//多分不要　　前回使用したメッセージプロパティのパス（前回と同じなら設定，背景画像，プロパティをロードしない）
+
 	char MonsterDir[MAX_PATH];
 
 	SetCurrentDirectory(AppDir);
@@ -1714,16 +1712,14 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 	int Undefined_MonsterImgHeight;
 	GetGraphSize(Undefined_MonsterImg, &Undefined_MonsterImgWide, &Undefined_MonsterImgHeight); //モンスターの画像の縦横サイズを取得してUndefined_MonsterImgWide，monsterhightに書き出す
 
-	if (FilePath_Monster_h[0] != '\0') {
-		//ディレクトリの取得（ファイル名の前の\\の位置を探す）
-		strcpy(MonsterDir, FilePath_Monster_h);
+	if (FilePath_Full_Monster[0] != '\0') {
+
+		strcpy(MonsterDir, FilePath_Full_Monster);
 		int mojisuu = strlen(MonsterDir);
 		int count;
 		for (count = 1; MonsterDir[mojisuu - count] != '\\' && count < MAX_PATH; count++);//
 		MonsterDir[mojisuu - count] = '\0';
 
-
-		GetTitleFromPath(FileTitle_Monster, FilePath_Monster_h);//相対ファイルパスからファイル名を取得（現状では必ず決まったファイル名となる）
 
 		////////モンスターテーブル数の決定
 		monstertableallsyokika(DisplayArea.Location[0] + DisplayArea.Padding[0], DisplayArea.Location[1] + DisplayArea.Padding[1], monstertableall, tablesuuMax);//tablesuu
@@ -1740,6 +1736,7 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 
 
 	}
+
 	//タイトルバーのテキストの更新
 	char Titlebar_text[MAX_PATH];
 	strcpy(Titlebar_text, ApplicationTitle);//アプリケーション名を代入
@@ -1762,12 +1759,8 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 		//●ツールボタン
 		int ToolB_PushType = 0; int ToolB_Prev = -2; int ToolB_Next = -2;
 		if (ShowBtnSet(ToolB, ToolBKosuu, &ClickedNo, ToolB_PushType, ToolB_Prev, ToolB_Next) == 1) {// BtnType（０：通常ボタン　１：インデックス）//ChangeType（０：マウス　１：十字キーで操作　２：[5][6]キーで操作　３：[5][6]キーで操作)
-			//戻る
-			if (ClickedNo == 0) {
-				if (windowflag == 0) return 0;//モンスター編集モードから抜ける
-			}
-			//モンスターの保存
-			else if (ClickedNo == 1) {
+			//戻るまたはモンスターの保存　　※戻るときにも必ずモンスターが保存される
+			if (ClickedNo == 0 || ClickedNo == 1) {
 				activereset_T(Monster_p, &activezokusei, &activemonster, InputHandle);//アクティブな項目の入力確定，状態のリセット，項目，小問，小問正解のアクティブのリセット
 				//■モンスターのＩＤ順の並べ替え
 				char charbuff[MAX_PATH] = { 0 }; //画像ファイル
@@ -1796,19 +1789,25 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 						}
 					}
 				}
+				//ディレクトリの直下にMonsterというディレクトリがなければ作成。あればエラーとなるだけで，Monster内の既存のファイルは消えない。
+				CreateDirectory(MonsterDir, NULL);
+				//SetCurrentDirectory(LocalDir);
+				//CreateDirectory("Monster", NULL);
+
+				
 				////モンスターのセーブ（ファイルパスがカラならすぐに抜けるから何も起こらない）
-				SaveMonster(FilePath_Monster_h, Monster_p, *Monster_Kosuu_p, *MaxMonsterID_p, ColumnTitle_h, *Column_Kosuu_p, MonsterImgTitle_h);	//////////
+				SaveMonster(FilePath_Full_Monster, Monster_p, *Monster_Kosuu_p, *MaxMonsterID_p, ColumnTitle_h, *Column_Kosuu_p, MonsterImgTitle_h);	//////////
+
+				//戻るのとき
+				if (ClickedNo == 0 && windowflag == 0) return 0;//モンスター編集モードから抜ける
 			}
 			//項目の設定
 			else if (ClickedNo == 2) {
-				//if (windowflag == 0) {
 				Toolbar.Active = 0;
 				for (int i = 0; i < MONSTER_COLUMNMAX; i++) strcpy(ColumnTitle_buff[i], ColumnTitle_h[i]);//OKを押すまではをColumnTitle_buff使用
 				ColumnKosuubuff = *Column_Kosuu_p;//OKを押すまではをColumnKosuubuff使用
 				windowflag = 1;//設定のポップアップの表示
 				DisplayArea.Active = 0;//または２　　　（-１：非表示　０：使用不可状態（ボタンのタイトルを薄く表示して無反応）　１：待機状態（ボタンの表示・反応）　２：ボタンを表示するが無反応）
-
-			//}
 			}
 			//モンスターの追加
 			else if (ClickedNo == 3) {
@@ -1824,20 +1823,18 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 					monsterhight[*Monster_Kosuu_p] = 0;
 					*Monster_Kosuu_p += 1;//モンスター数を１増やす
 
-					tablesuu = *Monster_Kosuu_p;//
-					if (tablesuu > tablesuuMax) tablesuu = tablesuuMax;//テーブル数
-					Rot = *Monster_Kosuu_p - tablesuu;
+					//tablesuuの決定
+					for (tablesuu = 0; tablesuu < tablesuuMax && monstertableall[tablesuu].yousono[3] < WindowHeight; tablesuu++);
+					tablesuu++;
+					if (tablesuu > *Monster_Kosuu_p) tablesuu = *Monster_Kosuu_p;//テーブル数を最大テーブル数（7）までとする（少ないときはモンスターの個数と一致。超えているときは最大テーブル数。）
 				}
-
 			}
 		}
 
 		////////////////////////////////
-		//●ディスプリエリア
+		//●ディスプレイエリア
 		ShowArea(&DisplayArea, 1);
 
-		//
-					///
 		static int StatusNumber = 0;//パッドモードのステータスバーの表示内容を変更（コントロール＋S）
 		if (ActiveMath::Key[KEY_INPUT_S] == 1 && (ActiveMath::Key[KEY_INPUT_LCONTROL] > 0 || ActiveMath::Key[KEY_INPUT_RCONTROL] > 0)) {//
 			StatusNumber += 1;//
@@ -1847,16 +1844,14 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 			DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "MonsterDir: %s", MonsterDir);//モンスターディレクトリ
 		}
 		else if (StatusNumber == 1) {
-			DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "ファイルパス: %s", FilePath_Monster_h);//ファイルパス
+			DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "ファイルパス: %s", FilePath_Full_Monster);//ファイルパス
 		}
 
 																							  //////////↓ファイル名が未定なら処理しない部分の上端（ファイルパスはなくてもファイル名が"無題"となっていれば処理する）↓
 		//●テーブル																					  ////起動時や，アプリは閉じずにファイルのみ閉じたとき。ただしモンスターの編集では現状その状況にならないが，今後のためにこのようにしておく。//////
-		if (FilePath_Monster_h[0] != '\0') {
+		if (FilePath_Full_Monster[0] != '\0') {
 			if (Rot < 0) Rot = 0;//マウスの回転量が0より小さくならないように
 			else if (Rot > *Monster_Kosuu_p - tablesuu + 1) Rot = *Monster_Kosuu_p - tablesuu + 1;//マウスの回転量が大きくなり過ぎないように
-			//■描画可能領域の指定
-			//SetDrawArea(0, kugirisen + 3, 1024, WindowHeight);//描画可能領域を限定する　小問のスクロールのため
 			for (int i = 0; Rot + i < *Monster_Kosuu_p && i < tablesuu; i++) {
 				//■テーブル全体の枠
 				DrawBox(monstertableall[i].column[0][2], monstertableall[i].column[0][1], monstertableall[i].tablewaku[2], monstertableall[i].name[3], gray, false);//枠の補完
@@ -1877,23 +1872,6 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 						}
 					}
 				}
-				//表示
-				/*関数化したり，スクロールなどで領域が重なったりしたら，//■描画可能領域の確定と//●モンスター画像　は，こういう風にする
-				//■元領域の取得
-				RECT DrawAreaBuff;
-				GetDrawArea(&DrawAreaBuff);
-				int Range[4] = { DrawAreaBuff.left, DrawAreaBuff.top, DrawAreaBuff.right, DrawAreaBuff.bottom };//合成領域を取得するための配列
-				//■書き出し可能領域を設定　　元の描画可能領域内 かつ モンスター画像の領域内
-				Overlap(Range, monstertableall[i].gazou);//
-				//■描画可能領域の確定
-				SetDrawArea(Range[0], Range[1], Range[2], Range[3]);
-				//●モンスター画像
-				int centerX = monstertableall[i].gazou[0] + 44; int centerY = monstertableall[i].gazou[1] + 44;////モンスター画像の枠の中心
-				int Rate = 3;//実寸の2/3の大きさで表示（中心から左右に1/3の位置）
-				DrawExtendGraph(centerX - monsterwide[Rot + i] / Rate, centerY - monsterhight[Rot + i] / Rate, centerX + monsterwide[Rot + i] / Rate, centerY + monsterhight[Rot + i] / Rate, MonsterImg[Rot + i], true);  //モンスター画像を描画する
-				//●描画可能領域を元に戻す
-				SetDrawArea(DrawAreaBuff.left, DrawAreaBuff.top, DrawAreaBuff.right, DrawAreaBuff.bottom);
-				*/
 
 				//■描画可能領域の確定
 				SetDrawArea(monstertableall[i].gazou[0], monstertableall[i].gazou[1], monstertableall[i].gazou[2], monstertableall[i].gazou[3]);
@@ -1902,10 +1880,9 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 				int Rate = 3;//実寸の2/3の大きさで表示（中心から左右に1/3の位置）
 				if(Monster_p[Rot + i].Img != -1) DrawExtendGraph(centerX - monsterwide[Rot + i] / Rate, centerY - monsterhight[Rot + i] / Rate, centerX + monsterwide[Rot + i] / Rate, centerY + monsterhight[Rot + i] / Rate, Monster_p[Rot + i].Img, true);  //モンスター画像を描画する
 				else DrawExtendGraph(centerX - Undefined_MonsterImgWide / Rate, centerY - Undefined_MonsterImgHeight / Rate, centerX + Undefined_MonsterImgWide / Rate, centerY + Undefined_MonsterImgHeight / Rate, Undefined_MonsterImg, true);  //モンスター画像を描画する
-
+				//■描画可能領域を元に戻す
 				SetDrawArea(DisplayArea.Nest[0], DisplayArea.Nest[1], DisplayArea.Nest[2], DisplayArea.Nest[3]);
-
-
+				//
 				DrawBox(monstertableall[i].gazou[0], monstertableall[i].gazou[1], monstertableall[i].gazou[2], monstertableall[i].gazou[3], gray, false);//モンスター画像の枠
 				//■カラム０（モンスターＩＤ）値の変更は不可
 				//表示
@@ -1979,9 +1956,6 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 						else DrawFormatString(monstertableall[i].column[k][0] + 4, monstertableall[i].column[k][1] + 4, white, "%d", Monster_p[Rot + i].Column[k]);//カラム（ｋ番目）の表示
 					}
 				}
-				//////////////////////////////
-				//int button1[4]; button1[0] = monstertableall[i].columntitle[4][0] + 3; button1[1] = monstertableall[i].column[0][1] + 12;  button1[2] = monstertableall[i].column[4][2] - 1;  button1[3] = monstertableall[i].name[3] - 12;
-
 
 				//■モンスターテーブルのツールバーエリア
 				static struct AREA_CTRL S_Toolbar = { 0 };
@@ -2037,7 +2011,7 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 
 				if (ShowBtnSet(S_Tool, S_ToolKosuu, &ClickedNo, S_Tool_PushType, S_Tool_Prev, S_Tool_Next) == 1) {//クリックした長さが１のとき
 					//■挿入ボタン
-					if (ClickedNo == 0) {//プレビュー && S_Tool[0].Nest[3] > DisplayArea2.Nest[1]
+					if (ClickedNo == 0) {
 						activereset_T(Monster_p, &activezokusei, &activemonster, InputHandle);//アクティブな項目の入力確定，状態のリセットなど（確定せずにボックスを移動してきたときのために必要）
 						activemonster = Rot + i;//テーブルの行番号を取得
 						if (*Monster_Kosuu_p < MONSTER_MAX) {//
@@ -2069,7 +2043,7 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 						}
 					}
 					//■クリアーボタン
-					else if (ClickedNo == 1) {//挿入 && S_Tool[1].Nest[3] > DisplayArea2.Nest[1]
+					else if (ClickedNo == 1) {
 						activereset_T(Monster_p, &activezokusei, &activemonster, InputHandle);//アクティブな項目の入力確定，状態のリセットなど（確定せずにボックスを移動してきたときのために必要）
 						activemonster = Rot + i;//テーブルの行番号を取得
 						Monster_p[activemonster].Name[0]='\0';//モンスター名　30字＋終端
@@ -2083,7 +2057,7 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 						}
 					}
 					//■削除ボタン
-					else if (ClickedNo == 2) {//挿入 && S_Tool[1].Nest[3] > DisplayArea2.Nest[1]
+					else if (ClickedNo == 2) {
 						activereset_T(Monster_p, &activezokusei, &activemonster, InputHandle);//アクティブな項目の入力確定，状態のリセットなど（確定せずにボックスを移動してきたときのために必要）
 						activemonster = Rot + i;//テーブルの行番号を取得
 
@@ -2095,31 +2069,24 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 							monsterwide[m] = monsterwide[m + 1];
 						}
 						*Monster_Kosuu_p -= 1;//モンスター数を１減らす
-							//tablesuuの決定
+						//tablesuuの決定
 						for (tablesuu = 0; tablesuu < tablesuuMax && monstertableall[tablesuu].yousono[3] < WindowHeight; tablesuu++);
 						tablesuu++;
 						if (tablesuu > *Monster_Kosuu_p) tablesuu = *Monster_Kosuu_p;//テーブル数を最大テーブル数（7）までとする（少ないときはモンスターの個数と一致。超えているときは最大テーブル数。）
 					}
 				}
-
-
-
-				/////////////////////////////////////
-
-
 			}
 			//■描画可能領域を元に戻す
 			SetDrawArea(0, 0, 1024, WindowHeight); //描画可能領域を元に戻す　縦768～縦980まではテスト用
-												   /////////↑ファイル名が未定なら処理しない部分の下端（ファイルパスはなくてもファイル名が"無題"となっていれば処理する）↑
 		}
 		////////↑テーブルの表示の終了
+
 		//●ステータスバー
 		ShowArea(&Statusbar, 1);
 
 		////起動時や，アプリは閉じずにファイルのみ閉じたとき。ただしモンスターの編集では現状その状況にならないが，今後のためにこのようにしておく。//////
-
 		if (windowflag == 1) {//：設定ポップアップ
-							  ////ポップアップウィンドウの表示
+			////ポップアップウィンドウの表示
 			static int wakuseniro = GetColor(185, 205, 229);
 			int popupwin[4] = { DisplayArea.Nest[0], DisplayArea.Nest[1] + 200, popupwin[0] + 1000, popupwin[1] + 200 };//ポップアップウィンドウの枠の宣言と初期化
 			DrawBox(popupwin[0], popupwin[1], popupwin[2], popupwin[3], wakuseniro, true); //ポップアップウィンドウの枠の表示
@@ -2130,18 +2097,10 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 			monstertableallsyokika(popupwin[0] + 19, popupwin[1] + 10 + SystemFontSize * 2, &monstertablepop, 1);
 
 			///////（３）モンスターテーブル
-			//処理
-			//////枠の補完と全体枠
 			DrawBox(monstertablepop.column[0][2], monstertablepop.column[0][1], monstertablepop.tablewaku[2], monstertablepop.name[3], gray, false);//枠の補完
 			DrawBox(monstertablepop.tablewaku[0], monstertablepop.tablewaku[1], monstertablepop.tablewaku[2], monstertablepop.tablewaku[3], gray, false);//全体枠
 			DrawBox(monstertablepop.tablewaku[0] + 1, monstertablepop.tablewaku[1] + 1, monstertablepop.tablewaku[2] - 1, monstertablepop.tablewaku[3] - 1, gray, false);//全体枠
-
-			//////////モンスターテーブルの表示
-			//テーブルの表示
 			DrawBox(monstertablepop.yousono[0], monstertablepop.yousono[1], monstertablepop.yousono[2], monstertablepop.yousono[3], gray, false);//モンスター要素番号の枠
-
-
-																																				 //表示
 			DrawBox(monstertablepop.gazou[0], monstertablepop.gazou[1], monstertablepop.gazou[2], monstertablepop.gazou[3], gray, false);//モンスター画像の枠
 
 			//●モンスター画像
@@ -2157,7 +2116,7 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 				if (monstertablepop.columntitle[0][0] < ActiveMath::MouseX && ActiveMath::MouseX < monstertablepop.columntitle[0][2] && monstertablepop.columntitle[0][1] < ActiveMath::MouseY && ActiveMath::MouseY < monstertablepop.columntitle[0][3]) {//IDの範囲内のとき
 					activereset_C(&activezokusei, InputHandle, ColumnTitle_buff);//アクティブな項目の入力確定，状態のリセットなど（確定せずにボックスを移動してきたときのために必要）
 					activezokusei = 0;//カラム０（ID）をアクティブにする（表示処理に使う変数）
-									  ///////新しいハンドルの作成
+					///////新しいハンドルの作成
 					SetKeyInputCursorBrinkTime(643);// キー入力ハンドルのキー入力時のカーソルの点滅する早さをセットする
 					SetKeyInputCursorBrinkFlag(true);// キー入力ハンドルのキー入力時のカーソルを点滅させるかどうかをセットする
 					InputHandle = MakeKeyInput(MONSTER_COLUMNTITLEFIELDMAX, true, false, false);//キー入力ハンドルの設定  [0]文字数  [1]ESCキーによるキャンセル機能の有無　[2]半角文字のみ　[3]数値文字のみ
@@ -2188,7 +2147,7 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 					if (monstertablepop.columntitle[k][0] < ActiveMath::MouseX && ActiveMath::MouseX < monstertablepop.columntitle[k][2] && monstertablepop.columntitle[k][1] < ActiveMath::MouseY && ActiveMath::MouseY < monstertablepop.columntitle[k][3]) {//名前IDの範囲内のとき
 						activereset_C(&activezokusei, InputHandle, ColumnTitle_buff);//アクティブな項目の入力確定，状態のリセットなど（確定せずにボックスを移動してきたときのために必要）
 						activezokusei = k;//カラム（ｋ番目）をアクティブにする（表示処理に使う変数）
-										  ///////新しいハンドルの作成
+						///////新しいハンドルの作成
 						SetKeyInputCursorBrinkTime(643);// キー入力ハンドルのキー入力時のカーソルの点滅する早さをセットする
 						SetKeyInputCursorBrinkFlag(true);// キー入力ハンドルのキー入力時のカーソルを点滅させるかどうかをセットする
 						InputHandle = MakeKeyInput(MONSTER_COLUMNTITLEFIELDMAX, true, false, false);//キー入力ハンドルの設定  [0]文字数  [1]ESCキーによるキャンセル機能の有無　[2]半角文字のみ　[3]数値文字のみ
@@ -2217,14 +2176,12 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 						if (ColumnKosuubuff < k + 1) {//クリックしたボタンがオフなら，クリックしたボタンまでをオンにする
 							ColumnKosuubuff = k + 1;//カラム（ｋ番目）をアクティブにする（表示処理に使う変数）
 							activezokusei = k;//カラム（ｋ番目）をアクティブにする（表示処理に使う変数）
-											  ///////新しいハンドルの作成
+							///////新しいハンドルの作成
 							SetKeyInputCursorBrinkTime(643);// キー入力ハンドルのキー入力時のカーソルの点滅する早さをセットする
 							SetKeyInputCursorBrinkFlag(true);// キー入力ハンドルのキー入力時のカーソルを点滅させるかどうかをセットする
 							InputHandle = MakeKeyInput(MONSTER_COLUMNTITLEFIELDMAX, true, false, false);//キー入力ハンドルの設定  [0]文字数  [1]ESCキーによるキャンセル機能の有無　[2]半角文字のみ　[3]数値文字のみ
 							SetActiveKeyInput(InputHandle);// 作成したキー入力ハンドルをアクティブにする
 							SetKeyInputString(ColumnTitle_buff[k], InputHandle);//キー入力データに指定の数値を文字に置き換えてセットする
-
-
 						}
 						else ColumnKosuubuff = k;//クリックしたボタンがオンなら，クリックしたボタン以降をオフにする
 					}
@@ -2236,7 +2193,6 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 					DrawString(monstertablepop.column[k][0] + 14, monstertablepop.column[k][1] + 5, "ON", black);
 				}
 				else {
-
 					DrawBox(monstertablepop.column[k][0] + 1, monstertablepop.column[k][1] + 1, monstertablepop.column[k][2] - 1, monstertablepop.column[k][3] - 1, graynobutton, true);//カラム（ｋ番目）タイトルの背景
 					DrawString(monstertablepop.column[k][0] + 11, monstertablepop.column[k][1] + 5, "OFF", black);
 				}
@@ -2254,38 +2210,31 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 					*Column_Kosuu_p = ColumnKosuubuff;
 					windowflag = 0;
 					Toolbar.Active = 1;
-
+					DisplayArea.Active = 1;
 				}
 			}
 			//ＯＫボタンの表示
 			DrawBox(ok[0], ok[1], ok[2], ok[3], gray, true); //ＯＫボタンの表示
 			DrawFormatString(ok[0] + 36, ok[1] + 5, black, oktext); //文字板の表示
-																	////キャンセルボタンの宣言と初期化↓////
+			////キャンセルボタンの宣言と初期化↓////
 			int cancel[4] = { ok[2] + SystemFontSize, ok[1], cancel[0] + 100, ok[3] };
 			char canceltext[] = { "キャンセル" };
 			//キャンセルの処理
 			if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 				if (cancel[0] < ActiveMath::MouseX && ActiveMath::MouseX < cancel[2] && cancel[1] < ActiveMath::MouseY && ActiveMath::MouseY < cancel[3]) {//キャンセルの範囲内のとき
 					windowflag = 0;
-					//ToolbarA.Active = 1;
 					Toolbar.Active = 1;
 					DisplayArea.Active = 1;
-
 				}
 			}
 			//キャンセルボタンの表示
 			DrawBox(cancel[0], cancel[1], cancel[2], cancel[3], gray, true); //キャンセルボタンの表示
 			DrawFormatString(cancel[0] + 15, cancel[1] + 5, black, canceltext); //文字板の表示
-
-
-
 		}
 		//カーソルオーバー
 		static const int BackColor_CursorOver = GetColor(230, 230, 204);
 		int LocationX = ActiveMath::MouseX; int LocationY = ActiveMath::MouseY + 20;
 		Math_CursorOver(LocationX, LocationY, 2, black, BackColor_CursorOver, NULL);//Math_ButtonTitleShow(const int LocationX, const int LocationY, const int Padding, const int StringColor, const int BackColor, const int Type)
-
-
 	}
 	//////////↑モンスター編集メインループの終わり↑//////////////////↑モンスター編集メインループの終わり↑//////////↑モンスター編集メインループの終わり↑///////////↑モンスター編集メインループの終わり↑/////////
 	return 0;
@@ -2294,7 +2243,7 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 int Untitled(struct MONDAI_CTRL *Mondai_p, int *syoumonsuu_p, char *monster_gazou_zero, int *monsterno_p, int *GazouHandle_p, int *monsterwide_p, int *monsterhight_p) {
 	struct MONDAI_CTRL Mondai_Clear = { 0 };
 	*Mondai_p = Mondai_Clear;//問題の初期化
-						   ////問題関連の変数　宣言と初期化////////////
+	////問題関連の変数　宣言と初期化////////////
 	*syoumonsuu_p = 1;//小問数（実際の個数）は１が最小
 	*monsterno_p = 0;//0：モンスターテーブル内での要素番号
 	*GazouHandle_p = LoadGraph(monster_gazou_zero); //画像ハンドルを取得
@@ -2306,9 +2255,9 @@ int Untitled(struct MONDAI_CTRL *Mondai_p, int *syoumonsuu_p, char *monster_gazo
 //大問，大問正解，小問，小問正解のアクティブプロパティ，アクティブな小問番号，小問正解番号のリセット　
 int ActiveClear(struct MSG_BOX_CTRL *MsgBox_p) {
 	MsgBox_p->Tag[0].PositionP = -1;//tag[0].PositionPはActiveElementの代用
-										  //MsgBox_p->ActiveCharNo = -1;
-										  //MsgBox_p->ActiveTagNo = 0;
-										  //MsgBox_p->tag[0].oyawakuidou = 0;
+	//MsgBox_p->ActiveCharNo = -1;
+	//MsgBox_p->ActiveTagNo = 0;
+	//MsgBox_p->tag[0].oyawakuidou = 0;
 	return 0;
 }
 int activereset(char** Message_p, struct MSG_BOX_CTRL *HMsgBoxH_D_p, struct MSG_BOX_CTRL *HMsgBoxH_DS, struct MSG_BOX_CTRL *HMsgBoxH_S, struct MSG_BOX_CTRL *HMsgBoxH_SS,
@@ -2320,7 +2269,6 @@ int activereset(char** Message_p, struct MSG_BOX_CTRL *HMsgBoxH_D_p, struct MSG_
 	HMsgBoxH_DS->Tag[0].PositionP = -1;//tag[0].PositionPはActiveElementの代用
 	HMsgBoxH_DS->Tag[0].PositionM = -1;//tag[0].PositionMはActiveCharNoの代用
 	HMsgBoxH_DS->Tag[0].LastNumInParsedMsg = 0;//tag[0].LastNumInParsedMsgをActiveTagNoとして代用
-
 
 	if (*activesyoumonH_p >= 0) {
 		//小問のリセット
@@ -2346,8 +2294,6 @@ int activereset(char** Message_p, struct MSG_BOX_CTRL *HMsgBoxH_D_p, struct MSG_
 	*activesyoumonseikaiH_p = -1;//大問，小問，小問正解のアクティブを一旦リセット（表示処理に使う変数）
 	*Message_p = NULL;
 	return 0;
-
-
 }
 
 
@@ -2543,10 +2489,8 @@ int ChageBackImg(const TCHAR *FilePath_h, struct AREA_CTRL *DisplayArea_p, int(*
 		SaveUnSaveBtn[SaveUnSaveBtnNo].Location[0] = -111111;
 		SaveUnSaveBtn[SaveUnSaveBtnNo].Location[1] = -222222;
 		strcpy(SaveUnSaveBtn[SaveUnSaveBtnNo].Title, "キャンセル");
-
 	}
 
-	//表示///////////////////////////////
 	//プロパティエリア
 	ShowArea(&PropertyArea, 1);//第2引数ははエリアの個数だから１
 
@@ -2573,9 +2517,9 @@ int ChageBackImg(const TCHAR *FilePath_h, struct AREA_CTRL *DisplayArea_p, int(*
 		}
 
 		else if (ClickedNo == 6) DisplayArea_p[AreaNum].Padding[0] += 1;
-		else if (ClickedNo == 7 && DisplayArea_p[AreaNum].Padding[0] > 0) DisplayArea_p[AreaNum].Padding[0] -= 1;
+		else if (ClickedNo == 7) DisplayArea_p[AreaNum].Padding[0] -= 1;// && DisplayArea_p[AreaNum].Padding[0] > 0
 		else if (ClickedNo == 8) DisplayArea_p[AreaNum].Padding[1] += 1;
-		else if (ClickedNo == 9 && DisplayArea_p[AreaNum].Padding[1] > 0) DisplayArea_p[AreaNum].Padding[1] -= 1;
+		else if (ClickedNo == 9) DisplayArea_p[AreaNum].Padding[1] -= 1;// && DisplayArea_p[AreaNum].Padding[1] > 0
 
 		if (10 <= ClickedNo && ClickedNo <= 15) {
 			if (ClickedNo == 10 && BackColorRGB_h[AreaNum][0] < 255) BackColorRGB_h[AreaNum][0] += 1;
@@ -2633,7 +2577,6 @@ int ChageBackImg(const TCHAR *FilePath_h, struct AREA_CTRL *DisplayArea_p, int(*
 				DisplayArea_p[AreaNum].BackImg = -1;
 			}
 		}
-
 	}
 	DrawFormatString(PropertyArea.Nest[0], PropertyArea.Nest[1] + L3, black, "背景画像(%s)", BackImgPath_h[AreaNum]);
 
@@ -2682,10 +2625,12 @@ int ChageBackImg(const TCHAR *FilePath_h, struct AREA_CTRL *DisplayArea_p, int(*
 
 
 //詳細編集, *MsgBox_pは初期状態。*MsgBox_pは*MsgBoxForm_pと関連づいている。
-int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgBoxCrlNumber, struct MSG_BOX_FORM *MsgBoxForm_p, struct MSG_BOX_RGB_SOUNDPATH *MsgBox_RGB_SoundPath_p, int MsgBoxForm_Kosuu, int *MsgBoxFormNumber_h,
+int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgBoxCrlNumber, struct MSG_BOX_FORM *MsgBoxForm_p, struct MSG_BOX_FORM_RGB_SOUNDPATH *MsgBoxForm_RGB_SoundPath_Set, int MsgBoxForm_Kosuu, int *MsgBoxFormNumber_h,
 	char *Message_h, int MsgSize, char *DisplayArea_Preview_FilePath_h, struct AREA_CTRL *DisplayArea_p, int(*BorderColorRGB_h)[3], int(*BackColorRGB_h)[3], char(*BackImgPath_h)[MAX_PATH], int Area_Kosuu, int AreaNumber,
 	char *FilePath_h, char *FileTitle_h, struct MONDAI_CTRL *Mondai_p, int *EditorMode_p, int *ExitModeFlag_p
 ) {
+
+
 	//■直後のScreenFlipから，各モードの０フレームのScreenFlipまでの待ち時間（ファイルのロードなど）に表示するもの↓
 	//（これがないと各モードから抜けてきたときに，なぜかScreenFlipされていて途中が書き出されてしまう）
 	const static char Msg[] = "お待ちください";
@@ -2699,7 +2644,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 
 	//■パッドメッセージをセットする
 	EditorPad.InputHandle = MakeKeyInput(100, TRUE, FALSE, FALSE);//新しいキー入力データの作成  ESCキーによるキャンセル機能の有無TRUE　半角文字のみの入力FALSE　数値文字のみの入力FALSE
-	//SetActiveKeyInput(EditorPad.InputHandle);// 作成したキー入力ハンドルをアクティブにする
+	SetActiveKeyInput(EditorPad.InputHandle);// 作成したキー入力ハンドルをアクティブにする 　詳細編集モードの場合はクリックしなくても入力だから，事前にアクティブにする。
 	EditorPad.Msg_h = Message_h;
 	EditorPad.MsgSize = MsgSize;
 
@@ -2833,12 +2778,10 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	*/
 	for (int i = 0; i < ToolKosuu; i++) {
 		Tool[i].ParentArea_p = &Toolbar[1];
-		Tool[i].BtnForm_p = &ToolForm;					   ////////
+		Tool[i].BtnForm_p = &ToolForm;
 		if (i > 0) Tool[i].Location[0] = -111111;
 		Tool[i].Active = 1;//－１：非表示　０：使用不可状態　１：待機状態　２：選択状態
-	}					   ////////
-	
-
+	}
 
 	int EditorSettingsFlag = 0;
 	//■ディスプレイエリア（各モードでロードしたものに追加で指定）
@@ -2846,20 +2789,13 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	DisplayArea_p[AreaNumber].Location[1] = 84;//28+56
 	DisplayArea_p[AreaNumber].Width = WindowWidth;
 	DisplayArea_p[AreaNumber].Height = WindowHeight - Toolbar[0].Height - EditorPadArea_h[2].Height;// - Statusbar.Height
-
 	DisplayArea_p[AreaNumber].Active = 1;
 
-
-
-////////////////////////
-		//プルダウンリスト
+	//■プルダウンリスト
 	int ListStrWidth;//タイトルの幅
-
-	const int list_BackColor = GetColor(240, 245, 245);
-	const int list_BorderColor = GetColor(204, 204, 204);
+	const int List_BackColor = GetColor(240, 245, 245);
+	const int List_BorderColor = GetColor(204, 204, 204);
 	const int List_CursorColor = GetColor(255, 255, 204);
-
-
 
 
 	//■ファイルのプルダウンリスト
@@ -2869,10 +2805,9 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	List0.ParentBtn_p = &ToolA[0];//ファイルボタン
 	List0.BorderThickness = 1;
 	for (int i = 0; i < 4; i++) List0.Padding[i] = 2;
-	List0.BackColor = list_BackColor;
-	List0.BorderColor = list_BorderColor;
+	List0.BackColor = List_BackColor;
+	List0.BorderColor = List_BorderColor;
 	List0.CursorColor = List_CursorColor;
-
 	List0.Active = -1; //－１：非表示　０：使用不可状態　１：使用可能状態
 	/////////
 	List0.RowKosuu = List0RowKosuu;
@@ -2900,8 +2835,8 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	List1.ParentBtn_p = &ToolA[1];//ファイルボタン
 	List1.BorderThickness = 1;
 	for (int i = 0; i < 4; i++) List1.Padding[i] = 2;
-	List1.BackColor = list_BackColor;
-	List1.BorderColor = list_BorderColor;
+	List1.BackColor = List_BackColor;
+	List1.BorderColor = List_BorderColor;
 	List1.CursorColor = List_CursorColor;
 	List1.Active = -1; //－１：非表示　０：使用不可状態　１：使用可能状態
 	/////////
@@ -2927,17 +2862,15 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	strcpy(List1Row[9].Title, "ジョイパッドスタイルディレクトリの変更");
 	strcpy(List1Row[10].Title, "リンクの保存");
 
-
-
 	//■設定のプルダウンリスト
-	const int List2RowKosuu = 2;
-	ListStrWidth = GetDrawStringWidth("フォームとコントロールの表示/非表示", strlen("フォームとコントロールの表示/非表示"));//最大文字数の項目からリストの幅を取得
+	const int List2RowKosuu = 3;
+	ListStrWidth = GetDrawStringWidth("書き込みモードと再生モードの切り替え", strlen("書き込みモードと再生モードの切り替え"));//最大文字数の項目からリストの幅を取得
 	static struct LIST_CTRL List2 = { 0 };
 	List2.ParentBtn_p = &ToolA[2];//ファイルボタン
 	List2.BorderThickness = 1;
 	for (int i = 0; i < 4; i++) List2.Padding[i] = 2;
-	List2.BackColor = list_BackColor;
-	List2.BorderColor = list_BorderColor;
+	List2.BackColor = List_BackColor;
+	List2.BorderColor = List_BorderColor;
 	List2.CursorColor = List_CursorColor;
 	List2.Active = -1; //－１：非表示　０：使用不可状態　１：使用可能状態
 	/////////
@@ -2951,16 +2884,9 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	/////////
 	static struct LISTROW_CTRL List2Row[List2RowKosuu] = { 0 };
 	for (int i = 0; i < List2RowKosuu; i++) List2Row[i].List_p = &List2;//★★★
-	strcpy(List2Row[0].Title, "フォームとコントロールの表示/非表示");
-	strcpy(List2Row[1].Title, "基準線と背景の変更");
-
-
-
-	//////////////////////////////
-
-
-
-
+	strcpy(List2Row[0].Title, "プロパティの表示/非表示の切り替え");
+	strcpy(List2Row[1].Title, "書き込みモードと再生モードの切り替え");
+	strcpy(List2Row[2].Title, "基準線と背景の変更");
 
 	//■プロパティエリア
 	static struct AREA_CTRL PropertyArea = { 0 };
@@ -2975,8 +2901,6 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	PropertyBtnForm.WaitingColor = GetColor(204, 204, 204);
 	PropertyBtnForm.CursorColor = GetColor(255, 255, 204);
 	PropertyBtnForm.PushedColor = GetColor(255, 153, 0);
-
-
 	//■プロパティ確定ボタン
 	int L1 = SystemFontSize * 0;
 	int L2 = SystemFontSize * 1.5;
@@ -3041,7 +2965,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
-
+	////
 	//Padding[0]
 	BtnNo++;//Up10
 	PropertyBtn[BtnNo].Location[0] = 120 + Width1;
@@ -3070,7 +2994,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
-
+	////
 	//BorderColorR
 	BtnNo++;//Up26
 	PropertyBtn[BtnNo].Location[0] = 120 + Width1;
@@ -3092,8 +3016,6 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
-
-	int Width2 = GetDrawStringWidth("透明度(50%) ", strlen("透明度(50%) "));
 	//BorderThickness
 	BtnNo++;//Up
 	PropertyBtn[BtnNo].Location[0] = 120 + Width1;
@@ -3102,7 +3024,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 
-	//BorderType★タイプ★
+	//BorderType
 	BtnNo++;//Up
 	PropertyBtn[BtnNo].Location[0] = 120 * 2 + Width1;
 	PropertyBtn[BtnNo].Location[1] = L5;
@@ -3110,6 +3032,8 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 
+	////
+	int Width2 = GetDrawStringWidth("透明度(50%) ", strlen("透明度(50%) "));
 	//BackColorR
 	BtnNo++;//Up18
 	PropertyBtn[BtnNo].Location[0] = 120 + Width1;
@@ -3138,10 +3062,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
-
-
-
-
+	////
 	//ActiveTagColorR
 	BtnNo++;//Up34
 	PropertyBtn[BtnNo].Location[0] = 120 + Width1;
@@ -3170,8 +3091,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
-
-
+	////
 	//ActiveMathColorR
 	BtnNo++;//Up42
 	PropertyBtn[BtnNo].Location[0] = 120 + Width1;
@@ -3200,6 +3120,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
+	////
 	//FontColorR
 	BtnNo++;//Up
 	PropertyBtn[BtnNo].Location[0] = 120 + Width1;
@@ -3221,6 +3142,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
+	////
 	int Width3 = GetDrawStringWidth("点滅(120回/分) ", strlen("点滅(120回/分) "));
 	//Leading
 	BtnNo++;//Up56
@@ -3237,7 +3159,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
-
+	////
 	//BlinkSpeed
 	BtnNo++;//Up
 	PropertyBtn[BtnNo].Location[0] = 120 + Width3;
@@ -3252,7 +3174,6 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
-
 	//ScrollSpeed
 	BtnNo++;//Up
 	PropertyBtn[BtnNo].Location[0] = 420 + Width4;
@@ -3260,7 +3181,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
-
+	////
 	//Value5 Optionの下から5桁目
 	BtnNo++;//Up
 	PropertyBtn[BtnNo].Location[0] = 420 + Width4;
@@ -3269,7 +3190,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//Value4 Optionの下から4桁目
-	int Width8 = GetDrawStringWidth("折り返し(1文字・数式) ", strlen("折り返し(1文字・数式) "));
+	int Width8 = GetDrawStringWidth("折り返し(3なしで幅の伸縮) ", strlen("折り返し(3なしで幅の伸縮) "));
 	BtnNo++;//Up
 	PropertyBtn[BtnNo].Location[0] = 120 + Width8;
 	PropertyBtn[BtnNo].Location[1] = L13;
@@ -3300,7 +3221,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
-	///////////////////////////
+	////
 	// MsgBoxFormNumber
 	BtnNo++;//Up76
 	PropertyBtn[BtnNo].Location[0] = 120 + Width3;
@@ -3308,22 +3229,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	BtnNo++;//Down77
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
-	/*
-	//  Location[0]
-	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 + Width1;
-	PropertyBtn[BtnNo].Location[1] = L20;
-	BtnNo++;//Down
-	PropertyBtn[BtnNo].Location[0] = -222222;
-	PropertyBtn[BtnNo].Location[1] = -111111;
-	//  Location[1]
-	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 240 + Width1;
-	PropertyBtn[BtnNo].Location[1] = L20;
-	BtnNo++;//Down
-	PropertyBtn[BtnNo].Location[0] = -222222;
-	PropertyBtn[BtnNo].Location[1] = -111111;
-*/	
+	////
 	//  Width
 	BtnNo++;//Up
 	PropertyBtn[BtnNo].Location[0] = 120 * 2 + Width1;
@@ -3339,11 +3245,11 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//0番があるから全82個のボタン
-	   	 
+
 	//モードのテキストの更新
 	char AppMode_text[MAX_PATH];
 	strcpy(AppMode_text, ApplicationTitle);//アプリケーション名を代入
-	if (*EditorMode_p == 0) strcat(AppMode_text, " - メッセージ編集モード - ");//
+	if (*EditorMode_p == 0) strcat(AppMode_text, " - メッセージ編集モード - ");
 	else if (*EditorMode_p == 1) strcat(AppMode_text, " - 問題編集モード - ");
 	else strcat(AppMode_text, " - パッドビューア - ");//if (*EditorMode_p == 2) 
 	//タイトルバーのテキストの更新
@@ -3404,19 +3310,19 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 		DeleteDirectory(TempCopyDir);
 	//	CreateDirectory(TempCopyDir, NULL);//Dirのディレクトリがなければ作成。あればエラーとなるだけで，Dir内の既存のファイルは消えない。
 	}
-
-
+	//■ローカルディレクトリの指定（ホーム画面から入ってきたばかりのとき）※ファイルを開くのときは、そのファイルから取得済み。新規作成のときは、前のローカルディレクトリがある。
+	char aaa[MAX_PATH];
+	strcpy(aaa, LocalDir);//チェック用
 	if (LocalDir[0] == '\0') {
 		strcpy(LocalDir, AppDir);
-		strcat(LocalDir, "\\OriginalFile\\MessageData");
+		strcat(LocalDir, "\\OriginalFile\\MsgData");//ここで最初にローカルディレクトリーが決まる20200903
 
 	}
 
 	//メッセージプレビューのクリアループ
 	while (!ProcessMessage()) {
 		struct MSG_BOX_FORM *Form_p = &MsgBoxForm_p[MsgFormNo];
-		struct MSG_BOX_RGB_SOUNDPATH *Form_RGB_SoundPath_p = &MsgBox_RGB_SoundPath_p[MsgFormNo];
-
+		struct MSG_BOX_FORM_RGB_SOUNDPATH *Form_RGB_SoundPath_p = &MsgBoxForm_RGB_SoundPath_Set[MsgFormNo];
 		
 		//実行用のMsgBoxを初期値に戻す（メッセージは元に戻さない。リパースもしない）
 		struct MSG_BOX_CTRL MsgBox_Play = MsgBox_p[MsgBoxCrlNumber];//EditorPad.MsgBoxは実行用（実行中の値）　MsgBox_pはマスター，本来の値，初期状態（フォームとの関連あり）
@@ -3431,8 +3337,9 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 			int Value1buff = 4;//４：停止 MsgBoxForm[i].Option % 10;
 			int Value2buff = 4;//４：ボックス左上 MsgBoxForm[i].Option % 100 / 10;
 			int Value3buff = 4;//下１桁目が4だからここは何でもよい MsgBoxForm[i].Option % 1000 / 100;
-			int Value4buff = Value4;// MsgBoxForm_p[MsgFormNo].Option % 10000 / 1000;//下から4桁目は書き換えない。０：折り返しなし　１：折り返しあり 　２：折り返しあり（わかち）
-			int Value5buff = 3;
+			int Value4buff = Value4;// MsgBoxForm_p[MsgFormNo].Option % 10000 / 1000;//下から4桁目は書き換えない。
+									//下４桁目　０：折り返しあり(文字・数式)　１：折り返しあり（わかち）２：折り返しなしで伸縮（MaxLineは無効になる）　３以上：折り返しなし（MaxLineは無効になる）//
+			int Value5buff = 3;//３：表示中のメッセージ下端（Heightの値も変化）
 			MsgBoxForm_p[MsgFormNo].Option = Value5buff * 10000 + Value4buff * 1000 + Value3buff * 100 + Value2buff * 10 + Value1buff * 1;
 			MsgBoxForm_p[MsgFormNo].OutputSpeed = -2;//
 
@@ -3465,17 +3372,19 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 			PropertyArea.Location[1] = WindowHeight - PropertyArea.Height - Statusbar.Height - 10;
 
 		}
+		int TagKosuu = GetTagKosuu(Message_h);
 
 		int nukeru = 0;//0:forループ継続　1：forループから抜ける
 		///////メッセージプレビュー画面のメインループ
 		for (int frameH = 0; !nukeru && !ScreenFlip() && !ProcessMessage() && !ClearDrawScreen() && !MathgpUpdateMouse() && !MathgpUpdateKey() && !MathgpUpdateJoypad(); frameH++) {//マウス・キーボード・ジョイパッド
+			//●キーボードの入力情報をジョイパッドに変換（F1でオン・オフ切り替え）
+			ConvertKeyIntoJoypad();
 			//●早すぎたら待機
 			SleepToFitFPS(FPS);
 			////　ツールバーA　////
 			static int ClickedNoA = -1;//押されたボタン番号
 			//ツールバー
 			ShowArea(Toolbar, 2);
-
 
 			//●ツール（プルダウンリスト）
 			int ToolA_PushType = 0; int ToolA_Prev = -2; int ToolA_Next = -2;
@@ -3491,7 +3400,6 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 					else if (ClickedNoA == 1 && List1.Active != 1) { List1.Active = 1; ActiveMath::Mouse[MOUSE_INPUT_LEFT] = 2; }
 					else if (ClickedNoA == 2 && List2.Active != 1) { List2.Active = 1; ActiveMath::Mouse[MOUSE_INPUT_LEFT] = 2; }
 				}
-
 			}
 
 			//ファイル，またはカスタマイズ，または設定を押したあと
@@ -3505,7 +3413,6 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 					}
 				}
 			}
-
 			//////ツールの処理
 			ShowArea(Tool[0].ParentArea_p, 1);
 
@@ -3543,28 +3450,21 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				}
 				//●新規作成ボタン
 				else if (ClickedNo == 2) {
-				//	char GetDir[MAX_PATH];
-					/*
-					*/
-					//ダイアログからディレクトリの選択
-					//if (GetOpenDirectoryName(LocalDir, LocalDir, MAX_PATH)) {
-						strcpy(FilePath_h, LocalDir);//) strcpy(FileTitle_Mondai, "無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
-						strcat(FilePath_h, "\\無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
-						*ExitModeFlag_p = 1;//各モードから抜けるサイン
-						return 0;//プレビューモードから抜ける
-					//}
-
+					strcpy(FilePath_h, LocalDir);//) strcpy(FileTitle_Mondai, "無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
+					strcat(FilePath_h, "\\無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
+					*ExitModeFlag_p = 1;//各モードから抜けるサイン
+					return 0;//プレビューモードから抜ける
 				}
 				//●ファイルを開くボタン
 				else if (ClickedNo == 3) {
 					//ダイアログからファイル名を取得
-					if (LocalDir[0] == '\0') {
-						strcpy(LocalDir, AppDir);
-						strcat(LocalDir, "\\OriginalFile\\MessageData");
-					}
+				//	if (LocalDir[0] == '\0') {
+				//		strcpy(LocalDir, AppDir);
+				//		strcat(LocalDir, "\\OriginalFile\\MsgData");
+				//	}
 					char filepath[MAX_PATH]; char filetitle[MAX_PATH];
 					if (GetOpenFileNameACM(LocalDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-					//※終了時のカレントディレクトリはメッセージファイルがあるディレクトリ。「～\\OriginalFile\\MessageData」とは限らないので注意。
+					//※終了時のカレントディレクトリはメッセージファイルがあるディレクトリ。「～\\OriginalFile\\MsgData」とは限らないので注意。
 					//※キャンセルしたときはパスとタイトルは変わらない。このとき相対パスのままなので下記の相対パス取得の処理はしないこと。
 						//開いたファイルのモードを調べる
 						ClearDrawScreen();
@@ -3584,12 +3484,13 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 					}
 				}
 
-				//●保存ボタン
+				//●上書き保存
 				else if (ClickedNo == 4) {
-					
+					char LocalDirBefore[MAX_PATH];
+					strcpy(LocalDirBefore, LocalDir);//元のディレクトリを控える
 					//メッセージの上書き保存（または名前を付けて保存）
 					if (Mondai_p != NULL) OverwriteMondai(FilePath_h, FileTitle_h, MAX_PATH, MAX_PATH, Mondai_p);////問題編集モード
-					else OverwriteMessage(FilePath_h, FileTitle_h, MAX_PATH, MAX_PATH, Message_h, EditorPad.MsgBox_p->Tag[0].Post);//メッセージ編集モード・パッドビューア//tag[0].PostをTagKosuu（tagnomax）として代用
+					else OverwriteMsg(FilePath_h, FileTitle_h, MAX_PATH, MAX_PATH, Message_h, EditorPad.MsgBox_p->Tag[0].Post);//メッセージ編集モード・パッドビューア//tag[0].PostをTagKosuu（tagnomax）として代用
 					//編集中のとき本来の値に戻す
 					if (flag_mode == -1) {
 						MsgBoxForm_p[MsgFormNo].Option = Value5 * 10000 + Value4 * 1000 + Value3 * 100 + Value2 * 10 + Value1 * 1;
@@ -3599,15 +3500,24 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 						MsgBoxForm_p[MsgFormNo].ConfirmSound = ConfirmSound_Copy;
 					}
 					else flag_mode = -1;//再生モードのとき，書き込みモードに戻してから抜ける（保存直後，再生が始まるのを防ぐため）
-					//メッセージボックスコントロール，メッセージボックスフォーム，スタイルの保存
-					SetCurrentDirectory(LocalDir);
-					SaveMsgBoxSet(".\\MsgBoxSet.txt", MsgBox_p, MsgBox_Kosuu, MsgBoxFormNumber_h);
-					SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", MsgBoxForm_p, MsgBox_RGB_SoundPath_p, MsgBoxForm_Kosuu);
-					SaveMsgCodeLink(".\\MsgCodeLink.txt");//スタイルの保存
-					SaveJoypadLink(".\\JoypadLink.txt");//スタイルの保存
-
-					//終了時のカレントディレクトリはLocalDir
-
+					
+					//メッセージボックスコントロール，メッセージボックスフォーム，リンクを保存するかどうか調べる
+					int SaveFlag = 0;
+					if (!strcmp(LocalDirBefore, LocalDir)) SaveFlag = 1;//同じディレクトリに保存したとき、MsgBoxSetなどを保存するためのフラグSaveFlagを1にする
+					else {//違うディレクトリに保存したときは，元からあるMsgBoxSetなどを優先する。つまり保存しない（SaveFlagは0のまま）
+						FILE *fp = fopen(".\\MsgBoxSet.txt", "r");//MsgBoxSetが存在するか，ファイルを開いて確認する
+						if (fp == NULL) SaveFlag = 1;//新規作成でMsgBoxSetがないディレクトリに保存したとき、MsgBoxSetなどを保存するためのフラグSaveFlagを1にする
+						else fclose(fp);//ファイルを閉じる
+					}
+					//メッセージボックスコントロール，メッセージボックスフォーム，リンクの保存
+					if (SaveFlag == 1) {//MsgBoxSetなどのファイルも保存する（同じディレクトリ、または新規作成でボックスがないディレクトリにメッセージを保存したとき）
+						//※異なるディレクトリで、かつ既にMsgBoxSetが存在するときは保存しない
+						SetCurrentDirectory(LocalDir);
+						SaveMsgBoxSet(".\\MsgBoxSet.txt", MsgBox_p, MsgBox_Kosuu, MsgBoxFormNumber_h);
+						SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", MsgBoxForm_p, MsgBoxForm_RGB_SoundPath_Set, MsgBoxForm_Kosuu);
+						SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
+						SaveJoypadLink(".\\JoypadLink.txt");//ジョイパッドリンクの保存　全部未設定（つまりTitle_JoypadStyle_rwが"なし"）なら保存しない
+					}
 
 					//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
 					strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
@@ -3649,8 +3559,6 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 						Tool[6].CursorImg = CursorImg_Play;
 						Tool[6].PushedImg = Tool[6].CursorImg;
 					}
-
-
 				}
 				//●スクロールメッセージ（ジョイパッド[1]）の代用ボタン
 				else if (ClickedNo == 7) {
@@ -3660,7 +3568,6 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 			//●ディスプレイエリア
 			ShowArea(&DisplayArea_p[AreaNumber], 1);//
 			static int FontColor = GetColor(255, 0, 0);
-			//static int TimeFrame = 0;//経過フレーム（次の大問に移っても持続）
 			//●基準線
 			if (DisplayArea_p[AreaNumber].BorderColor != NULL) {
 				DrawLine(DisplayArea_p[AreaNumber].Nest[0], DisplayArea_p[AreaNumber].Nest[1] - DisplayArea_p[AreaNumber].Padding[1],
@@ -3668,6 +3575,9 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				DrawLine(DisplayArea_p[AreaNumber].Nest[0] - DisplayArea_p[AreaNumber].Padding[0], DisplayArea_p[AreaNumber].Nest[1],
 					DisplayArea_p[AreaNumber].Nest[2] + DisplayArea_p[AreaNumber].Padding[2], DisplayArea_p[AreaNumber].Nest[1], DisplayArea_p[AreaNumber].BorderColor, false);//横軸
 			}
+			//if (EditorPad.MsgBox_p->Tag[0].TagSign == 1) TagKosuu = GetTagKosuu(Message_h);
+			if (MsgBox_Play.Tag[0].TagSign == 1) TagKosuu = GetTagKosuu(Message_h);
+
 			////////////入力パッド//////////詳細編集（プレビュー）
 			if (ShowDisplayPadM(&EditorPad) == 1) {
 				if (EditorPad.ActiveBtn_h != NULL && EditorPad.ActiveBtn_h->BtnType == 4) {
@@ -3735,6 +3645,8 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 					//ファイル選択ダイアログ
 					char FilePath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
 					char FileTitle[MAX_PATH];//ファイル名を取得する変数
+					//ダイアログで開くディレクトリの作成（既にあるときはエラーとなるだけで，ディレクトリ内の既存のファイルは消えない。）
+					CreateDirectory(DialogFirstDir, NULL);
 					if (*DialogFirstDir != '\0' && GetImgFileName(DialogFirstDir, FilePath, FileTitle, MAX_PATH, MAX_PATH, FileType)) {//ダイアログによる問題ファイル名の取得（カレントディレクトリが選択画像のディレクトリに変わるので注意）
 						char TitleText[MAX_PATH] = { 0 };//{}内に挿入するファイル名を取得する変数
 						char FilePathForSave[MAX_PATH] = { 0 };//保存時に使うディレクトリ（MsgDir，LocalDir，AppDir）
@@ -3801,7 +3713,6 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 					}
 				}
 			}
-
 			if (Message_h[0] != '\0') {
 				//■書き込みモード（-１：書き込みモード　１：再生モード）
 				if (flag_mode == -1) {
@@ -3840,8 +3751,8 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 						DrawFormatString(PropertyArea.Nest[0] + 120 * 2, PropertyArea.Nest[1] + L4, black, "G(%d)", Form_RGB_SoundPath_p->BorderColorRGB[1]);
 						DrawFormatString(PropertyArea.Nest[0] + 120 * 3, PropertyArea.Nest[1] + L4, black, "B(%d)", Form_RGB_SoundPath_p->BorderColorRGB[2]);
 
-						DrawFormatString(PropertyArea.Nest[0] + 120 * 1, PropertyArea.Nest[1] + L5, black, "太さ(%d)", Form_p->BorderThickness);//★タイプ★
-						DrawFormatString(PropertyArea.Nest[0] + 120 * 2, PropertyArea.Nest[1] + L5, black, "タイプ(%d)", Form_p->BorderType);
+						DrawFormatString(PropertyArea.Nest[0] + 120 * 1, PropertyArea.Nest[1] + L5, black, "太さ(%d)", Form_p->BorderThickness);
+						DrawFormatString(PropertyArea.Nest[0] + 120 * 2, PropertyArea.Nest[1] + L5, black, "種類(%d)", Form_p->BorderType);
 
 						DrawString(PropertyArea.Nest[0], PropertyArea.Nest[1] + L6, "背景", blue);
 
@@ -3857,7 +3768,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 						else DrawFormatString(PropertyArea.Nest[0] + 120 * 1, PropertyArea.Nest[1] + L7, black, "R(%d)", Form_RGB_SoundPath_p->ActiveTagColorRGB[0]);
 						DrawFormatString(PropertyArea.Nest[0] + 120 * 2, PropertyArea.Nest[1] + L7, black, "G(%d)", Form_RGB_SoundPath_p->ActiveTagColorRGB[1]);
 						DrawFormatString(PropertyArea.Nest[0] + 120 * 3, PropertyArea.Nest[1] + L7, black, "B(%d)", Form_RGB_SoundPath_p->ActiveTagColorRGB[2]);
-						DrawFormatString(PropertyArea.Nest[0] + 120 * 4, PropertyArea.Nest[1] + L7, black, "透明度(%d%%)", Form_p->ActiveTagColorTransparency);
+						DrawFormatString(PropertyArea.Nest[0] + 120 * 4, PropertyArea.Nest[1] + L7, black, "透明度(%d%%)", Form_p->ActiveTagTransparency);
 
 						DrawString(PropertyArea.Nest[0] + 180 * 0, PropertyArea.Nest[1] + L8, "アクティブな数式", blue);
 
@@ -3865,7 +3776,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 						else DrawFormatString(PropertyArea.Nest[0] + 120 * 1, PropertyArea.Nest[1] + L8, black, "R(%d)", Form_RGB_SoundPath_p->ActiveMathColorRGB[0]);
 						DrawFormatString(PropertyArea.Nest[0] + 120 * 2, PropertyArea.Nest[1] + L8, black, "G(%d)", Form_RGB_SoundPath_p->ActiveMathColorRGB[1]);
 						DrawFormatString(PropertyArea.Nest[0] + 120 * 3, PropertyArea.Nest[1] + L8, black, "B(%d)", Form_RGB_SoundPath_p->ActiveMathColorRGB[2]);
-						DrawFormatString(PropertyArea.Nest[0] + 120 * 4, PropertyArea.Nest[1] + L8, black, "透明度(%d%%)", Form_p->ActiveMathColorTransparency);
+						DrawFormatString(PropertyArea.Nest[0] + 120 * 4, PropertyArea.Nest[1] + L8, black, "透明度(%d%%)", Form_p->ActiveMathTransparency);
 
 						DrawString(PropertyArea.Nest[0] + 180 * 0, PropertyArea.Nest[1] + L9, "文字", blue);
 
@@ -3896,9 +3807,11 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 						else if (Value5 == 2) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L12, "ボックス(2表示中のメッセージ下端　※Heightは表示後の下端)", black);
 						else if (Value5 == 3) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L12, "ボックス(3表示中のメッセージ下端　※Heightは表示中の下端)", black);
 						else if (Value5 == 4) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L12, "ボックス(4指定した高さ・入らないなら表示後のメッセージ下端)", black);
-						if (Value4 == 0) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "折り返し(0なし)", black);
-						else if (Value4 == 1) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "折り返し(1文字・数式)", black);
-						else if (Value4 == 2) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "折り返し(2わかち)", black);
+						if (Value4 == 0) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "折り返し(0文字・数式)", black);
+						else if (Value4 == 1) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "折り返し(1わかち)", black);
+						else if (Value4 == 2) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "折り返し(2なし)", black);
+						else if (Value4 == 3) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "折り返し(3なしで幅の伸縮)", black);
+
 						if (Value3 == 0) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L13, "0停止(左寄せ)", black);
 						else if (Value3 == 1) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L13, "停止(1上寄せ)", black);
 						else if (Value3 == 2) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L13, "停止(2右寄せ)", black);
@@ -4084,7 +3997,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 							else if (ClickedNo == 22) Form_p->BorderThickness += 1;
 							else if (ClickedNo == 23 && Form_p->BorderThickness > 0) Form_p->BorderThickness -= 1;
 
-							else if (ClickedNo == 24 && Form_p->BorderType < 1) Form_p->BorderType += 1;//★タイプ★
+							else if (ClickedNo == 24 && Form_p->BorderType < 1) Form_p->BorderType += 1;
 							else if (ClickedNo == 25 && Form_p->BorderType > 0) Form_p->BorderType -= 1;
 
 							else if (26 <= ClickedNo && ClickedNo <= 31) {
@@ -4116,8 +4029,8 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 								if (Form_RGB_SoundPath_p->ActiveTagColorRGB[0] == -1) Form_p->ActiveTagColor = NULL;//Rが－１なら無色透明
 								else Form_p->ActiveTagColor = GetColor(Form_RGB_SoundPath_p->ActiveTagColorRGB[0], Form_RGB_SoundPath_p->ActiveTagColorRGB[1], Form_RGB_SoundPath_p->ActiveTagColorRGB[2]);
 							}
-							else if (ClickedNo == 40 && Form_p->ActiveTagColorTransparency < 100) Form_p->ActiveTagColorTransparency += 1;
-							else if (ClickedNo == 41 && Form_p->ActiveTagColorTransparency > 0) Form_p->ActiveTagColorTransparency -= 1;
+							else if (ClickedNo == 40 && Form_p->ActiveTagTransparency < 100) Form_p->ActiveTagTransparency += 1;
+							else if (ClickedNo == 41 && Form_p->ActiveTagTransparency > 0) Form_p->ActiveTagTransparency -= 1;
 
 							else if (42 <= ClickedNo && ClickedNo <= 47) {
 								if (ClickedNo == 42 && Form_RGB_SoundPath_p->ActiveMathColorRGB[0] < 255) Form_RGB_SoundPath_p->ActiveMathColorRGB[0] += 1;
@@ -4132,8 +4045,8 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 								if (Form_RGB_SoundPath_p->ActiveMathColorRGB[0] == -1) Form_p->ActiveMathColor = NULL;//Rが－１なら無色透明
 								else Form_p->ActiveMathColor = GetColor(Form_RGB_SoundPath_p->ActiveMathColorRGB[0], Form_RGB_SoundPath_p->ActiveMathColorRGB[1], Form_RGB_SoundPath_p->ActiveMathColorRGB[2]);
 							}
-							else if (ClickedNo == 48 && Form_p->ActiveMathColorTransparency < 100) Form_p->ActiveMathColorTransparency += 1;
-							else if (ClickedNo == 49 && Form_p->ActiveMathColorTransparency > 0) Form_p->ActiveMathColorTransparency -= 1;
+							else if (ClickedNo == 48 && Form_p->ActiveMathTransparency < 100) Form_p->ActiveMathTransparency += 1;
+							else if (ClickedNo == 49 && Form_p->ActiveMathTransparency > 0) Form_p->ActiveMathTransparency -= 1;
 
 							else if (50 <= ClickedNo && ClickedNo <= 55) {
 								if (ClickedNo == 50 && Form_p->FontColorRGB[0] < 255) Form_p->FontColorRGB[0] += 1;
@@ -4171,7 +4084,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 									if (Value5 == 0) EditorPad.MsgBox_p->Height = MsgBox_p[MsgBoxCrlNumber].Height;//実行中のコントロールに高さの初期値を書き写す
 									//（高さの固定・伸縮（下から5桁目）の切り替え時に，自動伸縮した高さを元に戻すため）
 								}
-								else if (ClickedNo == 68 && Value4 < 2) Value4++;
+								else if (ClickedNo == 68 && Value4 < 3) Value4++;
 								else if (ClickedNo == 69 && Value4 > 0) Value4--;
 								else if (ClickedNo == 70 && Value3 < 6) Value3++;
 								else if (ClickedNo == 71 && Value3 > 0) Value3--;
@@ -4278,12 +4191,13 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				}
 			}//ファイルを開いているときの処理の終了
 
+			
 			//●ステータスバー
 			ShowArea(&Statusbar, 1);
 			static int StatusNumber = 0;//パッドモードのステータスバーの表示内容を変更（コントロール＋S）
 			if (ActiveMath::Key[KEY_INPUT_S] == 1 && (ActiveMath::Key[KEY_INPUT_LCONTROL] > 0 || ActiveMath::Key[KEY_INPUT_RCONTROL] > 0)) {//
 				StatusNumber += 1;//
-				if (StatusNumber == 9) StatusNumber = 0;
+				if (StatusNumber == 10) StatusNumber = 0;
 			}
 			if (StatusNumber == 0) {
 				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "メッセージフォーム番号: %d  /  コンディション: %d", MsgFormNo, EditorPad.MsgBox_p->Condition);
@@ -4312,6 +4226,10 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 			else if (StatusNumber == 8) {
 				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "MsgDir: %s", MsgDir);//メッセージディレクトリ
 			}
+			else if (StatusNumber == 9) {
+				DrawFormatString(Statusbar.Nest[0], Statusbar.Nest[1], black, "TagKosuu: %d", TagKosuu);//タグの個数
+			}
+
 
 			////////（４）プルダウンメニューの処理////////////////////////////
 			if (List0.Active == 1) {//ファイル関連のプルダウンリストの処理
@@ -4335,31 +4253,16 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				ShowList(&List0);
 
 
-				////新規作成//アクティブなディレクトリ（取得），ファイルパス（NULL），ファイルタイトル（無題），エディターモード（現状ママ）でメッセージ編集モードから抜ける
+				//●新規作成//アクティブなディレクトリ（取得），ファイルパス（NULL），ファイルタイトル（無題），エディターモード（現状ママ）でメッセージ編集モードから抜ける
 				int r = 0;
 				if (List0.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List0.Nest[0] + List0.RowWidth && List0.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List0.Nest[1] + List0.RowHeight
 					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {//クリックしたときの処理
-						char GetDir[MAX_PATH];
-						//ダイアログからディレクトリの選択
-						if (LocalDir[0] == '\0') {
-							strcpy(LocalDir, AppDir);
-							strcat(LocalDir, "\\OriginalFile\\MessageData");
-						}
-						if (GetOpenDirectoryName(LocalDir, GetDir, MAX_PATH)) {
-							strcpy(FilePath_h, GetDir);//) strcpy(FileTitle_Mondai, "無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
-							strcat(FilePath_h, "\\無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
-							//（拡張子なしなので注意。ディレクトリ内に「無題.txt」があればそれを開いてしまうため）
-							strcpy(LocalDir, GetDir);
-
-							//ディレクトリの直下にMonsterというディレクトリがなければ作成。あればエラーとなるだけで，Monster内の既存のファイルは消えない。
-						//	SetCurrentDirectory(GetDir);
-						//	CreateDirectory("Img", NULL);
-						//	CreateDirectory("Sound", NULL);
-							*ExitModeFlag_p = 1;//各モードから抜けるサイン
-							return 0;//プレビューモードから抜ける
-						}
+						strcpy(FilePath_h, LocalDir);//) strcpy(FileTitle_Mondai, "無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
+						strcat(FilePath_h, "\\無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
+						*ExitModeFlag_p = 1;//各モードから抜けるサイン
+						return 0;//プレビューモードから抜ける
 					}
 				}
 				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
@@ -4367,20 +4270,15 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 
 				List0.Nest[1] += List0.RowHeight;//次の行の開始位置までずらす
-				////ファイルを開く（問題ファイル）//アクティブなディレクトリ（取得），ファイルパス（取得），ファイルタイトル（取得），エディターモード番号（取得）でメッセージ編集モードから抜ける
+				//●ファイルを開く（問題ファイル）//アクティブなディレクトリ（取得），ファイルパス（取得），ファイルタイトル（取得），エディターモード番号（取得）でメッセージ編集モードから抜ける
 				r++;
 				if (List0.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List0.Nest[0] + List0.RowWidth && List0.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List0.Nest[1] + List0.RowHeight
 					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-						//ダイアログからファイル名を取得
-						if (LocalDir[0] == '\0') {
-							strcpy(LocalDir, AppDir);
-							strcat(LocalDir, "\\OriginalFile\\MessageData");
-						}
 						char filepath[MAX_PATH]; char filetitle[MAX_PATH];
 						if (GetOpenFileNameACM(LocalDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-						//※終了時のカレントディレクトリはメッセージファイルがあるディレクトリ。「～\\OriginalFile\\MessageData」とは限らないので注意。
+						//※終了時のカレントディレクトリはメッセージファイルがあるディレクトリ。「～\\OriginalFile\\MsgData」とは限らないので注意。
 						//※キャンセルしたときはパスとタイトルは変わらない。このとき相対パスのままなので下記の相対パス取得の処理はしないこと。
 							//開いたファイルのモードを調べる
 							ClearDrawScreen();
@@ -4405,53 +4303,17 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List0.Nest[1] += List0.RowHeight;//次の行の開始位置までずらす
 
-				//上書き保存
+				//●上書き保存
 				r++;
 				if (List0.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List0.Nest[0] + List0.RowWidth && List0.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List0.Nest[1] + List0.RowHeight
 					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-						//メッセージの保存
-						if (Mondai_p != NULL) OverwriteMondai(FilePath_h, FileTitle_h, MAX_PATH, MAX_PATH, Mondai_p);//問題モードからきたときの上書き保存（または名前を付けて保存）
-						else OverwriteMessage(FilePath_h, FileTitle_h, MAX_PATH, MAX_PATH, Message_h, EditorPad.MsgBox_p->Tag[0].Post);//メッセージからきたときの上書き保存（または名前を付けて保存）;//tag[0].PostをTagKosuu（tagnomax）として代用
-						//編集中のとき本来の値に戻す
-						if (flag_mode == -1) {
-							MsgBoxForm_p[MsgFormNo].Option = Value5 * 10000 + Value4 * 1000 + Value3 * 100 + Value2 * 10 + Value1 * 1;
-							MsgBoxForm_p[MsgFormNo].OutputSpeed = OutputSpeed_Copy;//
-							MsgBoxForm_p[MsgFormNo].MsgSound = MsgSound_Copy;
-							MsgBoxForm_p[MsgFormNo].BackDelSound = BackDelSound_Copy;
-							MsgBoxForm_p[MsgFormNo].ConfirmSound = ConfirmSound_Copy;
-						}
-						else flag_mode = -1;//再生中のとき，編集モードに戻してから抜ける（保存直後，再生が始まるのを防ぐため）
-						//メッセージボックスコントロール，メッセージボックスフォーム，スタイルの保存
-						SetCurrentDirectory(LocalDir);
-						SaveMsgBoxSet(".\\MsgBoxSet.txt", MsgBox_p, MsgBox_Kosuu, MsgBoxFormNumber_h);
-						SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", MsgBoxForm_p, MsgBox_RGB_SoundPath_p, MsgBoxForm_Kosuu);
-						SaveMsgCodeLink(".\\MsgCodeLink.txt");//スタイルの保存
-						SaveJoypadLink(".\\JoypadLink.txt");//スタイルの保存
-
-						//終了時のカレントディレクトリはLocalDir
-
-						//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
-						strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
-						strcat(Titlebar_text, FileTitle_h);//ファイル名を連結
-						SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
-						//forループから抜けて書き直す
-						nukeru = 1;//0:forループ継続　1：forループから抜ける
-					}
-				}
-				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
-				DrawFormatString(List0.Nest[0] + List0.BorderThickness + List0.RowPadding[0], List0.Nest[1] + List0.BorderThickness + List0.RowPadding[1], black, List0Row[r].Title); //文字板の表示
-				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
-				List0.Nest[1] += List0.RowHeight;//次の行の開始位置までずらす
-				//名前を付けて保存
-				r++;
-				if (List0.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List0.Nest[0] + List0.RowWidth && List0.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List0.Nest[1] + List0.RowHeight
-					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
-					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
-					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-						/**/
-						SaveAsNewMessage(FilePath_h, FileTitle_h, MAX_PATH, MAX_PATH, Message_h, EditorPad.MsgBox_p->Tag[0].Post); //名前を付けて保存
+						char LocalDirBefore[MAX_PATH];
+						strcpy(LocalDirBefore, LocalDir);//元のディレクトリを控える
+						//メッセージの上書き保存（または名前を付けて保存）
+						if (Mondai_p != NULL) OverwriteMondai(FilePath_h, FileTitle_h, MAX_PATH, MAX_PATH, Mondai_p);////問題編集モード
+						else OverwriteMsg(FilePath_h, FileTitle_h, MAX_PATH, MAX_PATH, Message_h, EditorPad.MsgBox_p->Tag[0].Post);//メッセージ編集モード・パッドビューア//tag[0].PostをTagKosuu（tagnomax）として代用
 						//編集中のとき本来の値に戻す
 						if (flag_mode == -1) {
 							MsgBoxForm_p[MsgFormNo].Option = Value5 * 10000 + Value4 * 1000 + Value3 * 100 + Value2 * 10 + Value1 * 1;
@@ -4461,12 +4323,24 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 							MsgBoxForm_p[MsgFormNo].ConfirmSound = ConfirmSound_Copy;
 						}
 						else flag_mode = -1;//再生モードのとき，書き込みモードに戻してから抜ける（保存直後，再生が始まるのを防ぐため）
-						//メッセージボックスコントロール，メッセージボックスフォーム，スタイルの保存
-						SetCurrentDirectory(LocalDir);
-						SaveMsgBoxSet(".\\MsgBoxSet.txt", MsgBox_p, MsgBox_Kosuu, MsgBoxFormNumber_h);
-						SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", MsgBoxForm_p, MsgBox_RGB_SoundPath_p, MsgBoxForm_Kosuu);
-						SaveMsgCodeLink(".\\MsgCodeLink.txt");//スタイルの保存
-						SaveJoypadLink(".\\JoypadLink.txt");//スタイルの保存
+
+						//メッセージボックスコントロール，メッセージボックスフォーム，リンクを保存するかどうか調べる
+						int SaveFlag = 0;
+						if (!strcmp(LocalDirBefore, LocalDir)) SaveFlag = 1;//同じディレクトリに保存したとき、MsgBoxSetなどを保存するためのフラグ
+						else {//違うディレクトリに保存したときは，元からあるMsgBoxSetなどを優先する。つまり保存しない（SaveFlagは0のまま）
+							FILE *fp = fopen(".\\MsgBoxSet.txt", "r");//MsgBoxSetが存在するか，ファイルを開いて確認する
+							if (fp == NULL) SaveFlag = 1;//新規作成でMsgBoxSetがないディレクトリに保存したとき、MsgBoxSetなどを保存するためのフラグSaveFlagを1にする
+							else fclose(fp);//ファイルを閉じる
+						}
+						//メッセージボックスコントロール，メッセージボックスフォーム，リンクの保存
+						if (SaveFlag == 1) {//MsgBoxSetなどのファイルも保存する（同じディレクトリ、または新規作成でボックスがないディレクトリにメッセージを保存したとき）
+							//※異なるディレクトリで、かつ既にMsgBoxSetが存在するときは保存しない
+							SetCurrentDirectory(LocalDir);
+							SaveMsgBoxSet(".\\MsgBoxSet.txt", MsgBox_p, MsgBox_Kosuu, MsgBoxFormNumber_h);
+							SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", MsgBoxForm_p, MsgBoxForm_RGB_SoundPath_Set, MsgBoxForm_Kosuu);
+							SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
+							SaveJoypadLink(".\\JoypadLink.txt");//ジョイパッドリンクの保存　全部未設定（つまりTitle_JoypadStyle_rwが"なし"）なら保存しない
+						}
 
 						//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
 						strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
@@ -4480,7 +4354,58 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				DrawFormatString(List0.Nest[0] + List0.BorderThickness + List0.RowPadding[0], List0.Nest[1] + List0.BorderThickness + List0.RowPadding[1], black, List0Row[r].Title); //文字板の表示
 				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List0.Nest[1] += List0.RowHeight;//次の行の開始位置までずらす
-				///////戻る
+				//●名前を付けて保存
+				r++;
+				if (List0.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List0.Nest[0] + List0.RowWidth && List0.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List0.Nest[1] + List0.RowHeight
+					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
+					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
+					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
+						char LocalDirBefore[MAX_PATH];
+						strcpy(LocalDirBefore, LocalDir);//元のディレクトリを控える
+						//メッセージの上書き保存（または名前を付けて保存）
+						if (Mondai_p != NULL) SaveAsNewMondai(FilePath_h, FileTitle_h, MAX_PATH, MAX_PATH, Mondai_p);////問題編集モード
+						else SaveAsNewMsg(FilePath_h, FileTitle_h, MAX_PATH, MAX_PATH, Message_h, EditorPad.MsgBox_p->Tag[0].Post);//メッセージ編集モード・パッドビューア//tag[0].PostをTagKosuu（tagnomax）として代用
+						//編集中のとき本来の値に戻す
+						if (flag_mode == -1) {
+							MsgBoxForm_p[MsgFormNo].Option = Value5 * 10000 + Value4 * 1000 + Value3 * 100 + Value2 * 10 + Value1 * 1;
+							MsgBoxForm_p[MsgFormNo].OutputSpeed = OutputSpeed_Copy;//
+							MsgBoxForm_p[MsgFormNo].MsgSound = MsgSound_Copy;
+							MsgBoxForm_p[MsgFormNo].BackDelSound = BackDelSound_Copy;
+							MsgBoxForm_p[MsgFormNo].ConfirmSound = ConfirmSound_Copy;
+						}
+						else flag_mode = -1;//再生モードのとき，書き込みモードに戻してから抜ける（保存直後，再生が始まるのを防ぐため）
+
+						//メッセージボックスコントロール，メッセージボックスフォーム，リンクを保存するかどうか調べる
+						int SaveFlag = 0;
+						if (!strcmp(LocalDirBefore, LocalDir)) SaveFlag = 1;//同じディレクトリに保存したとき、MsgBoxSetなどを保存するためのフラグ
+						else {//違うディレクトリに保存したときは，元からあるMsgBoxSetなどを優先する。つまり保存しない（SaveFlagは0のまま）
+							FILE *fp = fopen(".\\MsgBoxSet.txt", "r");//MsgBoxSetが存在するか，ファイルを開いて確認する
+							if (fp == NULL) SaveFlag = 1;//新規作成でMsgBoxSetがないディレクトリに保存したとき、MsgBoxSetなどを保存するためのフラグSaveFlagを1にする
+							else fclose(fp);//ファイルを閉じる
+						}
+						//メッセージボックスコントロール，メッセージボックスフォーム，リンクの保存
+						if (SaveFlag == 1) {//MsgBoxSetなどのファイルも保存する（同じディレクトリ、または新規作成でボックスがないディレクトリにメッセージを保存したとき）
+							//※異なるディレクトリで、かつ既にMsgBoxSetが存在するときは保存しない
+							SetCurrentDirectory(LocalDir);
+							SaveMsgBoxSet(".\\MsgBoxSet.txt", MsgBox_p, MsgBox_Kosuu, MsgBoxFormNumber_h);
+							SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", MsgBoxForm_p, MsgBoxForm_RGB_SoundPath_Set, MsgBoxForm_Kosuu);
+							SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
+							SaveJoypadLink(".\\JoypadLink.txt");//ジョイパッドリンクの保存　全部未設定（つまりTitle_JoypadStyle_rwが"なし"）なら保存しない
+						}
+
+						//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
+						strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
+						strcat(Titlebar_text, FileTitle_h);//ファイル名を連結
+						SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
+						//forループから抜けて書き直す
+						nukeru = 1;//0:forループ継続　1：forループから抜ける
+					}
+				}
+				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
+				DrawFormatString(List0.Nest[0] + List0.BorderThickness + List0.RowPadding[0], List0.Nest[1] + List0.BorderThickness + List0.RowPadding[1], black, List0Row[r].Title); //文字板の表示
+				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
+				List0.Nest[1] += List0.RowHeight;//次の行の開始位置までずらす
+				//●戻る
 				r++;
 				if (List0.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List0.Nest[0] + List0.RowWidth && List0.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List0.Nest[1] + List0.RowHeight
 					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
@@ -4511,7 +4436,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				DrawFormatString(List0.Nest[0] + List0.BorderThickness + List0.RowPadding[0], List0.Nest[1] + List0.BorderThickness + List0.RowPadding[1], black, List0Row[r].Title); //文字板の表示
 				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List0.Nest[1] += List0.RowHeight;//次の行の開始位置までずらす
-				///////ホーム画面に戻る//アクティブなディレクトリ（外で消える），ファイルパス（外で消える），ファイルタイトル（NULL），エディターモード（99）でメッセージ編集モードから抜ける
+				//●ホーム画面に戻る//アクティブなディレクトリ（外で消える），ファイルパス（外で消える），ファイルタイトル（NULL），エディターモード（99）でメッセージ編集モードから抜ける
 				r++;
 				if (List0.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List0.Nest[0] + List0.RowWidth && List0.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List0.Nest[1] + List0.RowHeight
 					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
@@ -4526,7 +4451,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				DrawFormatString(List0.Nest[0] + List0.BorderThickness + List0.RowPadding[0], List0.Nest[1] + List0.BorderThickness + List0.RowPadding[1], black, List0Row[r].Title); //文字板の表示
 				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List0.Nest[1] += List0.RowHeight;//次の行の開始位置までずらす
-				////////アプリケーションの終了
+				//●アプリケーションの終了
 				r++;
 				if (List0.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List0.Nest[0] + List0.RowWidth && List0.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List0.Nest[1] + List0.RowHeight
 					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
@@ -4538,15 +4463,14 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
 				DrawFormatString(List0.Nest[0] + List0.BorderThickness + List0.RowPadding[0], List0.Nest[1] + List0.BorderThickness + List0.RowPadding[1], black, List0Row[r].Title); //文字板の表示
 				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
-				//List0.Nest[1] += List0.RowHeight;////次の行の開始位置までずらす　あってもなくてもよい
-				///////左クリックしたとき    プルダウンリストから抜ける　（returnで関数から抜けるもの以外は，すべてここでリストから抜ける）
+				//List0.Nest[1] += List0.RowHeight;////次の行の開始位置までずらす。最後だからなくてよい
+				//●左クリックしたとき    プルダウンリストから抜ける　（returnで関数から抜けるもの以外は，すべてここでリストから抜ける）
 				if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 					List0.Active = -1; Toolbar[1].Active = 1;//プルダウンリストから抜けて待機状態にする
 					for (int i = 0; i < 3; i++) EditorPadArea_h[i].Active = 1;//インデックスエリア，ボタンエリア，ベースボタンエリアを待機状態に戻す
 					DisplayArea_p[AreaNumber].Active = 1;
 				}
 			}
-
 			//////カスタマイズのプルダウンリスト
 			if (List1.Active == 1) {//プルダウンリスト190802
 				ShowList(&List1);
@@ -4567,7 +4491,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				DrawFormatString(box[0] + ToolAForm.BorderThickness + ToolA[1].Padding[0],
 					box[1] + ToolAForm.BorderThickness + ToolA[1].Padding[1], black, ToolA[1].Title); //文字板の表示
 
-				////フォントスタイル
+				//●フォントスタイル
 				int  r = 0;
 				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
 					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
@@ -4598,7 +4522,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
-				////フォント画像スタイル
+				//●フォント画像スタイル
 				r++;
 				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
 					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
@@ -4629,7 +4553,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
-				////タグスタイル
+				//●タグスタイル
 				r++;
 				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
 					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
@@ -4660,7 +4584,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
-				////ジョイパッドスタイル
+				//●ジョイパッドスタイル
 				r++;
 				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
 					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
@@ -4688,7 +4612,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
-				////フォントスタイルディレクトリ
+				//●フォントスタイルディレクトリ
 				r++;
 				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
 					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
@@ -4710,7 +4634,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
-				////フォント画像スタイルディレクトリ
+				//●フォント画像スタイルディレクトリ
 				r++;
 				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
 					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
@@ -4732,7 +4656,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
-				////タグスタイルディレクトリ
+				//●タグスタイルディレクトリ
 				r++;
 				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
 					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
@@ -4754,7 +4678,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
-				////アプリ共有画像ディレクトリ
+				//●アプリ共有画像ディレクトリ
 				r++;
 				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
 					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
@@ -4777,7 +4701,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
 
-				////アプリ共有音声ディレクトリ
+				//●アプリ共有音声ディレクトリ
 				r++;
 				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
 					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
@@ -4800,7 +4724,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
 
-				////ジョイパッドの割り当てのディレクトリ
+				//●ジョイパッドの割り当てのディレクトリ
 				r++;
 				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
 					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
@@ -4821,23 +4745,23 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List1.Nest[1] += List1.RowHeight;////次の行の開始位置までずらす　あってもなくてもよい
 
-				////リンクの保存
+				//●リンクの保存
 				r++;
 				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
 					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						SetCurrentDirectory(LocalDir);
-						SaveMsgCodeLink(".\\MsgCodeLink.txt");//スタイルの保存
-						SaveJoypadLink(".\\JoypadLink.txt");//スタイルの保存
+						SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
+						SaveJoypadLink(".\\JoypadLink.txt");//ジョイパッドリンクの保存　全部未設定（つまりTitle_JoypadStyle_rwが"なし"）なら保存しない
 					}
 				}
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
 				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
-				//List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
+				//List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす。最後だからなくてよい
 
-				///////左クリックしたとき    プルダウンリストから抜ける
+				//●左クリックしたとき    プルダウンリストから抜ける
 				if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 					List1.Active = -1; Toolbar[1].Active = 1;//プルダウンリストから抜けて待機状態にする
 					for (int i = 0; i < 3; i++) EditorPadArea_h[i].Active = 1;//インデックスエリア，ボタンエリア，ベースボタンエリアを待機状態に戻す
@@ -4865,19 +4789,59 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 					box[1] + ToolAForm.BorderThickness + ToolA[2].Padding[1], black, ToolA[2].Title); //文字板の表示
 
 				int  r = 0;
-				////フォームとコントロールの表示/非表示
+				//●プロパティの表示/非表示の切り替え
 				if (List2.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List2.Nest[0] + List2.RowWidth && List2.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List2.Nest[1] + List2.RowHeight
 					&& List2Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List2.Nest[0], List2.Nest[1], List2.Nest[0] + List2.RowWidth, List2.Nest[1] + List2.RowHeight, List2.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-						flag_paramata *= -1;
+						flag_paramata *= -1;//切り換え（-１：プロパティの非表示　１：プロパティの表示）
+						if (flag_paramata == 1) {//プロパティの表示のとき
+							strcpy(Tool[5].String, "プロパティの非表示");//strcpy(Tool[ToolN].String, "プロパティの表示");
+							Tool[5].WaitingImg = WaitingImg_PropertyOff;
+							Tool[5].CursorImg = CursorImg_PropertyOff;
+							Tool[5].PushedImg = Tool[5].CursorImg;
+						}
+						else {//プロパティの非表示のとき
+							strcpy(Tool[5].String, "プロパティの表示");//strcpy(Tool[ToolN].String, "プロパティの非表示");
+							Tool[5].WaitingImg = WaitingImg_PropertyOn;
+							Tool[5].CursorImg = CursorImg_PropertyOn;
+							Tool[5].PushedImg = Tool[5].CursorImg;
+						}
 					}
 				}
 				if (List2Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
 				DrawFormatString(List2.Nest[0] + List2.BorderThickness + List2.RowPadding[0], List2.Nest[1] + List2.BorderThickness + List2.RowPadding[1], black, List2Row[r].Title); //文字板の表示
 				if (List2Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List2.Nest[1] += List2.RowHeight;//次の行の開始位置までずらす
-				////エディターの設定
+
+				//●書き込みモードと再生モードの切り替え
+				r++;
+				if (List2.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List2.Nest[0] + List2.RowWidth && List2.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List2.Nest[1] + List2.RowHeight
+					&& List2Row[r].Active > 0) {//ボタンの範囲内のとき
+					DrawBox(List2.Nest[0], List2.Nest[1], List2.Nest[0] + List2.RowWidth, List2.Nest[1] + List2.RowHeight, List2.CursorColor, true); //カーソルの表示
+					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
+						flag_mode *= -1;//切り換え（-１：書き込みモード　１：再生モード）
+						nukeru = 1;//0:forループ継続　1：forループから抜ける
+						if (flag_mode == 1) {//再生モードのとき
+							strcpy(Tool[6].String, "書き込み");//strcpy(Tool[6].String, "再生");
+							Tool[6].WaitingImg = WaitingImg_Write;
+							Tool[6].CursorImg = CursorImg_Write;
+							Tool[6].PushedImg = Tool[6].CursorImg;
+						}
+						else {//書き込みモードのとき
+							strcpy(Tool[6].String, "再生");//strcpy(Tool[6].String, "書き込み");
+							Tool[6].WaitingImg = WaitingImg_Play;
+							Tool[6].CursorImg = CursorImg_Play;
+							Tool[6].PushedImg = Tool[6].CursorImg;
+						}
+					}
+				}
+				if (List2Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
+				DrawFormatString(List2.Nest[0] + List2.BorderThickness + List2.RowPadding[0], List2.Nest[1] + List2.BorderThickness + List2.RowPadding[1], black, List2Row[r].Title); //文字板の表示
+				if (List2Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
+				List2.Nest[1] += List2.RowHeight;//次の行の開始位置までずらす
+
+				//●基準線と背景の変更
 				r++;
 				if (List2.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List2.Nest[0] + List2.RowWidth && List2.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List2.Nest[1] + List2.RowHeight
 					&& List2Row[r].Active > 0) {//ボタンの範囲内のとき
@@ -4889,9 +4853,9 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				if (List2Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
 				DrawFormatString(List2.Nest[0] + List2.BorderThickness + List2.RowPadding[0], List2.Nest[1] + List2.BorderThickness + List2.RowPadding[1], black, List2Row[r].Title); //文字板の表示
 				if (List2Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
-				//List0.Nest[1] += List0.RowHeight;////次の行の開始位置までずらす　あってもなくてもよい
+				//List2.Nest[1] += List2.RowHeight;////次の行の開始位置までずらす。最後だからなくてよい
 
-				///////左クリックしたとき    プルダウンリストから抜ける
+				//●左クリックしたとき    プルダウンリストから抜ける
 				if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 					List2.Active = -1; Toolbar[1].Active = 1;//プルダウンリストから抜けて待機状態にする
 					for (int i = 0; i < 3; i++) EditorPadArea_h[i].Active = 1;//インデックスエリア，ボタンエリア，ベースボタンエリアを待機状態に戻す
@@ -4912,13 +4876,12 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 					for (int i = 0; i < 3; i++) EditorPadArea_h[i].Active = 1;//インデックスエリア，ボタンエリア，ベースボタンエリアの停止
 					DisplayArea_p[AreaNumber].Active = 1;
 				}
-
 			}
 			//●カーソルオーバー
 			static const int BackColor_CursorOver = GetColor(240, 250, 250);
 			Math_CursorOver(ActiveMath::MouseX, ActiveMath::MouseY + 20, 2, black, BackColor_CursorOver, NULL);//Math_ButtonTitleShow(const int LocationX, const int LocationY, const int Padding, const int StringColor, const int BackColor, const int Type)
 			//●マルチガイド
-			MultiGuide();
+			MultiGuide(10, 10, EditorPad.Msg_h, EditorPad.MsgBox_p);
 			//●サンプルの制限解除（コントロール＋R）
 			if (ActiveMath::Key[KEY_INPUT_R] == 1 && (ActiveMath::Key[KEY_INPUT_LCONTROL] > 0 || ActiveMath::Key[KEY_INPUT_RCONTROL] > 0)) {
 				for (int i = 0; i < ToolKosuu; i++) Tool[i].Active = 1;
@@ -4926,7 +4889,6 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				for (int i = 0; i < List1RowKosuu; i++) List1Row[i].Active = 1;
 				for (int i = 0; i < List2RowKosuu; i++) List2Row[i].Active = 1;
 			}
-
 		}
 	}
 	return 0;
@@ -4945,8 +4907,6 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 	for (int i = 0; i < 4; i++) Statusbar.Padding[i] = 5;
 	Statusbar.BackColor = GetColor(240, 240, 240);
 	Statusbar.Active = 1;
-
-
 
 	//エディターの設定（プレビュー用ディスプレイエリア）の取得
 	int SettingEditorBackFlag = 0;
@@ -5151,8 +5111,6 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 	char DisplayArea_Preview_FilePath[MAX_PATH] = ".\\System\\BackImg\\BackImgPath_Pad.txt";
 	LoadEditorSettings(DisplayArea_Preview_FilePath, &BorderColorRGB, &BackColorRGB, &BackImgPath, &DisplayArea, DisplayArea_Preview_Kosuu);
 
-
-
 	//////////プルダウンリスト////////////
 	int ListStrWidth;//タイトルの幅
 	const int list_BackColor = GetColor(240, 245, 245);
@@ -5273,7 +5231,7 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 	struct MSG_BOX_FORM PadMsgBoxForm;
 	struct MSG_BOX_CTRL PadMsgBox;
 	//MsgBoxForm_RGB_SoundPathの取得（色の値，音のパス）
-	static struct MSG_BOX_RGB_SOUNDPATH MsgBox_RGB_SoundPath_h;//色，音声はハンドルではなく，色はRGB値，音声はLocalDirからの相対パスを記録（値の変更や保存で使用）
+	static struct MSG_BOX_FORM_RGB_SOUNDPATH MsgBoxForm_RGB_SoundPath;//色，音声はハンドルではなく，色はRGB値，音声はLocalDirからの相対パスを記録（値の変更や保存で使用）
 	//ディスプレイパッド
 	struct DISPLAY_PAD_CTRL DisplayPad;
 	DisplayPad.Area_h = PadArea_h;
@@ -5287,8 +5245,6 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 	DisplayPad.MsgBoxForm_p = &PadMsgBoxForm;
 	DisplayPad.MsgBox_p = &PadMsgBox;
 
-
-	
 	//タイトル
 	char AppMode_text[MAX_PATH];
 	strcpy(AppMode_text, ApplicationTitle);//アプリケーション名を代入
@@ -5316,7 +5272,7 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 		{
 			struct LOAD_DISPLAY_PAD_SP p;//ロードするための情報
 			//エリア（[0]インデックスエリア，[1]ボタンエリア，[2]ベースボタンエリア）
-			p.FilePath_AreaSet_h = FilePath_Pad_h;
+			p.FilePath_DisplayPad_h = FilePath_Pad_h;
 			p.ParentArea_p = &DisplayArea;
 			p.DisplayPad_p = &DisplayPad;
 			p.Area_Max = PadArea_Max;
@@ -5325,9 +5281,10 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 			p.Btn_Max_h = Btn_Max_h;
 			p.BaseBtn_Max = BaseBtn_Max;
 			//フラグ
-			//m.GetDirFlag = 0;//初期値：１
-			//m.MsgCodeLinkFlag = 0;//初期値：１
-			//m.JoypadLinkFlag = 0;//初期値：１
+			//m.SetMsgLocalDirFlag = FALSE;//初期値：TRUE
+			//m.MsgCodeLinkFlag = FALSE;//初期値：TRUE
+			//m.JoypadLinkFlag = FALSE;//初期値：TRUE
+
 			//ロード
 			if (LoadDisplayPadSP(&p)) {
 			//	WaitKey();
@@ -5339,7 +5296,7 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 		}
 		//※終了時はパッド個別ディレクトリ（パッドファイルと同名のディレクトリ）
 		//MsgBoxForm_RGB_SoundPathの取得（色の値，音のパス）						1:MsgBoxForm_Kosuu
-		LoadMsgBoxRgbSoundPathSet(".\\MsgBoxFormSet.txt", &MsgBox_RGB_SoundPath_h, 1);
+		LoadMsgBoxFormRgbSoundPathSet(".\\MsgBoxFormSet.txt", &MsgBoxForm_RGB_SoundPath, 1);
 
 		//■タイトルバーのテキストの更新
 		strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
@@ -5358,9 +5315,9 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 		//〔入力したメッセージのリセット〕
 		strcpy(Msg_Pad, Msg_Copy);//メッセージのリセット
 		PadMsgBox = MsgBox_Pad_Copy;//ボックスのリセット
-		Reparse(&PadMsgBox);//タグの再読み込み指示（正解ボックスを表示させるため）
-		PadMsgBox.Tag[0].PositionP = 0;//ActiveElementを0にリセットしてカーソル位置を再検出
-		PadMsgBox.ParentArea_p = &DisplayArea;
+	//	Reparse(&PadMsgBox);//タグの再読み込み指示，アクティブ要素のリセット，フレームカウンターのリセット
+		//PadMsgBox.Tag[0].PositionP = 0;//ActiveElementを0にリセットしてカーソル位置を再検出//ボックスのリセットをリセットしたから不要？？？
+		//PadMsgBox.ParentArea_p = &DisplayArea;
 
 		//■メッセージプロパティ*MsgBox_p
 		//struct MSG_BOX_CTRL MsgBox;
@@ -5381,6 +5338,8 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 		int nukeru = 0;
 		////////パッドプレビュー画面のメインループ
 		for (int frameH = 0; !nukeru && !ScreenFlip() && !ProcessMessage() && !ClearDrawScreen() && !MathgpUpdateMouse() && !MathgpUpdateKey() && !MathgpUpdateJoypad(); frameH++) {//マウス・キーボード・ジョイパッド
+			//●キーボードの入力情報をジョイパッドに変換（F1でオン・オフ切り替え）
+			ConvertKeyIntoJoypad();
 			//●早すぎたら待機
 			SleepToFitFPS(FPS);
 			//ツールバー
@@ -5415,11 +5374,6 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 					}
 				}
 			}
-
-
-
-
-
 
 			//●ツールボタン
 			//ボタン　Btn_p->Active（-１：非表示　０：使用不可状態（ボタンのタイトルを薄く表示して無反応）　１：待機状態（ボタンの表示・反応）　２：押された状態　３：カーソル）
@@ -5467,7 +5421,6 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 							ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "該当するエディターモードがなく，このファイルを開くことができません。", black, gray60);
 							WaitKey();
 						}
-
 					}
 				}
 				///////入力モードの変更
@@ -5477,31 +5430,27 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 				}
 				///////メッセージの詳細編集
 				else if (ClickedNo == 3) {
-					//プレビューモード
-					int MsgBoxNumber = 0;
-					int MsgBoxFormNumber = 0;
-					char MsgFilePath[MAX_PATH];
-					strcpy(MsgFilePath, LocalDir);
-					strcat(MsgFilePath, "\\DefaultMsg.acm");
-					int Area_Kosuu = 2;  int AreaNumber = 0;
-					
-					strcpy(Msg_Pad, Msg_Copy);//メッセージのリセット
-					PadMsgBox = MsgBox_Pad_Copy;//ボックスのリセット
-					Reparse(&PadMsgBox);//タグの再読み込み指示（正解ボックスを表示させるため）
-					PadMsgBox.Tag[0].PositionP = 0;//ActiveElementを0にリセットしてカーソル位置を再検出
+					if (Msg_Copy[0] != '\0' && MsgBox_Pad_Copy.MsgBoxForm_p != NULL ) {
+						int MsgBoxNumber = 0;
+						int MsgBoxFormNumber = 0;
+						char MsgFilePath[MAX_PATH];
+						strcpy(MsgFilePath, LocalDir);
+						strcat(MsgFilePath, "\\DefaultMsg.acm");
+						int Area_Kosuu = 2;  int AreaNumber = 0;
 
-					//→								１はMsgBox_Kosuu												１はMsgBoxForm_Kosuu
-					MessagePreviewMode(DisplayPad.MsgBox_p, 1, MsgBoxNumber, DisplayPad.MsgBoxForm_p, &MsgBox_RGB_SoundPath_h, 1, &MsgBoxFormNumber,
-						Msg_Pad, MsgCharMax_Pad + 1, DisplayArea_Preview_FilePath, &DisplayArea, &BorderColorRGB, &BackColorRGB, &BackImgPath, Area_Kosuu, AreaNumber, //
-						MsgFilePath, FileTitle_Pad, NULL, EditorMode_p, &ExitModeFlag//問題編集もーどのときはNULLのところが, &mondai（これは問題ファイルを保存するのに必要だから）
-					);//ファイルパスはメッセージのファイルパス。ファイル名はパッドのファイル名。
-					if (ExitModeFlag) return 0;
-					nukeru = 1;
+						strcpy(Msg_Pad, Msg_Copy);//メッセージのリセット
+						PadMsgBox = MsgBox_Pad_Copy;//ボックスのリセット
+						Reparse(&PadMsgBox);//タグの再読み込み指示（正解ボックスを表示させるため）
+						PadMsgBox.Tag[0].PositionP = 0;//ActiveElementを0にリセットしてカーソル位置を再検出
+						//→								１はMsgBox_Kosuu												１はMsgBoxForm_Kosuu
+						MessagePreviewMode(DisplayPad.MsgBox_p, 1, MsgBoxNumber, DisplayPad.MsgBoxForm_p, &MsgBoxForm_RGB_SoundPath, 1, &MsgBoxFormNumber,
+							Msg_Pad, MsgCharMax_Pad + 1, DisplayArea_Preview_FilePath, &DisplayArea, &BorderColorRGB, &BackColorRGB, &BackImgPath, Area_Kosuu, AreaNumber, //
+							MsgFilePath, FileTitle_Pad, NULL, EditorMode_p, &ExitModeFlag//問題編集もーどのときはNULLのところが, &mondai（これは問題ファイルを保存するのに必要だから）
+						);//ファイルパスはメッセージのファイルパス。ファイル名はパッドのファイル名。
+						if (ExitModeFlag) return 0;
+						nukeru = 1;
+					}
 				}
-
-						//メッセージプレビュー, *MsgBox_pは初期状態。*MsgBox_pは*MsgBoxForm_pと関連づいている。???
-
-
 			}
 
 			//●ツール
@@ -5546,28 +5495,12 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 
 			//////////↓ファイル名が未定なら処理しない部分の上端（ファイルパスはなくてもファイル名が"無題"となっていれば処理する）↓////起動時や，アプリは閉じずにファイルのみ閉じたとき。
 			if (FilePath_Pad_h[0] != '\0') {
-				/*
-				//if (FilePath_Pad_h[0] != '\0' || strcmp(FileTitle_Pad, "無題") == 0) {
-				if (ShowPadJ(Message, &MsgBox, MsgCharMax + 1, ShowMsgBoxFlag, Index, IndexKosuu, Btn_ph, BtnKosuu, BaseBtn, BaseBtnKosuu, PadArea, &PadManager) == 1) {//プッシュした長さが１のとき
-					if (PadManager.PushedNo == 35 && PadArea[2].Active == 1) {//ベースボタンの35番（確定ボタン）をクリックした。　ベースボタン：1000番代
-						nukeru = 1;//入力したメッセージをリセットするために内側のループを抜ける
-					}
-				}
-				*/
 				//////パッド編集モード
 				if (ShowDisplayPadJ(&DisplayPad) == 1) {//プッシュした長さが１のとき
-					//●確定ボタン
-					if (DisplayPad.PushedNo == 35 && PadArea_h[2].Active == 1) {//ベースボタンの35番（確定ボタン）をクリックした。　ベースボタン：1000番代
-						nukeru = 1;//入力したメッセージをリセットするために内側のループを抜ける
-					}
+					//●確定ボタン//入力したメッセージをリセットするために内側のループを抜ける
+					if (DisplayPad.PushedNo == 35 && PadArea_h[2].Active == 1) nukeru = 1; //ベースボタンの35番（確定ボタン）をクリックした。ベースボタン：1000番代 
 				}
-				if (DisplayPad.MsgBox_p->Condition == 101) {
-					nukeru = 1;
-				}
-
-				//DisplayArea.Nest[3] = DisplayArea.Nest[1] + MsgBox.Location[1] + MsgBox.OuterHeight;
-				//DisplayArea.Height = MsgBox.OuterHeight + DisplayArea.Padding[1] + DisplayArea.Padding[3] + DisplayArea.BorderThickness * 2;
-
+				if (DisplayPad.Condition == 1) nukeru = 1;
 				DrawStringInArea(0, 0, &StringBox, DisplayPad.ActiveBtn_h->Btn.String, black);//ボタンのStringがあれば書き出す
 				DrawStringInArea(0, 0, &TextBox, DisplayPad.ActiveBtn_h->PutText, black);//マウスオーバーしたボタンのPutTextがあれば書き出す
 			}
@@ -5699,7 +5632,7 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
 				DrawFormatString(List0.Nest[0] + List0.BorderThickness + List0.RowPadding[0], List0.Nest[1] + List0.BorderThickness + List0.RowPadding[1], black, List0Row[r].Title); //文字板の表示
 				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
-				//List0.Nest[1] += List0.RowHeight;////次の行の開始位置までずらす　あってもなくてもよい
+				//List0.Nest[1] += List0.RowHeight;////次の行の開始位置までずらす。最後なのでなくてもよい
 				///////左クリックしたとき    プルダウンリストから抜ける
 				if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 					List0.Active = -1; Toolbar[1].Active = 1; Toolbar[2].Active = 1;//プルダウンリストから抜けて待機状態にする
@@ -5979,7 +5912,7 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
 				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
-				List1.Nest[1] += List1.RowHeight;////次の行の開始位置までずらす　あってもなくてもよい
+				List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
 
 				////リンクの保存
 				r++;
@@ -5988,14 +5921,14 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						SetCurrentDirectory(LocalDir);
-						SaveMsgCodeLink(".\\MsgCodeLink.txt");//スタイルの保存
-						SaveJoypadLink(".\\JoypadLink.txt");//スタイルの保存
+						SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
+						SaveJoypadLink(".\\JoypadLink.txt");//ジョイパッドリンクの保存　全部未設定（つまりTitle_JoypadStyle_rwが"なし"）なら保存しない
 					}
 				}
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
 				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
-				//List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
+				//List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす。最後なのでなくてもよい
 
 				///////左クリックしたとき    プルダウンリストから抜ける
 				if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
@@ -6036,38 +5969,40 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 				if (List2Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
 				DrawFormatString(List2.Nest[0] + List2.BorderThickness + List2.RowPadding[0], List2.Nest[1] + List2.BorderThickness + List2.RowPadding[1], black, List2Row[r].Title); //文字板の表示
 				if (List2Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
-				List2.Nest[1] += List2.RowHeight;////次の行の開始位置までずらす　あってもなくてもよい
+				List2.Nest[1] += List2.RowHeight;//次の行の開始位置までずらす
 				//メッセージの詳細編集
 				r++;
 				if (List2.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List2.Nest[0] + List2.RowWidth && List2.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List2.Nest[1] + List2.RowHeight
 					&& List2Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List2.Nest[0], List2.Nest[1], List2.Nest[0] + List2.RowWidth, List2.Nest[1] + List2.RowHeight, List2.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-						int MsgBoxNumber = 0;
-						int MsgBoxFormNumber = 0;
-						char MsgFilePath[MAX_PATH];
-						strcpy(MsgFilePath, LocalDir);
-						strcat(MsgFilePath, "\\DefaultMsg.acm");
-						int Area_Kosuu = 2;  int AreaNumber = 0;
+						if (Msg_Copy[0] != '\0' && MsgBox_Pad_Copy.MsgBoxForm_p != NULL) {
+							int MsgBoxNumber = 0;
+							int MsgBoxFormNumber = 0;
+							char MsgFilePath[MAX_PATH];
+							strcpy(MsgFilePath, LocalDir);
+							strcat(MsgFilePath, "\\DefaultMsg.acm");
+							int Area_Kosuu = 2;  int AreaNumber = 0;
 
-						strcpy(Msg_Pad, Msg_Copy);//メッセージのリセット
-						PadMsgBox = MsgBox_Pad_Copy;//ボックスのリセット
-						Reparse(&PadMsgBox);//タグの再読み込み指示（正解ボックスを表示させるため）
-						PadMsgBox.Tag[0].PositionP = 0;//ActiveElementを0にリセットしてカーソル位置を再検出
+							strcpy(Msg_Pad, Msg_Copy);//メッセージのリセット
+							PadMsgBox = MsgBox_Pad_Copy;//ボックスのリセット
+							Reparse(&PadMsgBox);//タグの再読み込み指示（正解ボックスを表示させるため）
+							PadMsgBox.Tag[0].PositionP = 0;//ActiveElementを0にリセットしてカーソル位置を再検出
 
-					//→								１はMsgBox_Kosuu												１はMsgBoxForm_Kosuu
-						MessagePreviewMode(DisplayPad.MsgBox_p, 1, MsgBoxNumber, DisplayPad.MsgBoxForm_p, &MsgBox_RGB_SoundPath_h, 1, &MsgBoxFormNumber,
-							Msg_Pad, MsgCharMax_Pad + 1, DisplayArea_Preview_FilePath, &DisplayArea, &BorderColorRGB, &BackColorRGB, &BackImgPath, Area_Kosuu, AreaNumber, //
-							MsgFilePath, FileTitle_Pad, NULL, EditorMode_p, &ExitModeFlag//問題編集もーどのときはNULLのところが, &mondai（これは問題ファイルを保存するのに必要だから）
-						);//ファイルパスはメッセージのファイルパス。ファイル名はパッドのファイル名。
-						if (ExitModeFlag) return 0;
-						nukeru = 1;
+						//→								１はMsgBox_Kosuu												１はMsgBoxForm_Kosuu
+							MessagePreviewMode(DisplayPad.MsgBox_p, 1, MsgBoxNumber, DisplayPad.MsgBoxForm_p, &MsgBoxForm_RGB_SoundPath, 1, &MsgBoxFormNumber,
+								Msg_Pad, MsgCharMax_Pad + 1, DisplayArea_Preview_FilePath, &DisplayArea, &BorderColorRGB, &BackColorRGB, &BackImgPath, Area_Kosuu, AreaNumber, //
+								MsgFilePath, FileTitle_Pad, NULL, EditorMode_p, &ExitModeFlag//問題編集もーどのときはNULLのところが, &mondai（これは問題ファイルを保存するのに必要だから）
+							);//ファイルパスはメッセージのファイルパス。ファイル名はパッドのファイル名。
+							if (ExitModeFlag) return 0;
+							nukeru = 1;
+						}
 					}
 				}
 				if (List2Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
 				DrawFormatString(List2.Nest[0] + List2.BorderThickness + List2.RowPadding[0], List2.Nest[1] + List2.BorderThickness + List2.RowPadding[1], black, List2Row[r].Title); //文字板の表示
 				if (List2Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
-				List2.Nest[1] += List2.RowHeight;////次の行の開始位置までずらす　あってもなくてもよい
+				List2.Nest[1] += List2.RowHeight;//次の行の開始位置までずらす
 				////背景の変更
 				r++;
 				if (List2.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List2.Nest[0] + List2.RowWidth && List2.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List2.Nest[1] + List2.RowHeight
@@ -6080,7 +6015,7 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 				if (List2Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
 				DrawFormatString(List2.Nest[0] + List2.BorderThickness + List2.RowPadding[0], List2.Nest[1] + List2.BorderThickness + List2.RowPadding[1], black, List2Row[r].Title); //文字板の表示
 				if (List2Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
-				//List2.Nest[1] += List2.RowHeight;////次の行の開始位置までずらす　あってもなくてもよい
+				//List2.Nest[1] += List2.RowHeight;////次の行の開始位置までずらす。最後なのでなくてもよい
 				///////左クリックしたとき    プルダウンリストから抜ける
 				if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 					List2.Active = -1; Toolbar[1].Active = 1; Toolbar[2].Active = 1;//プルダウンリストから抜けて待機状態にする
@@ -6124,7 +6059,7 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 
 
 			//●マルチガイド
-			MultiGuide();
+			MultiGuide(10, 50, Msg_Pad, &PadMsgBox);
 			//●サンプルの制限解除（コントロール＋R）
 			if (ActiveMath::Key[KEY_INPUT_R] == 1 && (ActiveMath::Key[KEY_INPUT_LCONTROL] > 0 || ActiveMath::Key[KEY_INPUT_RCONTROL] > 0)) {
 				for (int i = 0; i < ToolBKosuu; i++) ToolB[i].Active = 1;
@@ -6165,9 +6100,6 @@ int StatusShow(int LocationX, int LocationY, char *FilePath_h) {
 		DrawFormatString(LocationX, LocationY, black, "MsgDir: %s", MsgDir);//メッセージディレクトリ
 	}
 	return 0;
-
-
-
 }
 
 
@@ -6299,8 +6231,6 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 	Statusbar.BackColor = GetColor(240, 240, 240);
 	Statusbar.Active = 1; //－１：非表示　０：使用不可状態　１：使用可能状態
 
-
-	
 	//■ディスプレイエリア
 	static struct AREA_CTRL DisplayArea = { 0 };//whileの内側で指定する
 	DisplayArea.Location[1] = Toolbar[0].Height + EditorPadArea_h[2].Height;//28+56
@@ -6470,7 +6400,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 	const int MsgBoxForm_Kosuu = 4;
 	static struct MSG_BOX_FORM MsgBoxForm[MsgBoxForm_Kosuu];//マスター（メッセージの表示にはこれを使用する。メッセージの編集では値を一時的に書き換える）
 	static struct MSG_BOX_FORM MsgBoxForm_Copy[MsgBoxForm_Kosuu];//コピー（メッセージの編集で一時的に書き換えた値を，元に戻すために使用。またメッセージフォームの保存にはこれを使用。）
-	static struct MSG_BOX_RGB_SOUNDPATH MsgBox_RGB_SoundPath[MsgBoxForm_Kosuu];//色，音声はハンドルではなく，色はRGB値，音声はLocalDirからの相対パスを記録（値の変更や保存で使用）
+	static struct MSG_BOX_FORM_RGB_SOUNDPATH MsgBoxForm_RGB_SoundPath_Set[MsgBoxForm_Kosuu];//色，音声はハンドルではなく，色はRGB値，音声はLocalDirからの相対パスを記録（値の変更や保存で使用）
 
 	//メッセージボックス（マスター）
 	const int MsgBox_Kosuu = 4;
@@ -6490,11 +6420,11 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 	struct MONSTER_CTRL Monster[MONSTER_MAX];
 	static int Monster_Kosuu = 0;//モンスター数（実際の個数）
 	static char ColumnTitle[MONSTER_COLUMNMAX][MONSTER_COLUMNTITLEFIELDMAX + 1] = { 0 };//必ずMONSTER_COLUMNTITLEFIELDMAX + 1以下にすること（2次元配列の引数でMONSTER_COLUMNTITLEFIELDMAX + 1が指定されているため
-	static int Column_Kosuu = 0;
+	static int Column_Kosuu = 1;//IDがあるから最小は1
 	char MonsterImgTitle[MONSTER_MAX][MAX_PATH] = { 0 }; //全モンスターの画像ファイルのパスが入る配列
 	static int MonsterImgWidth[MONSTER_MAX];
 	static int MonsterImgHeight[MONSTER_MAX];//モンスターの画像の縦横サイズを取得するための変数
-	int MaxMonsterID = 0;
+	int IssuedMoonsterID=0;
 
 	int MonsterNum = 0;//0：モンスターテーブル内での要素番号　モンスターＩＤは0。モンスター未登録の状態
 		//未定義はモンスターテーブルに属するものではない
@@ -6508,12 +6438,12 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 		//●問題と問題関連ファイルのロード
 		{
 			struct LOAD_MONDAI_SP m;//ロードするための情報
-			m.FilePath_h = FilePath_Mondai_h;
+			m.FilePath = FilePath_Mondai_h;
 			m.Mondai_h = &Mondai;
 			m.Syoumon_Kosuu_p = &Syoumon_Kosuu;
-			char Dir_h[MAX_PATH];
-			GetDirFromPath(Dir_h, FilePath_Mondai_h);
-			m.Dir_h = Dir_h;
+			char Dir[MAX_PATH];
+			GetDirFromPath(Dir, FilePath_Mondai_h);
+			m.Dir = Dir;
 			m.MsgBoxForm_Max = MsgBoxForm_Kosuu;
 			m.MsgBoxForm_p = MsgBoxForm;
 			m.MsgBox_Max = MsgBox_Kosuu;
@@ -6523,16 +6453,15 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 			m.Monster_p = Monster;
 			m.Column_Kosuu_p = &Column_Kosuu;
 			m.ColumnTitle_p = ColumnTitle;
-			//m.GetDirFlag = 0;//初期値：１
-			//m.MsgCodeLinkFlag = 0;//初期値：１
-			//m.JoypadLinkFlag = 0;//初期値：１
+			//m.SetMsgLocalDirFlag = FALSE;//初期値：TRUE
+			//m.MsgCodeLinkFlag = FALSE;//初期値：TRUE
+			//m.JoypadLinkFlag = FALSE;//初期値：TRUE
 			//（ロード）
 			if (LoadMondaiSP(&m)) {
 				DxLib_End();// ＤＸライブラリ使用の終了処理
 				return -1;
 			}
 		}
-
 
 		//※終了時はモンスターディレクトリ
 		char DirectoryNow1[MAX_PATH];
@@ -6544,11 +6473,9 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 		else tablesuu = Monster_Kosuu;
 		SetCurrentDirectory(LocalDir);//
 		//MsgBoxForm2rのロード（色の値，音のパス）
-		LoadMsgBoxRgbSoundPathSet(".\\MsgBoxFormSet.txt", MsgBox_RGB_SoundPath, MsgBoxForm_Kosuu);//フォームのセーブがあるからForm2もロードしておく必要がある。
+		LoadMsgBoxFormRgbSoundPathSet(".\\MsgBoxFormSet.txt", MsgBoxForm_RGB_SoundPath_Set, MsgBoxForm_Kosuu);//フォームのセーブがあるからForm2もロードしておく必要がある。
 		//モンスター画像パスのロード
-		int IssuedMoonsterID_p;
-		LoadMonsterImgTitle(".\\Monster\\Monster.csv", MonsterImgTitle, MONSTER_MAX, &IssuedMoonsterID_p);
-
+		IssuedMoonsterID = LoadMonsterImgTitle(".\\Monster\\Monster.csv", MonsterImgTitle, MONSTER_MAX);
 
 		///////////////////////////
 		SetCurrentDirectory(AppDir);//
@@ -6559,15 +6486,15 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 		Monster[Monster_Kosuu + 1].Img = LoadGraph(".\\System\\Fixed\\notset.png");
 
 		//■モンスター番号の確定
-		for (int i = 0; i < Monster_Kosuu; i++) {//モンスターナンバー（モンスターの要素番号）の確定
-			if (Mondai.monsterID == 0) {//IDがカラのとき，「未設定」となる。
-				MonsterNum = Monster_Kosuu + 1; break;
-			}
-			else if (Mondai.monsterID == Monster[i].Column[0]) {
-				MonsterNum = i; break;
-			}
-			else if (i == Monster_Kosuu - 1) {
-				MonsterNum = Monster_Kosuu;  break;//最後までチェックしても一致するIDがないとき，「該当なし」となる。
+		if (Mondai.monsterID == 0) MonsterNum = Monster_Kosuu + 1;//IDが0のとき，「Monster_Kosuu + 1：未設定」となる。
+		else {
+			for (int i = 0; i < Monster_Kosuu; i++) {//モンスターナンバー（モンスターの要素番号）の確定
+				if (Mondai.monsterID == Monster[i].Column[0]) {
+					MonsterNum = i; break;
+				}
+				else if (i == Monster_Kosuu - 1) {
+					MonsterNum = Monster_Kosuu;  break;//最後までチェックしても一致するIDがないとき，「Monster_Kosuu：該当なし」となる。
+				}
 			}
 		}
 
@@ -6594,13 +6521,21 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 	static int ConfirmSound_edit = LoadSoundMem(".\\System\\Fixed\\button67.mp3");
 	static int BackDelSound_edit = LoadSoundMem(".\\System\\Fixed\\swish1.mp3");
 
+	//■ローカルディレクトリの指定（ホーム画面から入ってきたばかりのとき）※ファイルを開くのときは、そのファイルから取得済み。新規作成のときは、前のローカルディレクトリがある。
+	char aaa[MAX_PATH];
+	strcpy(aaa, LocalDir);//チェック用
+	if (LocalDir[0] == '\0') {
+		strcpy(LocalDir, AppDir);
+		strcat(LocalDir, "\\OriginalFile\\MondaiData");//ここで最初にローカルディレクトリーが決まる20200903
+	}
+
 	while (!ProcessMessage()) {
 
 		//■パッドメッセージをアンセットする
 		EditorPad.InputHandle = MakeKeyInput(100, TRUE, FALSE, FALSE);//新しいキー入力データの作成  ESCキーによるキャンセル機能の有無TRUE　半角文字のみの入力FALSE　数値文字のみの入力FALSE
+		//SetActiveKeyInput(EditorPad.InputHandle);// 作成したキー入力ハンドルをアクティブにする 　問題モードの場合はクリックしてから入力だから，事前にアクティブにしない。
 		EditorPad.Msg_h = NULL; EditorPad.MsgSize = 0;
 		EditorPad.MsgBox_p = NULL;
-		//SetActiveKeyInput(EditorPad.InputHandle);// 作成したキー入力ハンドルをアクティブにする
 
 		//背景の書き写し（ファイルを開いたときおよび，背景変更後もループを抜けて更新される）
 		DisplayArea.BackColor = DisplayArea_Preview[0].BackColor;
@@ -6615,7 +6550,8 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 				int Value1 = 4;//４：停止 MsgBoxForm[i].Option % 10;
 				int Value2 = 4;//４：ボックス左上 MsgBoxForm[i].Option % 100 / 10;
 				int Value3 = 4;//下１桁目が4だからここは何でもよい MsgBoxForm[i].Option % 1000 / 100;
-				int Value4 = MsgBoxForm[i].Option % 10000 / 1000;//下から4桁目だけ書き換えない。０：折り返しなし　１：折り返しあり 　２：折り返しあり（わかち）
+				int Value4 = MsgBoxForm[i].Option % 10000 / 1000;//下から4桁目だけ書き換えない。
+																 //下４桁目　０：折り返しあり(文字・数式)　１：折り返しあり（わかち）２：折り返しなしで伸縮（MaxLineは無効になる）　３以上：折り返しなし（MaxLineは無効になる）
 				int Value5 = 3;//３：表示中のメッセージ下端（Heightの値も変化） MsgBoxForm[i].Option % 100000 / 10000;
 				MsgBoxForm[i].Option = Value5 * 10000 + Value4 * 1000 + Value3 * 100 + Value2 * 10 + Value1 * 1;
 
@@ -6623,12 +6559,9 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 							 //つまり（プラス：パカパカあり。カーソルなし。　0：パカパカなし。カーソルなし。　-1：パカパカなし。クリック後からカーソルあり。　-2以下：パカパカなし。元からカーソルあり。）
 				MsgBoxForm[i].Margin[0] = 0; MsgBoxForm[i].Margin[1] = 0; MsgBoxForm[i].Margin[2] = 0; MsgBoxForm[i].Margin[3] = 0;
 
-
-
 				MsgBoxForm[i].MsgSound = MsgSound_edit;
 				MsgBoxForm[i].ConfirmSound = ConfirmSound_edit;
 				MsgBoxForm[i].BackDelSound = BackDelSound_edit;
-
 			}
 
 			//編集用の大問メッセージボックスを作成
@@ -6658,8 +6591,6 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 				HMsgBoxH_SS[i].OuterWidth = HMsgBoxH_SS[i].Width + HMsgBoxH_SS[i].MsgBoxForm_p->Margin[0] + HMsgBoxH_SS[i].MsgBoxForm_p->Margin[2];
 				HMsgBoxH_SS[i].OuterHeight = HMsgBoxH_SS[i].Height + HMsgBoxH_SS[i].MsgBoxForm_p->Margin[1] + HMsgBoxH_SS[i].MsgBoxForm_p->Margin[3];
 			}
-
-
 		}
 		int nukeru = 0;
 		//////////↓問題編集メインループの始まり↓////////////////////↓問題編集メインループの始まり↓///////////////////↓問題編集メインループの始まり↓///////////////////↓問題編集メインループの始まり↓/////////
@@ -6697,7 +6628,6 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 				}
 
 			}
-
 			//ファイルまたはスタイルを押したあと
 			else if (List0.Active == 1 || List1.Active == 1 || List2.Active == 1) {//プルダウン状態でカーソルが指すボタンがあるとき
 				for (int i = 0; i < ToolAKosuu; i++) {
@@ -6710,11 +6640,9 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 				}
 			}
 
-
 			////　ボタン　////
 			//●ツールボタン
 			int ClickedNo = -1;//押されたボタン番号
-
 			int ToolB_PushType = 0; int ToolB_Prev = -2; int ToolB_Next = -2;
 			if (ShowBtnSet(ToolB, ToolBKosuu, &ClickedNo, ToolB_PushType, ToolB_Prev, ToolB_Next) == 1) {//クリックした長さが１のとき
 			// BtnType（０：通常ボタン　１：インデックス）//ChangeType（０：マウス　１：十字キーで操作　２：[5][6]キーで操作　３：[5][6]キーで操作)
@@ -6726,36 +6654,39 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 				}
 				///////新規作成//アクティブなディレクトリ（取得），ファイルパス（NULL），ファイルタイトル（無題），エディターモード（現状ママ）でメッセージ編集モードから抜ける
 				else if (ClickedNo == 1) {
-					char GetDir[MAX_PATH];
+					//char GetDir[MAX_PATH];
 					//ダイアログからディレクトリの選択
-					if (LocalDir[0] == '\0') {
-						strcpy(LocalDir, AppDir);
-						strcat(LocalDir, "\\OriginalFile\\MondaiData");
-					}
-					if (GetOpenDirectoryName(LocalDir, GetDir, MAX_PATH)) {
-						strcpy(FilePath_Mondai_h, GetDir);//) strcpy(FileTitle_Mondai, "無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
+//					if (LocalDir[0] == '\0') {
+//						strcpy(LocalDir, AppDir);
+//						strcat(LocalDir, "\\OriginalFile\\MondaiData");
+//					}
+//					if (GetOpenDirectoryName(LocalDir, GetDir, MAX_PATH)) {
+						strcpy(FilePath_Mondai_h, LocalDir);//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
 						strcat(FilePath_Mondai_h, "\\無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
 						//（拡張子なしなので注意。ディレクトリ内に「無題.txt」があればそれを開いてしまうため）
-						strcpy(LocalDir, GetDir);
 
 						//ディレクトリの直下にMonsterというディレクトリがなければ作成。あればエラーとなるだけで，Monster内の既存のファイルは消えない。
-						SetCurrentDirectory(GetDir);
-						CreateDirectory("Monster", NULL);
-						//CreateDirectory("Img", NULL);
-						//CreateDirectory("Sound", NULL);
-					}
-					char DirectoryNow1[MAX_PATH];
-					GetCurrentDirectory(MAX_PATH, DirectoryNow1);//チェック用
-
+				//		SetCurrentDirectory(LocalDir);
+				//		CreateDirectory("Monster", NULL);
+//					}
+//					char DirectoryNow1[MAX_PATH];
+	//				GetCurrentDirectory(MAX_PATH, DirectoryNow1);//チェック用
 					return 0;//問題編集モードから抜ける
+
+
+
+//					strcpy(FilePath_h, LocalDir);//) strcpy(FileTitle_Mondai, "無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
+//					strcat(FilePath_h, "\\無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
+//					*ExitModeFlag_p = 1;//各モードから抜けるサイン
+//					return 0;//プレビューモードから抜ける
 				}
 				///////ファイルを開く
 				else if (ClickedNo == 2) {
 					//ダイアログからファイル名を取得
-					if (LocalDir[0] == '\0') {
-						strcpy(LocalDir, AppDir);
-						strcat(LocalDir, "\\OriginalFile\\MondaiData");
-					}
+				//	if (LocalDir[0] == '\0') {
+				//		strcpy(LocalDir, AppDir);
+				//		strcat(LocalDir, "\\OriginalFile\\MondaiData");
+				//	}
 					//LocalDirは現時点で開いているファイルのディレクトリ。それがないときは「～\\OriginalFile\\MondaiData」
 					char filepath[MAX_PATH]; char filetitle[MAX_PATH];
 					if (GetOpenFileNameACK(LocalDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
@@ -6783,17 +6714,34 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 				}
 				///////上書き保存
 				else if (ClickedNo == 3) {
+					char LocalDirBefore[MAX_PATH];
+					strcpy(LocalDirBefore, LocalDir);//元のディレクトリを控える
 					//メッセージの保存
 					OverwriteMondai(FilePath_Mondai_h, FileTitle_Mondai, MAX_PATH, MAX_PATH, &Mondai);//上書き保存（または名前を付けて保存）
+
+					//メッセージボックスコントロール，メッセージボックスフォーム，リンクを保存するかどうか調べる
+					int SaveFlag = 0;
+					if (!strcmp(LocalDirBefore, LocalDir)) SaveFlag = 1;//同じディレクトリに保存したとき、MsgBoxSetなどを保存するためのフラグ
+					else {//違うディレクトリに保存したときは，元からあるMsgBoxSetなどを優先する。つまり保存しない（SaveFlagは0のまま）
+						FILE *fp = fopen(".\\MsgBoxSet.txt", "r");//MsgBoxSetが存在するか，ファイルを開いて確認する
+						if (fp == NULL) SaveFlag = 1;//新規作成でMsgBoxSetがないディレクトリに保存したとき、MsgBoxSetなどを保存するためのフラグSaveFlagを1にする
+						else fclose(fp);//ファイルを閉じる
+					}
+					//メッセージボックスコントロール，メッセージボックスフォーム，リンクの保存
+					if (SaveFlag == 1) {//MsgBoxSetなどのファイルも保存する（同じディレクトリ、または新規作成でボックスがないディレクトリにメッセージを保存したとき）
+						//※異なるディレクトリで、かつ既にMsgBoxSetが存在するときは保存しない
+						SetCurrentDirectory(LocalDir);
+						SaveMsgBoxSet(".\\MsgBoxSet.txt", MsgBox_Master, MsgBox_Kosuu, MsgBoxFormNumber);
+						SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", MsgBoxForm_Copy, MsgBoxForm_RGB_SoundPath_Set, MsgBoxForm_Kosuu);
+						SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
+					}
+
 					//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
 					strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
 					strcat(Titlebar_text, FileTitle_Mondai);//ファイル名を連結
 					SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
-					//メッセージボックスコントロールとメッセージボックスフォームの保存
-					SetCurrentDirectory(LocalDir);
-					SaveMsgBoxSet(".\\MsgBoxSet.txt", MsgBox_Master, MsgBox_Kosuu, MsgBoxFormNumber);
-					SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", MsgBoxForm_Copy, MsgBox_RGB_SoundPath, MsgBoxForm_Kosuu);
-					SaveMsgCodeLink(".\\MsgCodeLink.txt");//スタイルの保存
+
+					/*
 					//■モンスターのＩＤ順の並べ替え
 					char charbuff[MAX_PATH] = { 0 }; //画像ファイル
 					int intbuff;
@@ -6822,38 +6770,19 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 					}
 					//■モンスターファイルの保存
 					SetCurrentDirectory(LocalDir);
-
-					//char FilePath_Monster[MAX_PATH];//モンスターファイルパスを取得する変数
-					//strcpy(FilePath_Monster, LocalDir);//
-					//if (LocalDir[0] != '\0') strcat(FilePath_Monster, "\\Monster\\Monster.csv");//問題ディレクトリがカラならパスもカラになる
 					////モンスターのセーブ（ファイルパスがカラならすぐに抜けるから何も起こらない）
-					SaveMonster(".\\Monster\\Monster.csv", Monster, Monster_Kosuu, MaxMonsterID, ColumnTitle, Column_Kosuu, MonsterImgTitle);	//////////
+					SaveMonster(".\\Monster\\Monster.csv", Monster, Monster_Kosuu, IssuedMoonsterID, ColumnTitle, Column_Kosuu, MonsterImgTitle);	//////////
+					*/
 				}
 				///////モンスター編集
-				else if (ClickedNo == 4) {
+				else if (ClickedNo == 4){// && FilePath_Mondai_h[strlen(FilePath_Mondai_h)-4]=='.') {
 					char FilePath_Monster[MAX_PATH];//モンスターファイルパスを取得する変数
 					strcpy(FilePath_Monster, LocalDir);//
-					if (LocalDir[0] != '\0') strcat(FilePath_Monster, "\\Monster\\Monster.csv");//問題ディレクトリがカラならパスもカラになる
+					strcat(FilePath_Monster, "\\Monster\\Monster.csv");//問題ディレクトリがカラならパスもカラになるif (LocalDir[0] != '\0') 
+					
 					ClearDrawScreen();
-					if (!EditMonster(FilePath_Monster, Monster, &Monster_Kosuu, &MaxMonsterID, ColumnTitle, &Column_Kosuu, MonsterImgTitle, DisplayArea.BackImg)) {//モンスター編集モード
-					/*
-					//■モノスターテーブルの再読み込み
-						SetCurrentDirectory(LocalDir);//問題ファイルがあるディレクトリをカレントディレクトリとする（ここで切り替えなくても，ダイアログで選択した時点ですでに切り替わっているが念のため）
-
-						int error;
-						switch (error = LoadMonster(".\\Monster\\Monster.csv", MonsterH, Monster_name, Monster_gazou, MonsterImg, &ColumnKosuu, columntitle, &monstersuu)) {
-						//case -1: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのファイルが存在しません。", black, gray60); break;
-						case -2: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのID用カラムのタイトルがサイズオーバーしています。", black, gray60); break;
-						case -5: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのカラムのタイトルがサイズオーバーしています。", black, gray60); break;
-						case -7: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのID用カラムがサイズオーバーしています。", black, gray60); break;
-						case -8: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのモンスター名がサイズオーバーしています。", black, gray60); break;
-						case -9: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのモンスター画像パスがサイズオーバーしています。", black, gray60); break;
-						case -10: ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "モンスターのカラムがサイズオーバーしています。", black, gray60);
-
-						}
-						if (error < -1) DxLib::WaitKey();//サイズオーバーでもそのまま続ける。-1はエラーとしない
-						//※終了時はモンスターディレクトリ
-*/
+					//モンスター編集モード
+					if (!EditMonster(FilePath_Monster, Monster, &Monster_Kosuu, &IssuedMoonsterID, ColumnTitle, &Column_Kosuu, MonsterImgTitle, DisplayArea.BackImg)) {
 						if (Monster_Kosuu > TableMax) tablesuu = TableMax;//
 						else tablesuu = Monster_Kosuu;
 
@@ -6862,21 +6791,18 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						Monster[Monster_Kosuu].Img = LoadGraph(".\\System\\EditMondai\\notappricable.png");
 						strcpy(Monster[Monster_Kosuu + 1].Name, "未設定");
 						Monster[Monster_Kosuu + 1].Img = LoadGraph(".\\System\\EditMondai\\notset.png");
-
 						//■モンスター番号の確定
-						for (int i = 0; i < Monster_Kosuu; i++) {//モンスターナンバー（モンスターの要素番号）の確定
-							if (Mondai.monsterID == 0) {//IDがカラのとき，「未設定」となる。
-								MonsterNum = Monster_Kosuu + 1; break;
-							}
-							else if (Mondai.monsterID == Monster[i].Column[0]) {
-								MonsterNum = i; break;
-							}
-							else if (i == Monster_Kosuu - 1) {
-								MonsterNum = Monster_Kosuu;  break;//最後までチェックしても一致するIDがないとき，「該当なし」となる。
+						if (Mondai.monsterID == 0) MonsterNum = Monster_Kosuu + 1;//IDがカラのとき，「未設定」となる。
+						else {
+							for (int i = 0; i < Monster_Kosuu; i++) {//モンスターナンバー（モンスターの要素番号）の確定
+								if (Mondai.monsterID == Monster[i].Column[0]) {
+									MonsterNum = i; break;
+								}
+								else if (i == Monster_Kosuu - 1) {
+									MonsterNum = Monster_Kosuu;  break;//最後までチェックしても一致するIDがないとき，「該当なし」となる。
+								}
 							}
 						}
-
-
 						//■モンスター画像サイズの取得
 						for (int i = 0; i < Monster_Kosuu + 2; i++) {//モンスターナンバー（モンスターの要素番号）の確定
 							GetGraphSize(Monster[i].Img, &MonsterImgWidth[i], &MonsterImgHeight[i]); //モンスターの画像の縦横サイズを取得してmonsterwide，monsterhightに書き出す
@@ -6886,7 +6812,6 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						strcat(Titlebar_text, FileTitle_Mondai);//ディレクトリ名を連結
 						SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 					}
-					
 				}
 			}
 
@@ -7135,7 +7060,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						int MsgBoxNumber = 0;
 						int AreaNumber = 0;
 						//プレビューモード★
-						MessagePreviewMode(MsgBox_Master, MsgBox_Kosuu, MsgBoxNumber, MsgBoxForm, MsgBox_RGB_SoundPath, MsgBoxForm_Kosuu, MsgBoxFormNumber,
+						MessagePreviewMode(MsgBox_Master, MsgBox_Kosuu, MsgBoxNumber, MsgBoxForm, MsgBoxForm_RGB_SoundPath_Set, MsgBoxForm_Kosuu, MsgBoxFormNumber,
 							Mondai.daimon, DAIMON_FIELDSIZE + 1, DisplayArea_Preview_FilePath, DisplayArea_Preview, BorderColorRGB, BackColorRGB, BackImgPath, DisplayArea_Preview_Kosuu, AreaNumber,
 							FilePath_Mondai_h, FileTitle_Mondai, &Mondai, EditorMode_p, &ExitModeFlag
 						);
@@ -7216,7 +7141,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						//プレビューモード
 						int MsgBoxNumber = 1;
 						int AreaNumber = 1;
-						MessagePreviewMode(MsgBox_Master, MsgBox_Kosuu, MsgBoxNumber, MsgBoxForm, MsgBox_RGB_SoundPath, MsgBoxForm_Kosuu, MsgBoxFormNumber,
+						MessagePreviewMode(MsgBox_Master, MsgBox_Kosuu, MsgBoxNumber, MsgBoxForm, MsgBoxForm_RGB_SoundPath_Set, MsgBoxForm_Kosuu, MsgBoxFormNumber,
 							Mondai.daimonseikai, DAIMONSEIKAI_FIELDSIZE + 1, DisplayArea_Preview_FilePath, DisplayArea_Preview, BorderColorRGB, BackColorRGB, BackImgPath, DisplayArea_Preview_Kosuu, AreaNumber,
 							FilePath_Mondai_h, FileTitle_Mondai, &Mondai, EditorMode_p, &ExitModeFlag
 						);
@@ -7457,7 +7382,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 							int MsgBoxNumber = 2;
 							int AreaNumber = 2;
 							//プレビューモード
-							MessagePreviewMode(MsgBox_Master, MsgBox_Kosuu, MsgBoxNumber, MsgBoxForm, MsgBox_RGB_SoundPath, MsgBoxForm_Kosuu, MsgBoxFormNumber,
+							MessagePreviewMode(MsgBox_Master, MsgBox_Kosuu, MsgBoxNumber, MsgBoxForm, MsgBoxForm_RGB_SoundPath_Set, MsgBoxForm_Kosuu, MsgBoxFormNumber,
 								Mondai.syoumon[s], SYOUMON_FIELDSIZE + 1, DisplayArea_Preview_FilePath, DisplayArea_Preview, BorderColorRGB, BackColorRGB, BackImgPath, DisplayArea_Preview_Kosuu, AreaNumber,
 								FilePath_Mondai_h, FileTitle_Mondai, &Mondai, EditorMode_p, &ExitModeFlag
 							);
@@ -7540,7 +7465,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 							int MsgBoxNumber = 3;
 							int AreaNumber = 3;
 							//プレビューモード
-							MessagePreviewMode(MsgBox_Master, MsgBox_Kosuu, MsgBoxNumber, MsgBoxForm, MsgBox_RGB_SoundPath, MsgBoxForm_Kosuu, MsgBoxFormNumber,
+							MessagePreviewMode(MsgBox_Master, MsgBox_Kosuu, MsgBoxNumber, MsgBoxForm, MsgBoxForm_RGB_SoundPath_Set, MsgBoxForm_Kosuu, MsgBoxFormNumber,
 								Mondai.syoumonseikai[s], SYOUMON_FIELDSIZE + 1, DisplayArea_Preview_FilePath, DisplayArea_Preview, BorderColorRGB, BackColorRGB, BackImgPath, DisplayArea_Preview_Kosuu, AreaNumber,
 								FilePath_Mondai_h, FileTitle_Mondai, &Mondai, EditorMode_p, &ExitModeFlag
 							);
@@ -7716,27 +7641,8 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-						char GetDir[MAX_PATH];
-						//ダイアログからディレクトリの選択
-						if (LocalDir[0] == '\0') {
-							strcpy(LocalDir, AppDir);
-							strcat(LocalDir, "\\OriginalFile\\MondaiData");
-						}
-						if (GetOpenDirectoryName(LocalDir, GetDir, MAX_PATH)) {
-							strcpy(FilePath_Mondai_h, GetDir);//) strcpy(FileTitle_Mondai, "無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
-							strcat(FilePath_Mondai_h, "\\無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
-							//（拡張子なしなので注意。ディレクトリ内に「無題.txt」があればそれを開いてしまうため）
-							strcpy(LocalDir, GetDir);
-
-							//ディレクトリの直下にMonsterというディレクトリがなければ作成。あればエラーとなるだけで，Monster内の既存のファイルは消えない。
-							SetCurrentDirectory(GetDir);
-							CreateDirectory("Monster", NULL);
-							//CreateDirectory("Img", NULL);
-							//CreateDirectory("Sound", NULL);
-						}
-						char DirectoryNow1[MAX_PATH];
-						GetCurrentDirectory(MAX_PATH, DirectoryNow1);//チェック用
-						for (int i = 0; i < 3; i++) EditorPadArea_h[i].Active = 1;//インデックスエリア，ボタンエリア，ベースボタンエリアを待機状態に戻す（プルダウンリストのとき，非アクティブのままreturnで抜けてしまわないように）
+						strcpy(FilePath_Mondai_h, LocalDir);//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
+						strcat(FilePath_Mondai_h, "\\無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
 						return 0;//問題編集モードから抜ける
 					}
 				}
@@ -7750,14 +7656,9 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-						//ダイアログからファイル名を取得
-						if (LocalDir[0] == '\0') {
-							strcpy(LocalDir, AppDir);
-							strcat(LocalDir, "\\OriginalFile\\MondaiData");
-						}
 						char filepath[MAX_PATH]; char filetitle[MAX_PATH];
 						if (GetOpenFileNameACK(LocalDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-						//※終了時のカレントディレクトリは問題ファイルがあるディレクトリ。「～\\OriginalFile\\MondaiData」とは限らないので注意。
+						//※終了時のカレントディレクトリは問題ファイルがあるディレクトリ。「～\\OriginalFile\\MondaiData」とは限らないので注意。MondaiDirは元のまま
 						//※キャンセルしたときはパスとタイトルは変わらない。このとき相対パスのままなので下記の相対パス取得の処理はしないこと。
 							//開いたファイルのモードを調べる
 							ClearDrawScreen();
@@ -7765,16 +7666,20 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 							case 0://成功時，ロードせずに問題編集モードから抜けて，入りなおす
 								strcpy(FilePath_Mondai_h, filepath);//ファイルパスの確定
 								//if (*EditorMode_p != 1) LocalDir[0] = '\0';//違うモードに進んだあと，このモードに戻ってきたときに，フォント・タグ設定を再ロードしたいため。
-								for (int i = 0; i < 3; i++) EditorPadArea_h[i].Active = 1;//インデックスエリア，ボタンエリア，ベースボタンエリアを待機状態に戻す（プルダウンリストのとき，非アクティブのままreturnで抜けてしまわないように）
 								return 0;//問題編集モードから抜ける
 							case -1:
-								ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "ファイルが存在しません。", black, gray60);
+								ShowMsgDsignedBox(-1, -1, 600,//タイトルのパディング5，メッセージのパディング20
+									"エラー", white, gray30, "ファイルが存在しません。", black, gray60
+								);
 								WaitKey(); break;
 							default://実質（case -2））
-								ShowMsgDsignedBox(-1, -1, 600, "エラー", white, gray30, "該当するエディターモードがなく，このファイルを開くことができません。", black, gray60);
+								ShowMsgDsignedBox(-1, -1, 600,//タイトルのパディング5，メッセージのパディング20
+									"エラー", white, gray30, "該当するエディターモードがなく，このファイルを開くことができません。", black, gray60
+								);
 								WaitKey();
 							}
 						}
+
 					}
 				}
 				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
@@ -7788,51 +7693,32 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
+						char LocalDirBefore[MAX_PATH];
+						strcpy(LocalDirBefore, LocalDir);//元のディレクトリを控える
 						//メッセージの保存
 						OverwriteMondai(FilePath_Mondai_h, FileTitle_Mondai, MAX_PATH, MAX_PATH, &Mondai);//上書き保存（または名前を付けて保存）
+
+						//メッセージボックスコントロール，メッセージボックスフォーム，リンクを保存するかどうか調べる
+						int SaveFlag = 0;
+						if (!strcmp(LocalDirBefore, LocalDir)) SaveFlag = 1;//同じディレクトリに保存したとき、MsgBoxSetなどを保存するためのフラグ
+						else {//違うディレクトリに保存したときは，元からあるMsgBoxSetなどを優先する。つまり保存しない（SaveFlagは0のまま）
+							FILE *fp = fopen(".\\MsgBoxSet.txt", "r");//MsgBoxSetが存在するか，ファイルを開いて確認する
+							if (fp == NULL) SaveFlag = 1;//新規作成でMsgBoxSetがないディレクトリに保存したとき、MsgBoxSetなどを保存するためのフラグSaveFlagを1にする
+							else fclose(fp);//ファイルを閉じる
+						}
+						//メッセージボックスコントロール，メッセージボックスフォーム，リンクの保存
+						if (SaveFlag == 1) {//MsgBoxSetなどのファイルも保存する（同じディレクトリ、または新規作成でボックスがないディレクトリにメッセージを保存したとき）
+							//※異なるディレクトリで、かつ既にMsgBoxSetが存在するときは保存しない
+							SetCurrentDirectory(LocalDir);
+							SaveMsgBoxSet(".\\MsgBoxSet.txt", MsgBox_Master, MsgBox_Kosuu, MsgBoxFormNumber);
+							SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", MsgBoxForm_Copy, MsgBoxForm_RGB_SoundPath_Set, MsgBoxForm_Kosuu);
+							SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
+						}
+
 						//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
 						strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
 						strcat(Titlebar_text, FileTitle_Mondai);//ファイル名を連結
 						SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
-						//メッセージボックスコントロールとメッセージボックスフォームの保存
-						SetCurrentDirectory(LocalDir);
-						SaveMsgBoxSet(".\\MsgBoxSet.txt", MsgBox_Master, MsgBox_Kosuu, MsgBoxFormNumber);
-						SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", MsgBoxForm_Copy, MsgBox_RGB_SoundPath, MsgBoxForm_Kosuu);
-						SaveMsgCodeLink(".\\MsgCodeLink.txt");//スタイルの保存
-						//■モンスターのＩＤ順の並べ替え
-						char charbuff[MAX_PATH] = { 0 }; //画像ファイル
-						int intbuff;
-						struct MONSTER_CTRL MinsterBuff;
-						for (int i = 0; i < Monster_Kosuu; i++) {
-							for (int j = Monster_Kosuu - 1; j > i; j--) {
-								if (Monster[j - 1].Column[0] > Monster[j].Column[0] && Monster[j].Column[0] != 0) {
-
-									MinsterBuff = Monster[j];
-									Monster[j] = Monster[j - 1];
-									Monster[j - 1] = MinsterBuff;
-
-									strcpy(charbuff, MonsterImgTitle[j]);//画像パスの並べ替え
-									strcpy(MonsterImgTitle[j], MonsterImgTitle[j - 1]);
-									strcpy(MonsterImgTitle[j - 1], charbuff);
-
-									intbuff = MonsterImgWidth[j];
-									MonsterImgWidth[j] = MonsterImgWidth[j - 1];
-									MonsterImgWidth[j - 1] = intbuff;
-
-									intbuff = MonsterImgHeight[j];
-									MonsterImgHeight[j] = MonsterImgHeight[j - 1];
-									MonsterImgHeight[j - 1] = intbuff;
-								}
-							}
-						}
-						//■モンスターファイルの保存
-						SetCurrentDirectory(LocalDir);
-
-						//char FilePath_Monster[MAX_PATH];//モンスターファイルパスを取得する変数
-						//strcpy(FilePath_Monster, LocalDir);//
-						//if (LocalDir[0] != '\0') strcat(FilePath_Monster, "\\Monster\\Monster.csv");//問題ディレクトリがカラならパスもカラになる
-						////モンスターのセーブ（ファイルパスがカラならすぐに抜けるから何も起こらない）
-						SaveMonster(".\\Monster\\Monster.csv", Monster, Monster_Kosuu, MaxMonsterID, ColumnTitle, Column_Kosuu, MonsterImgTitle);	//////////
 					}
 				}
 				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
@@ -7845,50 +7731,32 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
+						char LocalDirBefore[MAX_PATH];
+						strcpy(LocalDirBefore, LocalDir);//元のディレクトリを控える
+						//名前を付けてメッセージの保存
 						SaveAsNewMondai(FilePath_Mondai_h, FileTitle_Mondai, MAX_PATH, MAX_PATH, &Mondai); //名前を付けて保存
+
+						//メッセージボックスコントロール，メッセージボックスフォーム，リンクを保存するかどうか調べる
+						int SaveFlag = 0;
+						if (!strcmp(LocalDirBefore, LocalDir)) SaveFlag = 1;//同じディレクトリに保存したとき、MsgBoxSetなどを保存するためのフラグ
+						else {//違うディレクトリに保存したときは，元からあるMsgBoxSetなどを優先する。つまり保存しない（SaveFlagは0のまま）
+							FILE *fp = fopen(".\\MsgBoxSet.txt", "r");//MsgBoxSetが存在するか，ファイルを開いて確認する
+							if (fp == NULL) SaveFlag = 1;//新規作成でMsgBoxSetがないディレクトリに保存したとき、MsgBoxSetなどを保存するためのフラグSaveFlagを1にする
+							else fclose(fp);//ファイルを閉じる
+						}
+						//メッセージボックスコントロール，メッセージボックスフォーム，リンクの保存
+						if (SaveFlag == 1) {//MsgBoxSetなどのファイルも保存する（同じディレクトリ、または新規作成でボックスがないディレクトリにメッセージを保存したとき）
+							//※異なるディレクトリで、かつ既にMsgBoxSetが存在するときは保存しない
+							SetCurrentDirectory(LocalDir);
+							SaveMsgBoxSet(".\\MsgBoxSet.txt", MsgBox_Master, MsgBox_Kosuu, MsgBoxFormNumber);
+							SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", MsgBoxForm_Copy, MsgBoxForm_RGB_SoundPath_Set, MsgBoxForm_Kosuu);
+							SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
+						}
+
 						//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
 						strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
 						strcat(Titlebar_text, FileTitle_Mondai);//ファイル名を連結
 						SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
-						//メッセージボックスコントロールとメッセージボックスフォームの保存
-						SetCurrentDirectory(LocalDir);
-						SaveMsgBoxSet(".\\MsgBoxSet.txt", MsgBox_Master, MsgBox_Kosuu, MsgBoxFormNumber);
-						SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", MsgBoxForm_Copy, MsgBox_RGB_SoundPath, MsgBoxForm_Kosuu);
-						SaveMsgCodeLink(".\\MsgCodeLink.txt");//スタイルの保存
-						//■モンスターのＩＤ順の並べ替え
-						char charbuff[MAX_PATH] = { 0 }; //画像ファイル
-						int intbuff;
-						struct MONSTER_CTRL MinsterBuff;
-						for (int i = 0; i < Monster_Kosuu; i++) {
-							for (int j = Monster_Kosuu - 1; j > i; j--) {
-								if (Monster[j - 1].Column[0] > Monster[j].Column[0] && Monster[j].Column[0] != 0) {
-
-									MinsterBuff = Monster[j];
-									Monster[j] = Monster[j - 1];
-									Monster[j - 1] = MinsterBuff;
-
-									strcpy(charbuff, MonsterImgTitle[j]);//画像パスの並べ替え
-									strcpy(MonsterImgTitle[j], MonsterImgTitle[j - 1]);
-									strcpy(MonsterImgTitle[j - 1], charbuff);
-
-									intbuff = MonsterImgWidth[j];
-									MonsterImgWidth[j] = MonsterImgWidth[j - 1];
-									MonsterImgWidth[j - 1] = intbuff;
-
-									intbuff = MonsterImgHeight[j];
-									MonsterImgHeight[j] = MonsterImgHeight[j - 1];
-									MonsterImgHeight[j - 1] = intbuff;
-								}
-							}
-						}
-						//■モンスターファイルの保存
-						SetCurrentDirectory(LocalDir);
-
-						//char FilePath_Monster[MAX_PATH];//モンスターファイルパスを取得する変数
-						//strcpy(FilePath_Monster, LocalDir);//
-						//if (LocalDir[0] != '\0') strcat(FilePath_Monster, "\\Monster\\Monster.csv");//問題ディレクトリがカラならパスもカラになる
-						////モンスターのセーブ（ファイルパスがカラならすぐに抜けるから何も起こらない）
-						SaveMonster(".\\Monster\\Monster.csv", Monster, Monster_Kosuu, MaxMonsterID, ColumnTitle, Column_Kosuu, MonsterImgTitle);	//////////
 					}
 				}
 				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
@@ -7898,16 +7766,16 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 				////////モンスター編集
 				r++;
 				if (List0.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List0.Nest[0] + List0.RowWidth && List0.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List0.Nest[1] + List0.RowHeight
-					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
+					&& List0Row[r].Active > 0 && FilePath_Mondai_h[strlen(FilePath_Mondai_h) - 4] == '.') {//ボタンの範囲内のとき ※ファイル名が無題でない（つまり拡張子.acmがついている）
 					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						char FilePath_Monster[MAX_PATH];//モンスターファイルパスを取得する変数
 						strcpy(FilePath_Monster, LocalDir);//
-						if (LocalDir[0] != '\0') strcat(FilePath_Monster, "\\Monster\\Monster.csv");//問題ディレクトリがカラならパスもカラになる
+						strcat(FilePath_Monster, "\\Monster\\Monster.csv");//問題ディレクトリがカラならパスもカラになるif (LocalDir[0] != '\0') 
 						ClearDrawScreen();
-						if (!EditMonster(FilePath_Monster, Monster, &Monster_Kosuu, &MaxMonsterID, ColumnTitle, &Column_Kosuu, MonsterImgTitle, DisplayArea.BackImg)) {
+						//モンスター編集モード
+						if (!EditMonster(FilePath_Monster, Monster, &Monster_Kosuu, &IssuedMoonsterID, ColumnTitle, &Column_Kosuu, MonsterImgTitle, DisplayArea.BackImg)) {
 							
-							//モンスター編集モード
 							if (Monster_Kosuu > TableMax) tablesuu = TableMax;//
 							else tablesuu = Monster_Kosuu;
 
@@ -7916,20 +7784,18 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 							Monster[Monster_Kosuu].Img = LoadGraph(".\\System\\EditMondai\\notappricable.png");
 							strcpy(Monster[Monster_Kosuu + 1].Name, "未設定");
 							Monster[Monster_Kosuu + 1].Img = LoadGraph(".\\System\\EditMondai\\notset.png");
-
 							//■モンスター番号の確定
-							for (int i = 0; i < Monster_Kosuu; i++) {//モンスターナンバー（モンスターの要素番号）の確定
-								if (Mondai.monsterID == 0) {//IDがカラのとき，「未設定」となる。
-									MonsterNum = Monster_Kosuu + 1; break;
-								}
-								else if (Mondai.monsterID == Monster[i].Column[0]) {
-									MonsterNum = i; break;
-								}
-								else if (i == Monster_Kosuu - 1) {
-									MonsterNum = Monster_Kosuu;  break;//最後までチェックしても一致するIDがないとき，「該当なし」となる。
+							if (Mondai.monsterID == 0) MonsterNum = Monster_Kosuu + 1;//IDがカラのとき，「未設定」となる。
+							else {
+								for (int i = 0; i < Monster_Kosuu; i++) {//モンスターナンバー（モンスターの要素番号）の確定
+									if (Mondai.monsterID == Monster[i].Column[0]) {
+										MonsterNum = i; break;
+									}
+									else if (i == Monster_Kosuu - 1) {
+										MonsterNum = Monster_Kosuu;  break;//最後までチェックしても一致するIDがないとき，「該当なし」となる。
+									}
 								}
 							}
-
 							//■モンスター画像サイズの取得
 							for (int i = 0; i < Monster_Kosuu + 2; i++) {//モンスターナンバー（モンスターの要素番号）の確定
 								GetGraphSize(Monster[i].Img, &MonsterImgWidth[i], &MonsterImgHeight[i]); //モンスターの画像の縦横サイズを取得してmonsterwide，monsterhightに書き出す
@@ -7940,8 +7806,6 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 							SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 						}
 					}
-
-
 				}
 				if (List0Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
 				DrawFormatString(List0.Nest[0] + List0.BorderThickness + List0.RowPadding[0], List0.Nest[1] + List0.BorderThickness + List0.RowPadding[1], black, List0Row[r].Title); //文字板の表示
@@ -7953,9 +7817,8 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 					&& List0Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-						//LocalDir[0] = '\0';//違うモードに進んだあと，このモードに戻ってきたときに，フォント・タグ設定を再ロードしたいため。
 						*EditorMode_p = 99;//０：メッセージ編集モード　１：問題編集モード　２：パッドビューア　９９：ホームへ戻る
-						for (int i = 0; i < 3; i++) EditorPadArea_h[i].Active = 1;//インデックスエリア，ボタンエリア，ベースボタンエリアを待機状態に戻す（プルダウンリストのとき，非アクティブのままreturnで抜けてしまわないように）
+						//for (int i = 0; i < 3; i++) EditorPadArea_h[i].Active = 1;//インデックスエリア，ボタンエリア，ベースボタンエリアを待機状態に戻す（プルダウンリストのとき，非アクティブのままreturnで抜けてしまわないように）
 						return 0;
 					}
 				}
@@ -8016,11 +7879,13 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						if (GetOpenFileNameCsv(Dir_FontStyle, SourcePath, Title_FontStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時はDir_FontSetがカレントディレクトリとなる
 							//rwの書き換え
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							//MsgCodeLinkファイルがないときTitle_FontStyle_rw以外は"未設定"とする
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {
 								strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
+							//Title_FontStyle_rwだけ取得した文字列にする
 							strcpy(Title_FontStyle_rw, Title_FontStyle);
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
@@ -8047,11 +7912,13 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						if (GetOpenFileNameCsv(Dir_FontImgStyle, SourcePath, Title_FontImgStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時はDir_FontImgSetがカレントディレクトリとなる
 							//rwの書き換え
+							//MsgCodeLinkファイルがないときTitle_FontImgStyle_rw以外は"未設定"とする
 							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
+							//Title_FontImgStyle_rwだけ取得した文字列にする
 							strcpy(Title_FontImgStyle_rw, Title_FontImgStyle);
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
@@ -8078,11 +7945,13 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						if (GetOpenFileNameCsv(Dir_TagStyle, SourcePath, Title_TagStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時はDir_TagSetがカレントディレクトリとなる
 							//rwの書き換え
+							//MsgCodeLinkファイルがないときTitle_TagStyle_rw以外は"未設定"とする
 							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
+							//Title_TagStyle_rwだけ取得した文字列にする
 							strcpy(Title_TagStyle_rw, Title_TagStyle);
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
@@ -8108,9 +7977,12 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						char SourcePath[MAX_PATH] = { 0 };
 						if (GetOpenFileNameCsv(Dir_JoypadStyle, SourcePath, Title_JoypadStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時はDir_Joypadがカレントディレクトリとなる
+							//rwの書き換え
+							//JoypadLinkファイルがないときTitle_JoypadStyle_rw以外は"未設定"とする
 							if (strcmp(Title_JoypadStyle_rw, "なし") == 0) {//JoypadLinkがないとき
 								strcpy(Dir_JoypadStyle_rw, "未設定");
 							}
+							//Title_JoypadStyle_rwだけ取得した文字列にする
 							strcpy(Title_JoypadStyle_rw, Title_JoypadStyle);
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
@@ -8134,11 +8006,14 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_FontStyle, MAX_PATH)) {
+							//rwの書き換え
+							//MsgCodeLinkファイルがないときDir_FontStyle_rw以外は"未設定"とする
 							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
+							//Dir_FontStyle_rwだけ取得した文字列を相対パスに変換した文字列にする
 							PathRelativePathTo(Dir_FontStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
@@ -8156,11 +8031,14 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_FontImgStyle, MAX_PATH)) {
+							//rwの書き換え
+							//MsgCodeLinkファイルがないときDir_FontImgStyle_rw以外は"未設定"とする
 							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
+							//Dir_FontImgStyle_rwだけ取得した文字列を相対パスに変換した文字列にする
 							PathRelativePathTo(Dir_FontImgStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontImgStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
@@ -8178,11 +8056,14 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_TagStyle, MAX_PATH)) {
+							//rwの書き換え
+							//MsgCodeLinkファイルがないときDir_TagStyle_rw以外は"未設定"とする
 							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
+							//Dir_TagStyle_rwだけ取得した文字列を相対パスに変換した文字列にする
 							PathRelativePathTo(Dir_TagStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_TagStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
@@ -8200,11 +8081,14 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_AppImg, MAX_PATH)) {
+							//rwの書き換え
+							//MsgCodeLinkファイルがないときDir_AppImg_rw以外は"未設定"とする
 							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppSound_rw, "未設定");
 							}
+							//Dir_AppImg_rwだけ取得した文字列を相対パスに変換した文字列にする
 							PathRelativePathTo(Dir_AppImg_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppImg, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							nukeru = 1;//タグを再読み込みするため
 						}
@@ -8223,11 +8107,14 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_AppSound, MAX_PATH)) {
+							//rwの書き換え
+							//MsgCodeLinkファイルがないときDir_AppSound_rw以外は"未設定"とする
 							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定");
 							}
+							//Dir_AppSound_rwだけ取得した文字列を相対パスに変換した文字列にする
 							PathRelativePathTo(Dir_AppSound_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppSound, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							nukeru = 1;//タグを再読み込みするため
 						}
@@ -8246,9 +8133,12 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_JoypadStyle, MAX_PATH)) {
+							//rwの書き換え
+							//MsgCodeLinkファイルがないときDir_JoypadStyle_rw以外は"未設定"とする
 							if (strcmp(Title_JoypadStyle_rw, "なし") == 0) {//JoypadLinkがないとき
 								strcpy(Title_JoypadStyle_rw, "未設定");
 							}
+							//Dir_JoypadStyle_rwだけ取得した文字列を相対パスに変換した文字列にする
 							PathRelativePathTo(Dir_JoypadStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_JoypadStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
@@ -8266,14 +8156,14 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						SetCurrentDirectory(LocalDir);
-						SaveMsgCodeLink(".\\MsgCodeLink.txt");//スタイルの保存
-						SaveJoypadLink(".\\JoypadLink.txt");//スタイルの保存
+						SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
+						SaveJoypadLink(".\\JoypadLink.txt");//ジョイパッドリンクの保存　全部未設定（つまりTitle_JoypadStyle_rwが"なし"）なら保存しない
 					}
 				}
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
 				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
-				//List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
+				//List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす。最後だからなくてもよい
 
 				///////左クリックしたとき    プルダウンリストから抜ける
 				if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
@@ -8315,7 +8205,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 				if (List2Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
 				DrawFormatString(List2.Nest[0] + List2.BorderThickness + List2.RowPadding[0], List2.Nest[1] + List2.BorderThickness + List2.RowPadding[1], black, List2Row[r].Title); //文字板の表示
 				if (List2Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
-				//List0.Nest[1] += List0.RowHeight;////次の行の開始位置までずらす　あってもなくてもよい
+				//List0.Nest[1] += List0.RowHeight;////次の行の開始位置までずらす。最後だからなくてもよい
 				///////左クリックしたとき    プルダウンリストから抜ける
 				if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 					List1.Active = -1; List2.Active = -1; Toolbar[1].Active = 1;//プルダウンリストから抜けて待機状態にする
@@ -8441,7 +8331,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 			int LocationX = ActiveMath::MouseX; int LocationY = ActiveMath::MouseY + 20;
 			Math_CursorOver(LocationX, LocationY, 2, black, BackColor_CursorOver, NULL);//Math_ButtonTitleShow(const int LocationX, const int LocationY, const int Padding, const int StringColor, const int BackColor, const int Type)
 			//●マルチガイド
-			MultiGuide();//全メッセージで共有するため，MathWritingP内に入れないこと。
+	//		MultiGuide();//全メッセージで共有するため，MathWritingP内に入れないこと。
 			//●サンプルの制限解除（コントロール＋R）
 			if (ActiveMath::Key[KEY_INPUT_R] == 1 && (ActiveMath::Key[KEY_INPUT_LCONTROL] > 0 || ActiveMath::Key[KEY_INPUT_RCONTROL] > 0)) {
 				for (int i = 0; i < ToolBKosuu; i++) ToolB[i].Active = 1;
@@ -8460,6 +8350,8 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 
 /////↓メッセージ編集モード↓////////////↓メッセージ編集モード↓////////////↓メッセージ編集モード↓////////////↓メッセージ編集モード↓//////
 int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
+
+
 	//////////ツールボタン////////////
 	//■ツールバー
 	static struct AREA_CTRL Toolbar[2] = { 0 };
@@ -8702,13 +8594,13 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 	}
 */
 //メッセージ
-	const int MsgCharMax = 2000;//読み込み可能な文字数
+	const int MsgCharMax = 4000;//読み込み可能な文字数
 	char Msg[MsgCharMax + 1] = { 0 }; //メッセージを入れる
 	int MsgBox_Kosuu = 1, MsgBoxForm_Kosuu = 1;
 	//メッセージフォーム
 	static struct MSG_BOX_FORM MsgBoxForm;//マスター（メッセージの表示にはこれを使用する。メッセージの編集では値を一時的に書き換える）
 	static struct MSG_BOX_FORM MsgBoxForm_Copy;//コピー（メッセージの編集で一時的に書き換えた値を，元に戻すために使用。またメッセージフォームの保存にはこれを使用。）
-	static MSG_BOX_RGB_SOUNDPATH MsgBox_RGB_SoundPath_h;//色，音声はハンドルではなく，色はRGB値，音声はLocalDirからの相対パスを記録（値の変更や保存で使用）
+	static MSG_BOX_FORM_RGB_SOUNDPATH MsgBoxForm_RGB_SoundPath;//色，音声はハンドルではなく，色はRGB値，音声はLocalDirからの相対パスを記録（値の変更や保存で使用）
 
 
 	//メッセージボックスコントロール
@@ -8716,23 +8608,30 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 	static struct MSG_BOX_CTRL MsgBox_Msg;//メッセージボックス
 	int MsgBoxNumber = 0;
 	int MsgBoxFormNumber = 0;
+	char Pathbuff[MAX_PATH];
+	strcpy(Pathbuff, LocalDir);
 
 	//メッセージ，設定，背景画像，メッセージプロパティのロード
+
+	char Pathbuff2[MAX_PATH];
+	strcpy(Pathbuff2, LocalDir);
+
 	if (FilePath_Message_h[0] != '\0') {
 		//●メッセージとメッセージ関連ファイルのロード
 		{
 			struct LOAD_MSG_SP m;//ロードするための情報
-			m.FilePath_h = FilePath_Message_h;
-			m.MsgSize = sizeof(Msg);
-			m.Msg_h = Msg;
-			char Dir_h[MAX_PATH];
-			GetDirFromPath(Dir_h, FilePath_Message_h);
-			m.Dir_h = Dir_h;
+			m.FilePath = FilePath_Message_h;
+			m.MsgCodeSize = sizeof(Msg);
+			m.MsgCode = Msg;
+			//char Dir_h[MAX_PATH];
+			//GetDirFromPath(Dir_h, FilePath_Message_h);
+			//m.Dir = ;？？？strcpy？？？
 			m.MsgBoxForm_p = &MsgBoxForm;
 			m.MsgBox_p = &MsgBox_Master;
-			//m.GetDirFlag = 0;//初期値：１
-			//m.MsgCodeLinkFlag = 0;//初期値：１
-			//m.JoypadLinkFlag = 0;//初期値：１
+			//m.SetMsgLocalDirFlag = FALSE;//初期値：TRUE
+			//m.MsgCodeLinkFlag = FALSE;//初期値：TRUE
+			//m.JoypadLinkFlag = FALSE;//初期値：TRUE
+
 			//（ロード）
 			if (LoadMsgSP(&m)) {
 				DxLib::WaitKey();
@@ -8749,7 +8648,7 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 		char Path[MAX_PATH];
 		strcpy(Path, LocalDir);
 		strcat(Path, "\\MsgBoxFormSet.txt");
-		LoadMsgBoxRgbSoundPathSet(Path, &MsgBox_RGB_SoundPath_h, MsgBoxForm_Kosuu);//ファームのセーブがあるため，LoadMsgBoxForm_RGB_SoundPathもロードしておく必要がある。
+		LoadMsgBoxFormRgbSoundPathSet(Path, &MsgBoxForm_RGB_SoundPath, MsgBoxForm_Kosuu);//ファームのセーブがあるため，LoadMsgBoxForm_RGB_SoundPathもロードしておく必要がある。
 		//char DirectoryNow1[MAX_PATH];
 		//GetCurrentDirectory(MAX_PATH, DirectoryNow1);//チェック用
 
@@ -8761,16 +8660,15 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 	SetMainWindowText(Titlebar_text);//タイトルバーの書き換え
 
 
-
 	//プレビューモードint Area_Kosuu = 1;  
 	int ExitModeFlag = 0;
 	int AreaNumber = 0;
-	MessagePreviewMode(&MsgBox_Master, MsgBox_Kosuu, MsgBoxNumber, &MsgBoxForm, &MsgBox_RGB_SoundPath_h, MsgBoxForm_Kosuu, &MsgBoxFormNumber,
+	MessagePreviewMode(&MsgBox_Master, MsgBox_Kosuu, MsgBoxNumber, &MsgBoxForm, &MsgBoxForm_RGB_SoundPath, MsgBoxForm_Kosuu, &MsgBoxFormNumber,
 		Msg, MsgCharMax + 1, DisplayArea_Preview_FilePath, &DisplayArea_Preview, &BorderColorRGB, &BackColorRGB, &BackImgPath, DisplayArea_Preview_Kosuu, AreaNumber,
 		FilePath_Message_h, FileTitle_Message, NULL, EditorMode_p, &ExitModeFlag//問題編集もーどのときはNULLのところが, &mondai（これは問題ファイルを保存するのに必要だから）
 	);
 	return 0;
-
+/*
 	while (!ProcessMessage()) {
 		//■メッセージボックスフォームの値を編集用に書き換える
 		//本来の値をかきうつす（フォームはロードしたものを使うため，書き換える前に元の値をコピーしておく）
@@ -8851,7 +8749,7 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 					char GetDir[MAX_PATH];
 					//ダイアログからディレクトリの選択
 					strcpy(FirstDir, AppDir);
-					strcat(FirstDir, "\\OriginalFile\\MessageData");
+					strcat(FirstDir, "\\OriginalFile\\MsgData");
 					if (GetOpenDirectoryName(FirstDir, GetDir, MAX_PATH)) {
 						strcpy(FilePath_Message_h, GetDir);//) strcpy(FileTitle_Mondai, "無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
 						strcat(FilePath_Message_h, "\\無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
@@ -8871,12 +8769,12 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 					//ダイアログからファイル名を取得
 					if (LocalDir[0] == '\0') {
 						strcpy(FirstDir, AppDir);
-						strcat(FirstDir, "\\OriginalFile\\MessageData");
+						strcat(FirstDir, "\\OriginalFile\\MsgData");
 					}
 					else strcpy(FirstDir, LocalDir);
 					char filepath[MAX_PATH]; char filetitle[MAX_PATH];
 					if (GetOpenFileNameACM(FirstDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-					//※終了時のカレントディレクトリはメッセージファイルがあるディレクトリ。「～\\OriginalFile\\MessageData」とは限らないので注意。
+					//※終了時のカレントディレクトリはメッセージファイルがあるディレクトリ。「～\\OriginalFile\\MsgData」とは限らないので注意。
 					//※キャンセルしたときはパスとタイトルは変わらない。このとき相対パスのままなので下記の相対パス取得の処理はしないこと。
 						//開いたファイルのモードを調べる
 						ClearDrawScreen();
@@ -8896,12 +8794,12 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 				}
 				///////上書き保存
 				else if (ClickedNo == 3) {
-					OverwriteMessage(FilePath_Message_h, FileTitle_Message, MAX_PATH, MAX_PATH, Msg, MsgBox_Msg.Tag[0].Post);//上書き保存（または名前を付けて保存）;//tag[0].PostをTagKosuu（tagnomax）として代用
+					OverwriteMsg(FilePath_Message_h, FileTitle_Message, MAX_PATH, MAX_PATH, Msg, MsgBox_Msg.Tag[0].Post);//上書き保存（または名前を付けて保存）;//tag[0].PostをTagKosuu（tagnomax）として代用
 					//メッセージボックスコントロールとメッセージボックスフォームの保存
 					SetCurrentDirectory(LocalDir);
 					SaveMsgBoxSet(".\\MsgBoxSet.txt", &MsgBox_Master, MsgBox_Kosuu, &MsgBoxFormNumber);
 					SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", &MsgBoxForm_Copy, &MsgBox_RGB_SoundPath_h, MsgBoxForm_Kosuu);
-					SaveMsgCodeLink(".\\MsgCodeLink.txt");//スタイルの保存
+					SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 
 					//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
 					strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
@@ -9092,7 +8990,7 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 						char GetDir[MAX_PATH];
 						//ダイアログからディレクトリの選択
 						strcpy(FirstDir, AppDir);
-						strcat(FirstDir, ".\\OriginalFile\\MessageData");
+						strcat(FirstDir, ".\\OriginalFile\\MsgData");
 						if (GetOpenDirectoryName(FirstDir, GetDir, MAX_PATH)) {
 							strcpy(FilePath_Message_h, GetDir);//) strcpy(FileTitle_Mondai, "無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
 							strcat(FilePath_Message_h, "\\無題");//ディレクトリを取得できたらファイルタイトルを「無題」にする。キャンセルのときはそのまま。
@@ -9118,12 +9016,12 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 						//ダイアログからファイル名を取得
 						if (LocalDir[0] == '\0') {
 							strcpy(FirstDir, AppDir);
-							strcat(FirstDir, "\\OriginalFile\\MessageData");
+							strcat(FirstDir, "\\OriginalFile\\MsgData");
 						}
 						else strcpy(FirstDir, LocalDir);
 						char filepath[MAX_PATH]; char filetitle[MAX_PATH];
 						if (GetOpenFileNameACM(FirstDir, filepath, filetitle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-						//※終了時のカレントディレクトリはメッセージファイルがあるディレクトリ。「～\\OriginalFile\\MessageData」とは限らないので注意。
+						//※終了時のカレントディレクトリはメッセージファイルがあるディレクトリ。「～\\OriginalFile\\MsgData」とは限らないので注意。
 						//※キャンセルしたときはパスとタイトルは変わらない。このとき相対パスのままなので下記の相対パス取得の処理はしないこと。
 							//開いたファイルのモードを調べる
 							ClearDrawScreen();
@@ -9150,12 +9048,12 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 				if (List0.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List0.Nest[0] + List0.RowWidth && List0.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List0.Nest[1] + List0.RowHeight) {//ボタンの範囲内のとき
 					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-						OverwriteMessage(FilePath_Message_h, FileTitle_Message, MAX_PATH, MAX_PATH, Msg, MsgBox_Msg.Tag[0].Post);//上書き保存（または名前を付けて保存）
+						OverwriteMsg(FilePath_Message_h, FileTitle_Message, MAX_PATH, MAX_PATH, Msg, MsgBox_Msg.Tag[0].Post);//上書き保存（または名前を付けて保存）
 						//メッセージボックスコントロールとメッセージボックスフォームの保存
 						SetCurrentDirectory(LocalDir);
 						SaveMsgBoxSet(".\\MsgBoxSet.txt", &MsgBox_Master, MsgBox_Kosuu, &MsgBoxFormNumber);
 						SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", &MsgBoxForm_Copy, &MsgBox_RGB_SoundPath_h, MsgBoxForm_Kosuu);
-						SaveMsgCodeLink(".\\MsgCodeLink.txt");//スタイルの保存
+						SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 
 						//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
 						strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
@@ -9170,12 +9068,12 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 				if (List0.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List0.Nest[0] + List0.RowWidth && List0.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List0.Nest[1] + List0.RowHeight) {//ボタンの範囲内のとき
 					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-						SaveAsNewMessage(FilePath_Message_h, FileTitle_Message, MAX_PATH, MAX_PATH, Msg, MsgBox_Msg.Tag[0].Post); //名前を付けて保存
+						SaveAsNewMsg(FilePath_Message_h, FileTitle_Message, MAX_PATH, MAX_PATH, Msg, MsgBox_Msg.Tag[0].Post); //名前を付けて保存
 						//メッセージボックスコントロールとメッセージボックスフォームの保存
 						SetCurrentDirectory(LocalDir);
 						SaveMsgBoxSet(".\\MsgBoxSet.txt", &MsgBox_Master, MsgBox_Kosuu, &MsgBoxFormNumber);
 						SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", &MsgBoxForm_Copy, &MsgBox_RGB_SoundPath_h, MsgBoxForm_Kosuu);
-						SaveMsgCodeLink(".\\MsgCodeLink.txt");//スタイルの保存
+						SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 
 						//タイトルバーのテキストの更新（名前を付けて保存になったときのため）
 						strcpy(Titlebar_text, AppMode_text);//アプリケーション名を代入
@@ -9496,8 +9394,8 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						SetCurrentDirectory(LocalDir);
-						SaveMsgCodeLink(".\\MsgCodeLink.txt");//スタイルの保存
-						SaveJoypadLink(".\\JoypadLink.txt");//スタイルの保存
+						SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
+						SaveJoypadLink(".\\JoypadLink.txt");//ジョイパッドリンクの保存　全部未設定（つまりTitle_JoypadStyle_rwが"なし"）なら保存しない
 					}
 				}
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
@@ -9550,49 +9448,12 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 					DisplayArea.Active = 1;
 				}
 			}
-			/*
-			//背景の変更
-			if (SettingEditorBackFlag > 0) {
-				//リストから選択した瞬間
-				if (SettingEditorBackFlag == 1) {
-					Toolbar[1].Active = 0;//PulldownFlag：－１：無効　０以上：有効なツール番号
-					for (int i = 0; i < 3; i++) EditorPadArea_h[i].Active = 0;//インデックスエリア，ボタンエリア，ベースボタンエリアの停止
-					DisplayArea.Active = 0;
-
-				}
-				//背景の変更フォームの表示　リストから選択して（保存は戻ってきたあとDisplayArea_Preview_FilePathに書き写してから）
-				int AreaNum = 0;
-				int Value = ChageBackImg(DisplayArea_Preview_FilePath, &DisplayArea, &BorderColorRGB, &BackColorRGB, &BackImgPath, DisplayArea_Kosuu, &SettingEditorBackFlag);
-				//背景の変更フォーム内で保存を押した
-				if (Value == 1) {
-					//プレビュー用のディスプレイエリアに書き写す
-					DisplayArea_Preview.BackColor = DisplayArea.BackColor;//メッセージ入力エリア
-					DisplayArea_Preview.BackImg = DisplayArea.BackImg;//メッセージ入力エリア
-
-					//設定用ファイルの保存
-					//SetCurrentDirectory(AppDir);
-					//SaveEditorSettings(DisplayArea_Preview_FilePath, &DisplayArea_Preview, &BorderColorRGB, &BackColorRGB, &BackImgPath, DisplayArea_Preview_Kosuu);//スタイルの保存
-
-					//各エリアのアクティブ化
-					Toolbar[1].Active = 1;//PulldownFlag：－１：無効　０以上：有効なツール番号
-					for (int i = 0; i < 3; i++) EditorPadArea_h[i].Active = 1;//インデックスエリア，ボタンエリア，ベースボタンエリアの停止
-					DisplayArea.Active = 1;
-				}
-				//背景の変更フォーム内でキャンセルを押した
-				else if (Value == -1) {
-					//各エリアのアクティブ化
-					Toolbar[1].Active = 1;//PulldownFlag：－１：無効　０以上：有効なツール番号
-					for (int i = 0; i < 3; i++) EditorPadArea_h[i].Active = 1;//インデックスエリア，ボタンエリア，ベースボタンエリアの停止
-					DisplayArea.Active = 1;
-				}
-			}
-			*/
 
 			//●カーソルオーバー
 			static const int BackColor_CursorOver = GetColor(240, 250, 250);
 			Math_CursorOver(ActiveMath::MouseX, ActiveMath::MouseY + 20, 2, black, BackColor_CursorOver, NULL);//Math_ButtonTitleShow(const int LocationX, const int LocationY, const int Padding, const int StringColor, const int BackColor, const int Type)
 			//●マルチガイド
-			MultiGuide();
+		//	MultiGuide();
 			//●サンプルの制限解除（コントロール＋R）
 			if (ActiveMath::Key[KEY_INPUT_R] == 1 && (ActiveMath::Key[KEY_INPUT_LCONTROL] > 0 || ActiveMath::Key[KEY_INPUT_RCONTROL] > 0)) {
 				for (int i = 0; i < ToolBKosuu; i++) ToolB[i].Active = 1;
@@ -9604,6 +9465,7 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 		}//forメインループの終了
 	}//while
 	return 0;
+	*/
 }
 //////////↑メッセージ編集モードの終わり↑//////////////////↑メッセージ編集モードの終わり↑//////////↑メッセージ編集モードの終わり↑///////////↑メッセージ編集モードの終わり↑/////////
 
@@ -9718,7 +9580,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 	//真のウィンドウサイズの決定
 	GraphWidth = 1000;
 	GraphHeight = ScreenHeight-30;
-	SetGraphMode(GraphWidth, GraphHeight, ColorBitNum);//ウインドウサイズの指定(WindowWidth = 1000,WindowHeight = 798,ColorBitNum = 32)
+	SetGraphMode(GraphWidth, GraphHeight, ColorBitNum);//ウインドウサイズの指定(1000, 1010, 32)
 	//ウィンドウサイズの決定
 	WindowWidth = GraphWidth;
 	if (GraphHeight < 750) WindowHeight = GraphHeight;
@@ -9750,7 +9612,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 	{
 		struct LOAD_DISPLAY_PAD_SP p;//ロードするための情報
 		//エリア（[0]インデックスエリア，[1]ボタンエリア，[2]ベースボタンエリア）
-		p.FilePath_AreaSet_h = ".\\System\\EditorPadSet\\EditorPadSet.acp";//
+		p.FilePath_DisplayPad_h = ".\\System\\EditorPadSet\\EditorPadSet.acp";//
 		//p.ParentArea_p = NULL;//
 		p.DisplayPad_p = &EditorPad;
 		p.Area_Max = EditorPadArea_Max;//
@@ -9759,9 +9621,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 		p.Btn_Max_h = EditorBtnMax_h;//_h
 		p.BaseBtn_Max = EditorBaseBtn_Max;//
 		//フラグ
-		p.GetDirFlag = 0;//初期値：１
-		p.MsgCodeLinkFlag = 0;//初期値：１
-		p.JoypadLinkFlag = 0;//初期値：１
+		p.SetMsgLocalDirFlag = FALSE;//初期値：TRUE
+		p.MsgCodeLinkFlag = FALSE;//初期値：TRUE
+		p.JoypadLinkFlag = FALSE;//初期値：TRUE
+
 		//ロード
 		if (LoadDisplayPadSP(&p)) {
 			DxLib::WaitKey();
@@ -9974,8 +9837,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 
 
 	//メッセージ
-	const int HomeMsgSize = 2000; //MsgSizeは終端文字を含まない。終端文字を含めた MsgSize + 1 は変数名MsgSizeEと表すこととする。
-	char HomeMsg[HomeMsgSize + 1] = { 0 }; //メッセージを入れる
+	const int HomeMsgCodeMax = 2000; //文字数
+	char HomeMsgCode[HomeMsgCodeMax + 1] = { 0 }; //メッセージを入れる
 	//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
 	//GetFullPathName(".\\System\\HomeMsg\\HomeMsg.acm", MAX_PATH, FilePath_HomeMsg, NULL);
 
@@ -10002,15 +9865,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 		//●メッセージとメッセージ関連ファイルのロード
 		{
 			struct LOAD_MSG_SP m;//ロードするための情報
-			m.FilePath_h = ".\\System\\HomeMsg\\HomeMsg.acm";
-			m.MsgSize = sizeof(HomeMsg);
-			m.Msg_h = HomeMsg;
-			m.Dir_h = ".\\System\\HomeMsg";
+			m.FilePath = ".\\System\\HomeMsg\\HomeMsg.acm";
+			m.MsgCodeSize = HomeMsgCodeMax+1;
+			m.MsgCode = HomeMsgCode;
+			m.Dir = ".\\System\\HomeMsg";
 			m.MsgBoxForm_p = &MsgBoxForm_Home;
 			m.MsgBox_p = &MsgBox_Home;
-			//m.GetDirFlag = 0;//初期値：１
-			//m.MsgCodeLinkFlag = 0;//初期値：１
-			//m.JoypadLinkFlag = 0;//初期値：１
+
+			//m.SetMsgLocalDirFlag = FALSE;//初期値：TRUE
+			//m.MsgCodeLinkFlag = FALSE;//初期値：TRUE
+			m.JoypadLinkFlag = FALSE;//初期値：TRUE
+
 			//（ロード）
 			if (LoadMsgSP(&m)) {
 				DxLib::WaitKey();
@@ -10018,7 +9883,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 				DxLib_End();
 				return -1;
 			}
-				int aaaa = 5;
 		}
 		//※終了時はモンスターディレクトリ
 		SetCurrentDirectory(AppDir);
@@ -10116,7 +9980,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 				}
 				///////問題編集モードのサンプル
 				else if (ClickedNo == 3) {
-					GetFullPathName(".\\System\\Sample\\Mondai\\Sample_Mondai01.ack", MAX_PATH, FilePath, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
+					GetFullPathName(".\\System\\Sample\\Mondai\\01\\Sample_Mondai01.ack", MAX_PATH, FilePath, NULL);//相対パスから絶対パスを取得（相対パス，パス名を格納するバッファのサイズ，絶対パス，ファイル名のアドレス）
 				}
 				///////パッドビューアのサンプル
 				else if (ClickedNo == 4) {
@@ -10137,7 +10001,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 			else if (EditorMode == 2) { Editor(&EditorMode, FilePath); break; }///////パッドビューア
 
 			//●メッセージ
-			int Value = ShowMsgBox(HomeMsg, &MsgBox_Home);
+			int Value = ShowMsgBox(HomeMsgCode, &MsgBox_Home);
 			//メッセージの高さに合わせるため毎回更新。高さだけ取得できる関数があれば，ループに入る前に指定できる★★★
 			MenuArea.Height = 20 + 240 + MsgBox_Home.OuterHeight + 20;
 
@@ -10189,7 +10053,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 							strcpy(FilePath, Dir_FontStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontStyle);
 							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
 							SetCurrentDirectory(AppDir);
-							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//スタイルの保存
+							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						}
 						List0.Active = -1; MenuArea.Active = 1;//プルダウンリストから抜けて待機状態にする
 						break;
@@ -10218,7 +10082,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 							strcpy(FilePath, Dir_FontImgStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontImgStyle);
 							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
 							SetCurrentDirectory(AppDir);
-							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//スタイルの保存
+							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						}
 						List0.Active = -1; MenuArea.Active = 1;//プルダウンリストから抜けて待機状態にする
 						break;
@@ -10248,7 +10112,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 							strcpy(FilePath, Dir_TagStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_TagStyle);
 							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
 							SetCurrentDirectory(AppDir);
-							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//スタイルの保存
+							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						}
 						List0.Active = -1; MenuArea.Active = 1;//プルダウンリストから抜けて待機状態にする
 						break;
@@ -10277,7 +10141,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 							strcpy(FilePath, Dir_JoypadStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_JoypadStyle);
 							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
 							SetCurrentDirectory(AppDir);
-							SaveJoypadLink(".\\System\\File\\JoypadLink.txt");//スタイルの保存
+							SaveJoypadLink(".\\System\\File\\JoypadLink.txt");//ジョイパッドリンクの保存　全部未設定（つまりTitle_JoypadStyle_rwが"なし"）なら保存しない
 						}
 						List0.Active = -1; MenuArea.Active = 1;//プルダウンリストから抜けて待機状態にする
 						break;
@@ -10301,7 +10165,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 						if (GetOpenDirectoryName(AppDir, Dir_FontStyle, MAX_PATH)) {
 							PathRelativePathTo(Dir_FontStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							SetCurrentDirectory(AppDir);
-							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//スタイルの保存
+							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						}
 						List0.Active = -1; MenuArea.Active = 1;//プルダウンリストから抜けて待機状態にする
 						break;
@@ -10325,7 +10189,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 						if (GetOpenDirectoryName(AppDir, Dir_FontImgStyle, MAX_PATH)) {
 							PathRelativePathTo(Dir_FontImgStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontImgStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							SetCurrentDirectory(AppDir);
-							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//スタイルの保存
+							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						}
 						List0.Active = -1; MenuArea.Active = 1;//プルダウンリストから抜けて待機状態にする
 						break;
@@ -10350,7 +10214,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 						if (GetOpenDirectoryName(AppDir, Dir_TagStyle, MAX_PATH)) {
 							PathRelativePathTo(Dir_TagStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_TagStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							SetCurrentDirectory(AppDir);
-							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//スタイルの保存
+							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						}
 						List0.Active = -1; MenuArea.Active = 1;//プルダウンリストから抜けて待機状態にする
 						break;
@@ -10374,7 +10238,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 						if (GetOpenDirectoryName(AppDir, Dir_AppImg, MAX_PATH)) {
 							PathRelativePathTo(Dir_AppImg_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppImg, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							SetCurrentDirectory(AppDir);
-							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//スタイルの保存
+							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						}
 						List0.Active = -1; MenuArea.Active = 1;//プルダウンリストから抜けて待機状態にする
 						break;
@@ -10398,7 +10262,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 						if (GetOpenDirectoryName(AppDir, Dir_AppSound, MAX_PATH)) {
 							PathRelativePathTo(Dir_AppSound_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppSound, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							SetCurrentDirectory(AppDir);
-							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//スタイルの保存
+							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						}
 						List0.Active = -1; MenuArea.Active = 1;//プルダウンリストから抜けて待機状態にする
 						break;
@@ -10422,7 +10286,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 						if (GetOpenDirectoryName(AppDir, Dir_JoypadStyle, MAX_PATH)) {
 							PathRelativePathTo(Dir_JoypadStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_JoypadStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							SetCurrentDirectory(AppDir);
-							SaveJoypadLink(".\\System\\File\\JoypadLink.txt");//スタイルの保存
+							SaveJoypadLink(".\\System\\File\\JoypadLink.txt");//ジョイパッドリンクの保存　全部未設定（つまりTitle_JoypadStyle_rwが"なし"）なら保存しない
 						}
 						List0.Active = -1; MenuArea.Active = 1;//プルダウンリストから抜けて待機状態にする
 						break;
@@ -10438,7 +10302,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 				}
 			}
 			//マルチガイド
-			MultiGuide();//全メッセージで共有するため，MathWritingP内に入れないこと。
+			MultiGuide(10, 10, HomeMsgCode, &MsgBox_Home);
 		}//forの終わり
 	}//whileの終わり
 

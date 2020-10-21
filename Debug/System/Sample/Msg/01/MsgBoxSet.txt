@@ -1,4 +1,5 @@
-メッセージ
+★
+#MsgBoxSet
 MsgBoxFormNumber,0
-Width,500
+Width,550
 Height,130

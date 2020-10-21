@@ -1,4 +1,5 @@
-Ç∆ÇŒÇ∑
+Åö
+#MsgBoxFormSet
 MaxLine,-1
 Margin[4],0,0,0,0
 Padding[4],0,0,0,0
@@ -16,7 +17,7 @@ Leading,5
 BlinkSpeed,0
 OutputSpeed,0
 ScrollSpeed,50
-Option,10520
+Option,12520
 MessageSound,
 ConfirmSound,
 BackDelSound,

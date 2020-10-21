@@ -1,6 +1,21 @@
-﻿  コード生成しています。
-  コード生成が終了しました。
-  2 of 164 functions ( 1.2%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
+﻿  Source.cpp
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2393): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2395): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2982): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2984): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2986): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2988): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2990): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2992): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2994): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2996): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2998): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(3000): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(3444): warning C4244: '=': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(3462): warning C4244: '=': 'double' から 'int' への変換です。データが失われる可能性があります。
+  コード生成しています。
+  2 of 165 functions ( 1.2%) were compiled, the rest were copied from previous compilation.
+    1 functions were new in current compilation
     10 functions had inline decision re-evaluated but remain unchanged
+  コード生成が終了しました。
   Project1.vcxproj -> C:\Users\Yoshi\source\repos\ActiveMath_MsgEditor\Release\Project1.exe
