@@ -3337,8 +3337,14 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 			int Value1buff = 4;//４：停止 MsgBoxForm[i].Option % 10;
 			int Value2buff = 4;//４：ボックス左上 MsgBoxForm[i].Option % 100 / 10;
 			int Value3buff = 4;//下１桁目が4だからここは何でもよい MsgBoxForm[i].Option % 1000 / 100;
-			int Value4buff = Value4;// MsgBoxForm_p[MsgFormNo].Option % 10000 / 1000;//下から4桁目は書き換えない。
-									//下４桁目　０：折り返しあり(文字・数式)　１：折り返しあり（わかち）２：折り返しなしで伸縮（MaxLineは無効になる）　３以上：折り返しなし（MaxLineは無効になる）//
+			//int Value4buff = Value4;// MsgBoxForm_p[MsgFormNo].Option % 10000 / 1000;//下から4桁目は書き換えない。
+			int Value4buff;// MsgBoxForm_p[MsgFormNo].Option % 10000 / 1000;//下から4桁目
+			if (Value4 == 3) Value4buff = 4;//下から4桁目
+			else if (Value4 == 5) Value4buff = 6;//下から4桁目
+			else Value4buff = Value4;
+
+
+				//下４桁目　０：折り返しあり(文字・数式)　１：折り返しあり（わかち）　２：折り返し，改行なし（MaxLineは無効になる）３：折り返し，改行なしで伸縮（MaxLineは無効になる）４：折り返しなしで伸縮　左記は変更後の値（0→2	1→0	2は1	3→3　20201018に変更　　4は新規20201022に追加）
 			int Value5buff = 3;//３：表示中のメッセージ下端（Heightの値も変化）
 			MsgBoxForm_p[MsgFormNo].Option = Value5buff * 10000 + Value4buff * 1000 + Value3buff * 100 + Value2buff * 10 + Value1buff * 1;
 			MsgBoxForm_p[MsgFormNo].OutputSpeed = -2;//
@@ -6551,7 +6557,8 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 				int Value2 = 4;//４：ボックス左上 MsgBoxForm[i].Option % 100 / 10;
 				int Value3 = 4;//下１桁目が4だからここは何でもよい MsgBoxForm[i].Option % 1000 / 100;
 				int Value4 = MsgBoxForm[i].Option % 10000 / 1000;//下から4桁目だけ書き換えない。
-																 //下４桁目　０：折り返しあり(文字・数式)　１：折り返しあり（わかち）２：折り返しなしで伸縮（MaxLineは無効になる）　３以上：折り返しなし（MaxLineは無効になる）
+				//下４桁目　０：折り返しあり(文字・数式)　１：折り返しあり（わかち）　２：折り返し，改行なし（MaxLineは無効になる）３：折り返し，改行なしで伸縮（MaxLineは無効になる）４：折り返しなしで伸縮　左記は変更後の値（0→2	1→0	2は1	3→3　20201018に変更　　4は新規20201022に追加）
+
 				int Value5 = 3;//３：表示中のメッセージ下端（Heightの値も変化） MsgBoxForm[i].Option % 100000 / 10000;
 				MsgBoxForm[i].Option = Value5 * 10000 + Value4 * 1000 + Value3 * 100 + Value2 * 10 + Value1 * 1;
 

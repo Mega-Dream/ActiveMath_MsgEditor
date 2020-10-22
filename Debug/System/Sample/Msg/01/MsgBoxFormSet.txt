@@ -17,7 +17,7 @@ Leading,30
 BlinkSpeed,120
 OutputSpeed,50
 ScrollSpeed,200
-Option,1445
+Option,5445
 MsgSound,.\Cyber20-1.mp3
 ConfirmSound,.\button01a.mp3
 BackDelSound,

@@ -1,16 +1,1 @@
-﻿  Source.cpp
-c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2339): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
-c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2341): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
-c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2906): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
-c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2908): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
-c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2910): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
-c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2912): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
-c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2914): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
-c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2916): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
-c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2918): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
-c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2920): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
-c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2922): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
-c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2924): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
-c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(3351): warning C4244: '=': 'double' から 'int' への変換です。データが失われる可能性があります。
-c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(3369): warning C4244: '=': 'double' から 'int' への変換です。データが失われる可能性があります。
-  Project1.vcxproj -> C:\Users\Yoshi\source\repos\ActiveMath_MsgEditor\Debug\Project1.exe
+﻿  Project1.vcxproj -> C:\Users\Yoshi\source\repos\ActiveMath_MsgEditor\Debug\Project1.exe
