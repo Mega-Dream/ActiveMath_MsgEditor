@@ -54,7 +54,7 @@ static struct AREA_CTRL EditorPadArea_h[EditorPadArea_Max] = { 0 };
 const int EditorBtnForm_Max = 2;//インデックス用とボタン・ベースボタン用
 static struct BTN_FORM EditorBtnForm_h[EditorBtnForm_Max] = { 0 };
 //■入力用インデックス
-const int EditorIndex_Max = 6;//ボタン配列の要素数（実際より大きい値でもよい）
+const int EditorIndex_Max = 7;//ボタン配列の要素数（実際より大きい値でもよい）
 static struct BTN_CTRL EditorIndex_h[EditorIndex_Max] = { 0 };
 //■入力用ボタン
 const int EditorBtnMax0 = 18;//ボタン配列の要素数（実際より大きい値でもよい）
@@ -62,12 +62,13 @@ const int EditorBtnMax1 = 18;//ボタン配列の要素数（実際より大きい値でもよい）
 const int EditorBtnMax2 = 18;//ボタン配列の要素数（実際より大きい値でもよい）
 const int EditorBtnMax3 = 17;//ボタン配列の要素数（実際より大きい値でもよい）
 const int EditorBtnMax4 = 18;//ボタン配列の要素数（実際より大きい値でもよい）
-const int EditorBtnMax5 = 36;//ボタン配列の要素数（実際より大きい値でもよい）
-const int EditorBtnMax_h[EditorIndex_Max] = { EditorBtnMax0, EditorBtnMax1, EditorBtnMax2, EditorBtnMax3, EditorBtnMax4, EditorBtnMax5 };//ボタン配列の要素数
+const int EditorBtnMax5 = 18;//ボタン配列の要素数（実際より大きい値でもよい）
+const int EditorBtnMax6 = 36;//ボタン配列の要素数（実際より大きい値でもよい）
+const int EditorBtnMax_h[EditorIndex_Max] = { EditorBtnMax0, EditorBtnMax1, EditorBtnMax2, EditorBtnMax3, EditorBtnMax4, EditorBtnMax5, EditorBtnMax6 };//ボタン配列の要素数
 static int EditorBtnKosuu_h[EditorIndex_Max];//最終ボタンの要素番号（ロード時に取得できるからここでは指定しない）（ボタンを書き出すときに使用する）
 
-static struct INPUT_TEXT_BTN_CTRL EditorBtn_h0[EditorBtnMax0], EditorBtn_h1[EditorBtnMax1], EditorBtn_h2[EditorBtnMax2], EditorBtn_h3[EditorBtnMax3], EditorBtn_h4[EditorBtnMax4], EditorBtn_h5[EditorBtnMax5];
-static struct INPUT_TEXT_BTN_CTRL *EditorBtn_hh[] = { EditorBtn_h0, EditorBtn_h1, EditorBtn_h2, EditorBtn_h3, EditorBtn_h4, EditorBtn_h5 };
+static struct INPUT_TEXT_BTN_CTRL EditorBtn_h0[EditorBtnMax0], EditorBtn_h1[EditorBtnMax1], EditorBtn_h2[EditorBtnMax2], EditorBtn_h3[EditorBtnMax3], EditorBtn_h4[EditorBtnMax4], EditorBtn_h5[EditorBtnMax5], EditorBtn_h6[EditorBtnMax6];
+static struct INPUT_TEXT_BTN_CTRL *EditorBtn_hh[] = { EditorBtn_h0, EditorBtn_h1, EditorBtn_h2, EditorBtn_h3, EditorBtn_h4, EditorBtn_h5, EditorBtn_h6 };
 //■入力用基本ボタン
 const int EditorBaseBtn_Max = 9;//ボタン配列の要素数（実際より大きい値でもよい）
 static struct INPUT_TEXT_BTN_CTRL EditorBaseBtn_h[EditorBaseBtn_Max] = { 0 };
@@ -1714,11 +1715,15 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 
 	if (FilePath_Full_Monster[0] != '\0') {
 
+		/*
 		strcpy(MonsterDir, FilePath_Full_Monster);
 		int mojisuu = strlen(MonsterDir);
 		int count;
 		for (count = 1; MonsterDir[mojisuu - count] != '\\' && count < MAX_PATH; count++);//
 		MonsterDir[mojisuu - count] = '\0';
+
+*/
+		GetDirFromPath(MonsterDir, FilePath_Full_Monster);
 
 
 		////////モンスターテーブル数の決定
@@ -3342,9 +3347,9 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 			if (Value4 == 3) Value4buff = 4;//下から4桁目
 			else if (Value4 == 5) Value4buff = 6;//下から4桁目
 			else Value4buff = Value4;
+			//下４桁目　０：折り返しあり(文字・数式)　１：折り返しあり（わかち）　２：折り返し，改行なし（MaxLineは無効になる）３：折り返し，改行なしで表示後の最右端まで伸縮（MaxLineは無効になる）４：折り返し，改行なしで表示中の最右端まで伸縮（MaxLineは無効になる）
+				//５：折り返しなしで表示後の再右端まで伸縮　６：折り返しなしで表示中の再右端まで伸縮　左記は変更後の値（0→2	1→0	2は1	3→3　20201018に変更　　4,5,6は新規20201022に追加）
 
-
-				//下４桁目　０：折り返しあり(文字・数式)　１：折り返しあり（わかち）　２：折り返し，改行なし（MaxLineは無効になる）３：折り返し，改行なしで伸縮（MaxLineは無効になる）４：折り返しなしで伸縮　左記は変更後の値（0→2	1→0	2は1	3→3　20201018に変更　　4は新規20201022に追加）
 			int Value5buff = 3;//３：表示中のメッセージ下端（Heightの値も変化）
 			MsgBoxForm_p[MsgFormNo].Option = Value5buff * 10000 + Value4buff * 1000 + Value3buff * 100 + Value2buff * 10 + Value1buff * 1;
 			MsgBoxForm_p[MsgFormNo].OutputSpeed = -2;//
@@ -3592,8 +3597,10 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 
 					int FileType = 0;//画像ファイル
 					//ディレクトリの決定
-					if (!strcmp(EditorPad.ActiveBtn_h->PutText, "#img_lm{") || !strcmp(EditorPad.ActiveBtn_h->PutText, "#img_le{")) {
-						//一時コピーディレクトリ
+					//if (!strcmp(EditorPad.ActiveBtn_h->PutText, "#img_lm{") || !strcmp(EditorPad.ActiveBtn_h->PutText, "#img_le{")) {
+					if (!strcmp(EditorPad.ActiveBtn_h->PutText, "#img_l{m;")) {
+
+						//一時コピーディレクトリ  ★★★問題編集の方には一時ディレクトリーの処理がないので作らないと。
 						strcpy(TempCopyDir, AppDir);
 						strcat(TempCopyDir, "\\System\\Temp\\Img");
 						//初期ディレクトリ
@@ -3603,14 +3610,18 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 							strcat(DialogFirstDir, "\\Img");//ローカルディレクトリ\\Imgとなる
 						}
 					}
-					else if (!strcmp(EditorPad.ActiveBtn_h->PutText, "#img_am{") || !strcmp(EditorPad.ActiveBtn_h->PutText, "#img_ae{")) {
+					//else if (!strcmp(EditorPad.ActiveBtn_h->PutText, "#img_am{") || !strcmp(EditorPad.ActiveBtn_h->PutText, "#img_ae{")) {
+					else if (!strcmp(EditorPad.ActiveBtn_h->PutText, "#img_a{m;")) {
+
 						//一時コピーディレクトリ
 						strcpy(TempCopyDir, AppDir);
 						strcat(TempCopyDir, "\\System\\Temp\\Dir_AppImg");
 						//初期ディレクトリ
 						strcpy(DialogFirstDir, Dir_AppImg);//アプリケーション画像ディレクトリとなる
 					}
-					else if (!strcmp(EditorPad.ActiveBtn_h->PutText, "#img_nm{") || !strcmp(EditorPad.ActiveBtn_h->PutText, "#img_ne{")) {
+					//else if (!strcmp(EditorPad.ActiveBtn_h->PutText, "#img_nm{") || !strcmp(EditorPad.ActiveBtn_h->PutText, "#img_ne{")) {
+					else if (!strcmp(EditorPad.ActiveBtn_h->PutText, "#img_n{m;")) {
+
 						//一時コピーディレクトリ
 						strcpy(TempCopyDir, AppDir);
 						strcat(TempCopyDir, "\\System\\Temp\\MsgDir");
@@ -3815,8 +3826,13 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 						else if (Value5 == 4) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L12, "ボックス(4指定した高さ・入らないなら表示後のメッセージ下端)", black);
 						if (Value4 == 0) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "折り返し(0文字・数式)", black);
 						else if (Value4 == 1) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "折り返し(1わかち)", black);
-						else if (Value4 == 2) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "折り返し(2なし)", black);
-						else if (Value4 == 3) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "折り返し(3なしで幅の伸縮)", black);
+						else if (Value4 == 2) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "折り返し(2なし)改行なし", black);
+						else if (Value4 == 3) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "折り返し(3なし)改行なし表示後の最右端)", black);
+						else if (Value4 == 4) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "折り返し(4なし)改行なし表示中の最右端)", black);
+						else if (Value4 == 5) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "折り返し(5なし)表示後の最右端)", black);
+						else if (Value4 == 6) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "折り返し(6なし)表示中の最右端)", black);
+						//下４桁目　０：折り返しあり(文字・数式)　１：折り返しあり（わかち）　２：折り返し，改行なし（MaxLineは無効になる）３：折り返し，改行なしで表示後の最右端まで伸縮（MaxLineは無効になる）４：折り返し，改行なしで表示中の最右端まで伸縮（MaxLineは無効になる）
+							//５：折り返しなしで表示後の再右端まで伸縮　６：折り返しなしで表示中の再右端まで伸縮　左記は変更後の値（0→2	1→0	2は1	3→3　20201018に変更　　4,5,6は新規20201022に追加）
 
 						if (Value3 == 0) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L13, "0停止(左寄せ)", black);
 						else if (Value3 == 1) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L13, "停止(1上寄せ)", black);
@@ -4090,7 +4106,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 									if (Value5 == 0) EditorPad.MsgBox_p->Height = MsgBox_p[MsgBoxCrlNumber].Height;//実行中のコントロールに高さの初期値を書き写す
 									//（高さの固定・伸縮（下から5桁目）の切り替え時に，自動伸縮した高さを元に戻すため）
 								}
-								else if (ClickedNo == 68 && Value4 < 3) Value4++;
+								else if (ClickedNo == 68 && Value4 < 6) Value4++;
 								else if (ClickedNo == 69 && Value4 > 0) Value4--;
 								else if (ClickedNo == 70 && Value3 < 6) Value3++;
 								else if (ClickedNo == 71 && Value3 > 0) Value3--;
@@ -4895,6 +4911,13 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				for (int i = 0; i < List1RowKosuu; i++) List1Row[i].Active = 1;
 				for (int i = 0; i < List2RowKosuu; i++) List2Row[i].Active = 1;
 			}
+			/*
+			//スイッチのテスト用
+			if (MsgBox_Play.Switch ==8) {
+				int aaa = 0;
+			}
+			*/
+
 		}
 	}
 	return 0;
@@ -5261,13 +5284,16 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 	static char PadDir[MAX_PATH] = { 0 };
 		//////////↓開くのとき（ファイルパスがない）や，ファイル名が"無題"（新規作成）のとき）
 	if (FilePath_Pad_h[0] != '\0') {
-		//ディレクトリの取得（ファイル名の前の\\の位置を探す）
+		
+		/*
 		strcpy(PadDir, FilePath_Pad_h);
 		int mojisuu = strlen(PadDir);
 		int count;
 		for (count = 1; PadDir[mojisuu - count] != '\\' && count < MAX_PATH; count++);//
 		PadDir[mojisuu - count] = '\0';
+		*/
 
+		GetDirFromPath(PadDir, FilePath_Pad_h);//パッドディレクトリの取得（ファイル名の前の\\の位置を探す）
 		char DirectoryNow1[MAX_PATH];
 		GetCurrentDirectory(MAX_PATH, DirectoryNow1);//チェック用
 
@@ -6557,7 +6583,8 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 				int Value2 = 4;//４：ボックス左上 MsgBoxForm[i].Option % 100 / 10;
 				int Value3 = 4;//下１桁目が4だからここは何でもよい MsgBoxForm[i].Option % 1000 / 100;
 				int Value4 = MsgBoxForm[i].Option % 10000 / 1000;//下から4桁目だけ書き換えない。
-				//下４桁目　０：折り返しあり(文字・数式)　１：折り返しあり（わかち）　２：折り返し，改行なし（MaxLineは無効になる）３：折り返し，改行なしで伸縮（MaxLineは無効になる）４：折り返しなしで伸縮　左記は変更後の値（0→2	1→0	2は1	3→3　20201018に変更　　4は新規20201022に追加）
+				//下４桁目　０：折り返しあり(文字・数式)　１：折り返しあり（わかち）　２：折り返し，改行なし（MaxLineは無効になる）３：折り返し，改行なしで表示後の最右端まで伸縮（MaxLineは無効になる）４：折り返し，改行なしで表示中の最右端まで伸縮（MaxLineは無効になる）
+					//５：折り返しなしで表示後の再右端まで伸縮　６：折り返しなしで表示中の再右端まで伸縮　左記は変更後の値（0→2	1→0	2は1	3→3　20201018に変更　　4,5,6は新規20201022に追加）
 
 				int Value5 = 3;//３：表示中のメッセージ下端（Heightの値も変化） MsgBoxForm[i].Option % 100000 / 10000;
 				MsgBoxForm[i].Option = Value5 * 10000 + Value4 * 1000 + Value3 * 100 + Value2 * 10 + Value1 * 1;
@@ -6833,18 +6860,19 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 					char Dir[MAX_PATH] = { 0 };//ディレクトリを指定するための変数
 					int FileType = 0;//画像ファイル
 					//ディレクトリの決定
-					if (!strcmp(EditorPad.ActiveBtn_h->PutText, "#img_lm{") || !strcmp(EditorPad.ActiveBtn_h->PutText, "#img_le{")) {//
-						strcpy(Dir, LocalDir); strcat(Dir, "\\Img");//ディレクトリは，メッセージディレクトリ\\Imgとなる
+					//if (!strcmp(EditorPad.ActiveBtn_h->PutText, "#img_lm{") || !strcmp(EditorPad.ActiveBtn_h->PutText, "#img_le{")) {//
+					if (!strcmp(EditorPad.ActiveBtn_h->PutText, "#img_l{m;")) {//
+							strcpy(Dir, LocalDir); strcat(Dir, "\\Img");//ディレクトリは，メッセージディレクトリ\\Imgとなる
 					}
-					else if (!strcmp(EditorPad.ActiveBtn_h->PutText, "#img_am{") || !strcmp(EditorPad.ActiveBtn_h->PutText, "#img_ae{")) {//
+					else if (!strcmp(EditorPad.ActiveBtn_h->PutText, "#img_a{m;")) {//
 						strcpy(Dir, Dir_AppImg);
 					}
-					else if (!strcmp(EditorPad.ActiveBtn_h->PutText, "#img_nm{") || !strcmp(EditorPad.ActiveBtn_h->PutText, "#img_ne{")) {//
+					else if (!strcmp(EditorPad.ActiveBtn_h->PutText, "#img_n{m;")) {//
 
 						strcpy(Dir, MsgDir);//
-						char aaaaa[MAX_PATH] = { 0 };//ディレクトリを指定するための変数
+//						char aaaaa[MAX_PATH] = { 0 };//ディレクトリを指定するための変数
 
-						strcpy(aaaaa, FileTitle_Mondai);//
+//						strcpy(aaaaa, FileTitle_Mondai);//
 
 						if (!strcmp(FileTitle_Mondai, "無題")) Dir[0] = '\0';//保存されていないファイルではMsgDirがないので#img_nm{が使えないように。
 						//保存してから使用すること（詳細編集モードでは保存されていないファイルであれば自動で「名前を付けて保存」に移る。

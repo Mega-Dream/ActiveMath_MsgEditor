@@ -1,5 +1,5 @@
 Åö
 #MsgBoxSet
 MsgBoxFormNumber,0
-Width,550
-Height,130
+Width,700
+Height,195

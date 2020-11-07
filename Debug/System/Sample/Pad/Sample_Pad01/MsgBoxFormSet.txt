@@ -16,7 +16,7 @@ FontColorRGB[3],255,255,255
 Leading,25
 BlinkSpeed,90
 OutputSpeed,-2
-ScrollSpeed,400
+ScrollSpeed,0
 Option,2444
 MsgSound,.\swing1.mp3
 ConfirmSound,.\button67.mp3
