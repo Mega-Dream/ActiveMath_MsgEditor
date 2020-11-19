@@ -1,1 +1,16 @@
-﻿  Project1.vcxproj -> C:\Users\Yoshi\source\repos\ActiveMath_MsgEditor\Debug\Project1.exe
+﻿  Source.cpp
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2377): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2379): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2984): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2986): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2988): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2990): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2992): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2994): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2996): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(2998): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(3000): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(3002): warning C4244: '初期化中': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(3441): warning C4244: '=': 'double' から 'int' への変換です。データが失われる可能性があります。
+c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(3457): warning C4244: '=': 'double' から 'int' への変換です。データが失われる可能性があります。
+  Project1.vcxproj -> C:\Users\Yoshi\source\repos\ActiveMath_MsgEditor\Debug\Project1.exe
