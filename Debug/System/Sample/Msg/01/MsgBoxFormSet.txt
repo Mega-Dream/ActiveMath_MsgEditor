@@ -19,5 +19,5 @@ OutputSpeed,50
 ScrollSpeed,200
 Option,1448
 OpeningSound,
-MsgSound,.\Cyber20-1.mp3
-ConfirmSound,.\button01a.mp3
+MsgSound,Cyber20-1.mp3
+ConfirmSound,button01a.mp3

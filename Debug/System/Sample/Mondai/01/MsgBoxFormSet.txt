@@ -17,7 +17,7 @@ Leading,5
 BlinkSpeed,120
 OutputSpeed,50
 ScrollSpeed,200
-Option,20444
+Option,10449
 OpeningSound,
 MsgSound,Cyber20-1.mp3
 ConfirmSound,
@@ -39,7 +39,7 @@ Leading,10
 BlinkSpeed,120
 OutputSpeed,-1
 ScrollSpeed,500
-Option,22444
+Option,13449
 OpeningSound,
 MsgSound,
 ConfirmSound,
@@ -61,7 +61,7 @@ Leading,10
 BlinkSpeed,120
 OutputSpeed,-1
 ScrollSpeed,500
-Option,20444
+Option,10449
 OpeningSound,
 MsgSound,
 ConfirmSound,
@@ -83,7 +83,7 @@ Leading,10
 BlinkSpeed,120
 OutputSpeed,-1
 ScrollSpeed,500
-Option,22444
+Option,13449
 OpeningSound,
 MsgSound,
 ConfirmSound,

@@ -18,6 +18,6 @@ BlinkSpeed,90
 OutputSpeed,-2
 ScrollSpeed,0
 Option,2449
-OpeningSound,.\swish1.mp3
-MsgSound,.\swing1.mp3
-ConfirmSound,.\button67.mp3
+OpeningSound,swish1.mp3
+MsgSound,swing1.mp3
+ConfirmSound,button67.mp3

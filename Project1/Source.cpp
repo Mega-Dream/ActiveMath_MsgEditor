@@ -3887,7 +3887,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 					ShowHeightGauge(EditorPad.MsgBox_p, MsgBox_p[MsgBoxCrlNumber].Height, Color);
 
 					//パラメータの表示
-					if (flag_paramata == 1) {
+					if (flag_paramata == 1 && nukeru == 0) {
 						ShowArea(&PropertyArea, 1);//パラメータのエリアを表示
 						DrawString(PropertyArea.Nest[0], PropertyArea.Nest[1] + L1, "メッセージフォーム", red);
 
@@ -4016,17 +4016,17 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 								OpeningSound_y1 + SystemFontSize, SpotColor, true);
 							//押されたとき
 							if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-								char ImgFilePath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
-								char ImgFileTitle[MAX_PATH];//ファイル名を取得する変数
+								char FilePath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
+								char FileTitle[MAX_PATH];//ファイル名を取得する変数
 								char Dir[MAX_PATH] = { 0 };//ディレクトリを指定するための変数
 								int FileType = 1;//0:画像ファイル　　1:音声ファイル
-								strcpy(Dir, LocalDir); strcat(Dir, "\\Sound");//ディレクトリは，メッセージディレクトリ\\Soundとなる
+								strcpy(Dir, LocalDir); strcat(Dir, "\\Sound");//ディレクトリは，LocalDir\\Soundとなる
 								//ファイル選択ダイアログ
-								if (GetImgFileName(Dir, ImgFilePath, ImgFileTitle, MAX_PATH, MAX_PATH, FileType)) {//ダイアログによる問題ファイル名の取得（カレントディレクトリが選択画像のディレクトリに変わるので注意）
+								if (GetImgFileName(Dir, FilePath, FileTitle, MAX_PATH, MAX_PATH, FileType)) {//ダイアログによる問題ファイル名の取得（カレントディレクトリが選択画像のディレクトリに変わるので注意）
 									//ファイル取得に成功したらDirからみたファイルの相対パスを取得
-									PathRelativePathTo(ImgFilePath, Dir, FILE_ATTRIBUTE_DIRECTORY, ImgFilePath, FILE_ATTRIBUTE_ARCHIVE);
-									strcpy(Form_RGB_SoundPath_p->OpeningSoundPath, ImgFilePath);
-									OpeningSound_Copy = LoadSoundMem(ImgFilePath);
+									//PathRelativePathTo(FilePath, Dir, FILE_ATTRIBUTE_DIRECTORY, FilePath, FILE_ATTRIBUTE_ARCHIVE);
+									strcpy(Form_RGB_SoundPath_p->OpeningSoundPath, FileTitle);
+									OpeningSound_Copy = LoadSoundMem(FileTitle);
 								}
 								//ダイアログのキャンセルで，パスとハンドルを削除
 								else {
@@ -4043,17 +4043,17 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 								MsgSound_y1 + SystemFontSize, SpotColor, true);
 							//押されたとき
 							if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-								char ImgFilePath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
-								char ImgFileTitle[MAX_PATH];//ファイル名を取得する変数
+								char FilePath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
+								char FileTitle[MAX_PATH];//ファイル名を取得する変数
 								char Dir[MAX_PATH] = { 0 };//ディレクトリを指定するための変数
 								int FileType = 1;//0:画像ファイル　　1:音声ファイル
-								strcpy(Dir, LocalDir); strcat(Dir, "\\Sound");//ディレクトリは，メッセージディレクトリ\\Soundとなる
+								strcpy(Dir, LocalDir); strcat(Dir, "\\Sound");//ディレクトリは，LocalDir\\Soundとなる
 								//ファイル選択ダイアログ
-								if (GetImgFileName(Dir, ImgFilePath, ImgFileTitle, MAX_PATH, MAX_PATH, FileType)) {//ダイアログによる問題ファイル名の取得（カレントディレクトリが選択画像のディレクトリに変わるので注意）
+								if (GetImgFileName(Dir, FilePath, FileTitle, MAX_PATH, MAX_PATH, FileType)) {//ダイアログによる問題ファイル名の取得（カレントディレクトリが選択画像のディレクトリに変わるので注意）
 									//ファイル取得に成功したらDirからみたファイルの相対パスを取得
-									PathRelativePathTo(ImgFilePath, Dir, FILE_ATTRIBUTE_DIRECTORY, ImgFilePath, FILE_ATTRIBUTE_ARCHIVE);
-									strcpy(Form_RGB_SoundPath_p->MsgSoundPath, ImgFilePath);
-									MsgSound_Copy = LoadSoundMem(ImgFilePath);
+									//PathRelativePathTo(FilePath, Dir, FILE_ATTRIBUTE_DIRECTORY, FilePath, FILE_ATTRIBUTE_ARCHIVE);
+									strcpy(Form_RGB_SoundPath_p->MsgSoundPath, FileTitle);
+									MsgSound_Copy = LoadSoundMem(FileTitle);
 								}
 								//ダイアログのキャンセルで，パスとハンドルを削除
 								else {
@@ -4071,17 +4071,17 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 								ConfirmSound_y1 + SystemFontSize, SpotColor, true);
 							//押されたとき
 							if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-								char ImgFilePath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
-								char ImgFileTitle[MAX_PATH];//ファイル名を取得する変数
+								char FilePath[MAX_PATH] = { 0 };//ファイルパスを取得する変数
+								char FileTitle[MAX_PATH];//ファイル名を取得する変数
 								char Dir[MAX_PATH] = { 0 };//ディレクトリを指定するための変数
 								int FileType = 1;//0:画像ファイル　　1:音声ファイル
-								strcpy(Dir, LocalDir); strcat(Dir, "\\Sound");//ディレクトリは，メッセージディレクトリ\\Soundとなる
+								strcpy(Dir, LocalDir); strcat(Dir, "\\Sound");//ディレクトリは，LocalDir\\Soundとなる
 								//ファイル選択ダイアログ
-								if (GetImgFileName(Dir, ImgFilePath, ImgFileTitle, MAX_PATH, MAX_PATH, FileType)) {//ダイアログによる問題ファイル名の取得（カレントディレクトリが選択画像のディレクトリに変わるので注意）
+								if (GetImgFileName(Dir, FilePath, FileTitle, MAX_PATH, MAX_PATH, FileType)) {//ダイアログによる問題ファイル名の取得（カレントディレクトリが選択画像のディレクトリに変わるので注意）
 									//ファイル取得に成功したらDirからみたファイルの相対パスを取得
-									PathRelativePathTo(ImgFilePath, Dir, FILE_ATTRIBUTE_DIRECTORY, ImgFilePath, FILE_ATTRIBUTE_ARCHIVE);
-									strcpy(Form_RGB_SoundPath_p->ConfirmSoundPath, ImgFilePath);
-									ConfirmSound_Copy = LoadSoundMem(ImgFilePath);
+									//PathRelativePathTo(FilePath, Dir, FILE_ATTRIBUTE_DIRECTORY, FilePath, FILE_ATTRIBUTE_ARCHIVE);
+									strcpy(Form_RGB_SoundPath_p->ConfirmSoundPath, FileTitle);
+									ConfirmSound_Copy = LoadSoundMem(FileTitle);
 
 								}
 								//ダイアログのキャンセルで，パスとハンドルを削除
@@ -6717,9 +6717,14 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 	for (int i = 0; i < MsgBoxForm_Kosuu; i++)MsgBoxForm_Copy[i] = MsgBoxForm[i];
 	//カレントディレクトリの指定
 	SetCurrentDirectory(AppDir);//他のモードから移ってきたときに違うディレクトリになっているから必ずここで指定
-	static int OpeningSound_edit = LoadSoundMem(".\\System\\Fixed\\swish1.mp3");//開始音（入力状態：バックスペースやデリートのときの音）
-	static int MsgSound_edit = LoadSoundMem(".\\System\\Fixed\\button67.mp3");//行ごとに鳴らす書き出しの音（入力状態：カーソルがジャンプするときの音）
-	static int ConfirmSound_edit = LoadSoundMem(".\\System\\Fixed\\button67.mp3");//フレーズ書き終え状態，ウィンドウが満杯の状態のときにボタンを押した音（入力状態：数式などが確定するときの音）
+	//static int OpeningSound_edit;// = LoadSoundMem(".\\System\\Fixed\\swish1.mp3");//開始音（入力状態：バックスペースやデリートのときの音）
+	//static int MsgSound_edit = LoadSoundMem(".\\System\\Fixed\\button67.mp3");//行ごとに鳴らす書き出しの音（入力状態：カーソルがジャンプするときの音）
+	//static int ConfirmSound_edit = LoadSoundMem(".\\System\\Fixed\\button67.mp3");//フレーズ書き終え状態，ウィンドウが満杯の状態のときにボタンを押した音（入力状態：数式などが確定するときの音）
+
+	//編集モードとしての入力状態を表すサウンドハンドル
+	int OpeningSound_edit = LoadSoundMem(".\\System\\Fixed\\swish1.mp3");//開始音（入力状態：バックスペースやデリートのときの音）
+	int MsgSound_edit = LoadSoundMem(".\\System\\Fixed\\swing1.mp3");//行ごとに鳴らす書き出しの音（入力状態：カーソルがジャンプするときの音）
+	int ConfirmSound_edit = LoadSoundMem(".\\System\\Fixed\\button67.mp3");//フレーズ書き終え状態，ウィンドウが満杯の状態のときにボタンを押した音（入力状態：数式などが確定するときの音）
 
 	{
 		char TempCopyDir[MAX_PATH];
@@ -6794,6 +6799,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 				MsgBoxForm[i].ConfirmSound = ConfirmSound_edit;
 			}
 
+			//MsgBox_Master[0]は大問，MsgBox_Master[1]は大問正解，MsgBox_Master[2]は小問，MsgBox_Master[3]は小問正解
 			//編集用の大問メッセージボックスを作成
 			HMsgBoxH_D = MsgBox_Master[0];//マスターは問題が変わったときやプレビューで，クリアーするために使用
 			HMsgBoxH_D.Location[0] = 0;//レフトバーの表示分として確保（ボックス内しか書き出せないので，ディスプレイエリア１のPading[1]を18にしても小問エリアのレフトバーは書き出せないため）

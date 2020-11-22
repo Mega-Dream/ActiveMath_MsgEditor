@@ -18,6 +18,6 @@ BlinkSpeed,120
 OutputSpeed,0
 ScrollSpeed,200
 Option,03433
-OpeningSound,.\by_chance.mp3
+OpeningSound,by_chance.mp3
 MsgSound,
-ConfirmSound,.\button01a.mp3
+ConfirmSound,button01a.mp3
