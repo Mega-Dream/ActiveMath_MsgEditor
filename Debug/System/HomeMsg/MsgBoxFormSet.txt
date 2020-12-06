@@ -17,7 +17,7 @@ Leading,5
 BlinkSpeed,0
 OutputSpeed,0
 ScrollSpeed,50
-Option,12520
+Option,12531
 OpeningSound,
 MsgSound,
 ConfirmSound,

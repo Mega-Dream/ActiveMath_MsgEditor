@@ -63,8 +63,8 @@ const int EditorBtnMax1 = 18;//ボタン配列の要素数（実際より大きい値でもよい）
 const int EditorBtnMax2 = 18;//ボタン配列の要素数（実際より大きい値でもよい）
 const int EditorBtnMax3 = 17;//ボタン配列の要素数（実際より大きい値でもよい）
 const int EditorBtnMax4 = 18;//ボタン配列の要素数（実際より大きい値でもよい）
-const int EditorBtnMax5 = 18;//ボタン配列の要素数（実際より大きい値でもよい）
-const int EditorBtnMax6 = 36;//ボタン配列の要素数（実際より大きい値でもよい）
+const int EditorBtnMax5 = 36;//ボタン配列の要素数（実際より大きい値でもよい）
+const int EditorBtnMax6 = 18;//ボタン配列の要素数（実際より大きい値でもよい）
 const int EditorBtnMax_h[EditorIndex_Max] = { EditorBtnMax0, EditorBtnMax1, EditorBtnMax2, EditorBtnMax3, EditorBtnMax4, EditorBtnMax5, EditorBtnMax6 };//ボタン配列の要素数
 static int EditorBtnKosuu_h[EditorIndex_Max];//最終ボタンの要素番号（ロード時に取得できるからここでは指定しない）（ボタンを書き出すときに使用する）
 
@@ -675,7 +675,101 @@ int EditorModeChecker(int *EditorMode_p, char *FilePath_h) {//成功：０　失敗：０
 
 	return 0;//成功
 }
-//■設定のセーブ（ジョイパッドスタイルのリンクのセーブ）
+//■画像の上下位置の変更
+int ChangeImgAlign(char *Msg, struct MSG_BOX_CTRL *MsgBox_p) {
+	if (ChangingAlignmentNo != 0) {
+		if (Msg[ChangingAlignmentNo] == 'm') Msg[ChangingAlignmentNo] = 'b';
+		else if (Msg[ChangingAlignmentNo] == 'b') Msg[ChangingAlignmentNo] = 't';
+		else if (Msg[ChangingAlignmentNo] == 't') Msg[ChangingAlignmentNo] = 'e';
+		else if (Msg[ChangingAlignmentNo] == 'e') Msg[ChangingAlignmentNo] = 'm';
+		MsgBox_p->Tag[0].TagSign = 1;//変更したタグで再読取り
+		ActiveElement_G = MsgBox_p->Tag[0].PositionP;//「元に戻す」「やり直す」のバッファ用に変更前のアクティブ要素番号値を記録
+		MsgBox_p->Condition = 6;//書き込み
+		ChangingAlignmentNo = 0;//初期値0に戻す（これはグローバル変数）
+	}
+	return 0;
+}
+
+//■メッセージボックスの高さの初期値表示
+int ShowHeightGauge(struct MSG_BOX_CTRL *MsgBox_p, int MasterHeight, unsigned int Color) {
+	int Circle[3] = { MsgBox_p->Location[0] + MsgBox_p->MsgBoxForm_p->Margin[0] - 7,//描く円の中心座標x
+		MsgBox_p->Location[1] + MsgBox_p->MsgBoxForm_p->Margin[1] + MasterHeight,//描く円の中心座標y
+		7//描く円の半径
+	};
+	if (MsgBox_p->ParentArea_p != NULL) {
+		Circle[0] += MsgBox_p->ParentArea_p->Nest[0];
+		Circle[1] += MsgBox_p->ParentArea_p->Nest[1];
+	}
+
+	//////////////
+		//■元領域の取得
+	RECT DrawAreaBuff;
+	GetDrawArea(&DrawAreaBuff);
+	int Range[4] = { DrawAreaBuff.left, DrawAreaBuff.top, DrawAreaBuff.right, DrawAreaBuff.bottom };//合成領域を取得するための配列
+
+	//■書き出し可能領域を設定　　元の描画可能領域内 かつ 親エリアの描画可能領域内（親エリアを持たないときは，元の描画可能領域のまま）
+	int ParentRange[4] = { 0 };//親エリアのパディングも描画可能
+	if (MsgBox_p->ParentArea_p != NULL) {
+		ParentRange[0] = MsgBox_p->ParentArea_p->Range[0] - MsgBox_p->ParentArea_p->Padding[0];
+		ParentRange[1] = MsgBox_p->ParentArea_p->Range[1] - MsgBox_p->ParentArea_p->Padding[1];
+		ParentRange[2] = MsgBox_p->ParentArea_p->Range[2] + MsgBox_p->ParentArea_p->Padding[2];
+		ParentRange[3] = MsgBox_p->ParentArea_p->Range[3] + MsgBox_p->ParentArea_p->Padding[3];
+
+	}
+	Overlap(Range, ParentRange);//
+	//■描画可能領域の確定
+	SetDrawArea(Range[0], Range[1], Range[2], Range[3]);
+
+	////////////////////
+
+
+		//指定されたコントロールの高さを超えるとき
+		//if (MsgBox_p->Height > MasterHeight) {
+	int *FlameCounter = &MsgBox_p->Tag[0].ConnectionP;
+	const int Speed = 70;//点滅の速さ（１分あたりの点滅回数）//点滅周期はFrameRate * 60 / Speed
+	//if (MsgBox_p->Time % (60000 / Speed) < (30000 / Speed)) {
+	if (*FlameCounter % (FrameRate * 60 / Speed) < (FrameRate * 30 / Speed)) {//フレームか時間か
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 50);//
+		DrawCircle(Circle[0], Circle[1], Circle[2], gray, TRUE);//背景と重なって三角が見えないのを防ぐ。薄いので場合によっては円の方が見えない。
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す
+		DrawTriangle(Circle[0] - 2, Circle[1] - 6, Circle[0] - 2, Circle[1] + 6, Circle[0] + 5, Circle[1], Color, TRUE);//下端（線の太さおよび下パディングを除いた部分）に矢印表示
+	//}
+	}
+	//■描画可能領域を元に戻す
+	SetDrawArea(DrawAreaBuff.left, DrawAreaBuff.top, DrawAreaBuff.right, DrawAreaBuff.bottom);
+
+
+
+	return 0;
+}
+
+//■ジョイパッドリンクの一括作成
+int MakeJoypadLink() {
+	strcpy(Dir_JoypadStyle_rw, Dir_JoypadStyle);
+	strcpy(Title_JoypadStyle_rw, Title_JoypadStyle);
+	return 0;
+}
+//■メッセージコードリンクの一括作成
+int MakeMsgCodeLink() {
+	strcpy(Dir_FontStyle_rw, Dir_FontStyle);
+	strcpy(Title_FontStyle_rw, Title_FontStyle);
+
+	strcpy(Dir_FontImgStyle_rw, Dir_FontImgStyle);
+	strcpy(Title_FontImgStyle_rw, Title_FontImgStyle);
+
+	strcpy(Dir_TagStyle_rw, Dir_TagStyle);
+	strcpy(Title_TagStyle_rw, Title_TagStyle);
+
+	strcpy(Dir_AppImg_rw, Dir_AppImg);
+
+	strcpy(Dir_AppSound_rw, Dir_AppSound);
+
+	return 0;
+}
+
+
+
+//■ジョイパッドリンクのセーブ（ジョイパッドスタイルのリンクのセーブ）
 int SaveJoypadLink(const TCHAR* file_h) {
 	if (strcmp(Title_JoypadStyle_rw, "なし") == 0) {//新規作成しない
 		return -2;
@@ -694,7 +788,7 @@ int SaveJoypadLink(const TCHAR* file_h) {
 
 //■メッセージコードリンクのセーブ（フォントスタイル，フォント画像スタイル，タグスタイルのリンクと，アプリ共有画僧ディレクトリ，アプリ共有音声ディレクトリのセーブ）
 int SaveMsgCodeLink(const TCHAR* file_h) {
-	if (strcmp(Title_FontStyle_rw, "なし") == 0){//新規作成しない
+	if (strcmp(Title_FontStyle_rw, "なし") == 0){//新規作成しない（fopenで新規作成してしまわないように，先に関数から抜ける）
 		return -2;
 	}
 	FILE *fp = fopen(file_h, "w");//テキストファイルを開く//ファイルがなければ新規作成
@@ -2272,7 +2366,7 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 		//カーソルオーバー
 		static const int BackColor_CursorOver = GetColor(230, 230, 204);
 		int LocationX = ActiveMath::MouseX; int LocationY = ActiveMath::MouseY + 20;
-		Math_CursorOver(LocationX, LocationY, 2, black, BackColor_CursorOver, NULL);//Math_ButtonTitleShow(const int LocationX, const int LocationY, const int Padding, const int StringColor, const int BackColor, const int Type)
+		Math_CursorOver(LocationX, LocationY, 2, black, BackColor_CursorOver);//Math_ButtonTitleShow(const int LocationX, const int LocationY, const int Padding, const int StringColor, const int BackColor)
 	}
 	//////////↑モンスター編集メインループの終わり↑//////////////////↑モンスター編集メインループの終わり↑//////////↑モンスター編集メインループの終わり↑///////////↑モンスター編集メインループの終わり↑/////////
 	return 0;
@@ -2839,7 +2933,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 		Tool[ToolN].PushedImg = Tool[ToolN].CursorImg;
 	}
 	ToolN++;
-	strcpy(Tool[ToolN].String, "ScrollMsgボタン");
+	strcpy(Tool[ToolN].String, "スクロール");
 	if (Tool[ToolN].WaitingImg == -1) {
 		Tool[ToolN].WaitingImg = LoadGraph(".\\System\\Fixed\\push24.png");
 		Tool[ToolN].CursorImg = LoadGraph(".\\System\\Fixed\\push24b.png");
@@ -2906,7 +3000,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	strcpy(List0Row[6].Title, "アプリケーションの終了");
 
 	//■カスタマイズのプルダウンリスト
-	const int List1RowKosuu = 11;
+	const int List1RowKosuu = 12;
 	ListStrWidth = GetDrawStringWidth("ジョイパッドスタイルディレクトリの変更", strlen("ジョイパッドスタイルディレクトリの変更"));//最大文字数の項目からリストの幅を取得
 	static struct LIST_CTRL List1 = { 0 };
 	List1.ParentBtn_p = &ToolA[1];//ファイルボタン
@@ -2937,7 +3031,8 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	strcpy(List1Row[7].Title, "アプリ共有画像ディレクトリの変更");
 	strcpy(List1Row[8].Title, "アプリ共有音声ディレクトリの変更");
 	strcpy(List1Row[9].Title, "ジョイパッドスタイルディレクトリの変更");
-	strcpy(List1Row[10].Title, "リンクの保存");
+	strcpy(List1Row[10].Title, "メッセージコードリンクの一括作成");
+	strcpy(List1Row[11].Title, "ジョイパッドリンクの一括作成");
 
 	//■ツールのプルダウンリスト
 	const int List2RowKosuu = 4;
@@ -3000,6 +3095,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	int L18 = SystemFontSize * 25.5;
 	int L19 = SystemFontSize * 27;
 	int L20 = SystemFontSize * 28.5;
+	int L21 = SystemFontSize * 30;
 
 	const int PropertyBtn_Kosuu = 82;
 	static struct BTN_CTRL PropertyBtn[PropertyBtn_Kosuu] = { 0 };
@@ -3014,7 +3110,9 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 
 	}
 
+	////
 	int Width1 = GetDrawStringWidth("左(000)   ", strlen("左(000)   "));
+	int Width2 = GetDrawStringWidth("透明度(50%) ", strlen("透明度(50%) "));
 	//Margin[0]
 	int BtnNo = 0;
 	PropertyBtn[BtnNo].Location[0] = 120 + Width1;
@@ -3024,21 +3122,21 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//Margin[1]
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 2 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 240 + Width1;
 	PropertyBtn[BtnNo].Location[1] = L2;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//Margin[2]
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 3 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 360 + Width1;
 	PropertyBtn[BtnNo].Location[1] = L2;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//Margin[3]
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 4 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 480 + Width2;
 	PropertyBtn[BtnNo].Location[1] = L2;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
@@ -3053,21 +3151,21 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//Padding[1]
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 2 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 240 + Width1;
 	PropertyBtn[BtnNo].Location[1] = L3;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//Padding[2]
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 3 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 360 + Width1;
 	PropertyBtn[BtnNo].Location[1] = L3;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//Padding[3]
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 4 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 480 + Width2;
 	PropertyBtn[BtnNo].Location[1] = L3;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
@@ -3082,14 +3180,14 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//BorderColorG
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 2 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 240 + Width1;
 	PropertyBtn[BtnNo].Location[1] = L4;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//BorderColorB
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 3 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 360 + Width1;
 	PropertyBtn[BtnNo].Location[1] = L4;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
@@ -3104,14 +3202,12 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 
 	//BorderType
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 2 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 240 + Width1;
 	PropertyBtn[BtnNo].Location[1] = L5;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 
-	////
-	int Width2 = GetDrawStringWidth("透明度(50%) ", strlen("透明度(50%) "));
 	//BackColorR
 	BtnNo++;//Up18
 	PropertyBtn[BtnNo].Location[0] = 120 + Width1;
@@ -3121,21 +3217,21 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//BackColorG
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 2 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 240 + Width1;
 	PropertyBtn[BtnNo].Location[1] = L6;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//BackColorB
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 3 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 360 + Width1;
 	PropertyBtn[BtnNo].Location[1] = L6;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//BackGroundTransparency
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 4 + Width2;
+	PropertyBtn[BtnNo].Location[0] = 480 + Width2;
 	PropertyBtn[BtnNo].Location[1] = L6;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
@@ -3150,21 +3246,21 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//ActiveTagColorG
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 2 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 240 + Width1;
 	PropertyBtn[BtnNo].Location[1] = L7;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//ActiveTagColorB
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 3 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 360 + Width1;
 	PropertyBtn[BtnNo].Location[1] = L7;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//ActiveTagColorTransparency
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 4 + Width2;
+	PropertyBtn[BtnNo].Location[0] = 480 + Width2;
 	PropertyBtn[BtnNo].Location[1] = L7;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
@@ -3179,21 +3275,21 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//ActiveMathColorG
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 2 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 240 + Width1;
 	PropertyBtn[BtnNo].Location[1] = L8;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//ActiveMathColorB
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 3 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 360 + Width1;
 	PropertyBtn[BtnNo].Location[1] = L8;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//ActiveMathColorTransparency
 	BtnNo++;//Up48
-	PropertyBtn[BtnNo].Location[0] = 120 * 4 + Width2;
+	PropertyBtn[BtnNo].Location[0] = 480 + Width2;
 	PropertyBtn[BtnNo].Location[1] = L8;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
@@ -3208,14 +3304,14 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//FontColorG
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 2 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 240 + Width1;
 	PropertyBtn[BtnNo].Location[1] = L9;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//FontColorB
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 3 + Width1;
+	PropertyBtn[BtnNo].Location[0] = 360 + Width1;
 	PropertyBtn[BtnNo].Location[1] = L9;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
@@ -3229,7 +3325,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
-	int Width4 = GetDrawStringWidth("スクロール(000px/秒) ", strlen("スクロール(000px/秒) "));
+	//int Width4 = GetDrawStringWidth("スクロール(000px/秒) ", strlen("スクロール(000px/秒) "));
 	//MaxLine
 	BtnNo++;//Up2
 	PropertyBtn[BtnNo].Location[0] = 480 + Width2;
@@ -3247,55 +3343,51 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//OutputSpeed
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 384;
+	PropertyBtn[BtnNo].Location[0] = 480 + Width2;
 	PropertyBtn[BtnNo].Location[1] = L11;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//ScrollSpeed
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 420 + Width4;
-	PropertyBtn[BtnNo].Location[1] = L11;
+	PropertyBtn[BtnNo].Location[0] = 240 + Width1;
+	PropertyBtn[BtnNo].Location[1] = L12;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	////
 	//Value5 Optionの下から5桁目
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 420 + Width4;
-	PropertyBtn[BtnNo].Location[1] = L12;
+	PropertyBtn[BtnNo].Location[0] = 240 + Width1;
+	PropertyBtn[BtnNo].Location[1] = L13;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//Value4 Optionの下から4桁目
-	int Width8 = GetDrawStringWidth("幅(5折り返しと改行なし，メッセージの幅，ボックス伸縮) ", strlen("幅(5折り返しと改行なし，メッセージの幅，ボックス伸縮) "));
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 + Width8;
-	PropertyBtn[BtnNo].Location[1] = L13;
+	PropertyBtn[BtnNo].Location[0] = 360 + Width1;
+	PropertyBtn[BtnNo].Location[1] = L14;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//Value3 Optionの下から3桁目
-	int Width5 = GetDrawStringWidth("停止(4自動寄せ) ", strlen("停止(4自動寄せ) "));
 	BtnNo++;//Up70
-	PropertyBtn[BtnNo].Location[0] = 420 + Width4;
-	PropertyBtn[BtnNo].Location[1] = L13;
+	PropertyBtn[BtnNo].Location[0] = 480 + Width2;
+	PropertyBtn[BtnNo].Location[1] = L14;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//Value2 Optionの下から2桁目
-	int Width6 = GetDrawStringWidth("開始(4ボックス内) ", strlen("開始(4ボックス内) "));
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 + Width8;
-	PropertyBtn[BtnNo].Location[1] = L14;
+	PropertyBtn[BtnNo].Location[0] = 240 + Width1;
+	PropertyBtn[BtnNo].Location[1] = L15;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
-	int Width7 = GetDrawStringWidth("方向(5ジョイパッド) ", strlen("方向(5ジョイパッド) "));
 	//Value1 Optionの下から1桁目
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 420 + Width4;
-	PropertyBtn[BtnNo].Location[1] = L14;
+	PropertyBtn[BtnNo].Location[0] = 480 + Width2;
+	PropertyBtn[BtnNo].Location[1] = L15;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
@@ -3303,22 +3395,22 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	// MsgBoxFormNumber
 	BtnNo++;//Up76
 	PropertyBtn[BtnNo].Location[0] = 120 + Width3;
-	PropertyBtn[BtnNo].Location[1] = L19;
+	PropertyBtn[BtnNo].Location[1] = L20;
 	BtnNo++;//Down77
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	////
 	//  Width
 	BtnNo++;//Up
-	PropertyBtn[BtnNo].Location[0] = 120 * 2 + Width1;
-	PropertyBtn[BtnNo].Location[1] = L20;
+	PropertyBtn[BtnNo].Location[0] = 240 + Width1;
+	PropertyBtn[BtnNo].Location[1] = L21;
 	BtnNo++;//Down
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
 	//  Height
 	BtnNo++;//Up80
-	PropertyBtn[BtnNo].Location[0] = 120 * 4 + Width2;
-	PropertyBtn[BtnNo].Location[1] = L20;
+	PropertyBtn[BtnNo].Location[0] = 480 + Width2;
+	PropertyBtn[BtnNo].Location[1] = L21;
 	BtnNo++;//Down81
 	PropertyBtn[BtnNo].Location[0] = -222222;
 	PropertyBtn[BtnNo].Location[1] = -111111;
@@ -3385,7 +3477,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 	//■ローカルディレクトリの指定（ホーム画面から入ってきたばかりのとき）※ファイルを開くのときは、そのファイルから取得済み。新規作成のときは、前のローカルディレクトリがある。
 	if (LocalDir[0] == '\0') {
 		strcpy(LocalDir, AppDir);
-		strcat(LocalDir, "\\OriginalFile\\MsgData");//ここで最初にローカルディレクトリーが決まる20200903
+		strcat(LocalDir, "\\OriginalFile");//ここで最初にローカルディレクトリーが決まる20200903\\MsgData
 	}
 
 	//メッセージプレビューのクリアループ
@@ -3408,9 +3500,9 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 		//書き込みモード
 		if (flag_mode == -1) {
 			//■メッセージボックスフォームの値を編集用に書き換える
-			int Value1buff = 9;//９：スクロールなし MsgBoxForm[i].Option % 10;
-			int Value2buff = 4;//４：ボックス左上 MsgBoxForm[i].Option % 100 / 10;
-			int Value3buff = 4;//下１桁目が4だからここは何でもよい MsgBoxForm[i].Option % 1000 / 100;
+			int Value1buff = 0;//０：スクロールなし MsgBoxForm[i].Option % 10;
+			int Value2buff = 0;//０：左上 MsgBoxForm[i].Option % 100 / 10;
+			int Value3buff = 0;//０：自動　※下１桁目が0だからここは何でもよい MsgBoxForm[i].Option % 1000 / 100;
 			//ノーマル表示
 			int Value4buff = Value4;// Form_p->Option % 10000 / 1000;//下から4桁目
 			int Value5buff = Value5;// Form_p->Option % 100000 / 10000;//下から5桁目
@@ -3438,7 +3530,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 
 			//■プロパティエリア
 			PropertyArea.Width = 605;
-			PropertyArea.Height = SystemFontSize * 1.5 * 20 - 7 + 20;
+			PropertyArea.Height = SystemFontSize * 1.5 * 21 - 7 + 20;
 			PropertyArea.Location[0] = WindowWidth - PropertyArea.Width - 10;
 			PropertyArea.Location[1] = WindowHeight - PropertyArea.Height - Statusbar.Height - 10;
 
@@ -3877,14 +3969,20 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 
 					if (MsgBuffActive == MsgBuffMax) MsgBuffActive = 0;
 
-					//高さのカーソルの表示
-					int Color;
-					if (Value5 == 0 && Value1 == 9) {//指定した高さに合わせる　かつ，スクロールしないなら
-						if (EditorPad.MsgBox_p->Height > MsgBox_p[MsgBoxCrlNumber].Height) Color = red;//指定した高さを超えているなら赤
-						else  Color = blue;//指定した高さ以内なら青
+					//メッセージボックスの下端を示すカーソルの表示　//スクロールなしで高さ指定（はみだす：赤　はみ出さない：青）　それ以外：白
+					{
+						int Color;
+						if (Value5 == 0 && Value1 == 0) {//指定した高さに合わせる　かつ，スクロールしないなら
+							//if (EditorPad.MsgBox_p->Height > MsgBox_p[MsgBoxCrlNumber].Height) Color = red;//指定した高さを超えているなら赤
+
+							//↓MsgBox_p->Heightだとモードを変えたとき青になってしまうので，MsgBox_p->MsgHeightから計算しなおす
+							int MsgBoxHeight = EditorPad.MsgBox_p->MsgHeight + (EditorPad.MsgBox_p->MsgBoxForm_p->Padding[1] + EditorPad.MsgBox_p->MsgBoxForm_p->Padding[3] + EditorPad.MsgBox_p->MsgBoxForm_p->BorderThickness * 2);
+							if (MsgBoxHeight > MsgBox_p[MsgBoxCrlNumber].Height) Color = red;//指定した高さを超えているなら赤
+							else  Color = blue;//指定した高さ以内なら青
+						}
+						else Color = white;//上記以外
+						ShowHeightGauge(EditorPad.MsgBox_p, MsgBox_p[MsgBoxCrlNumber].Height, Color);
 					}
-					else Color = white;//上記以外
-					ShowHeightGauge(EditorPad.MsgBox_p, MsgBox_p[MsgBoxCrlNumber].Height, Color);
 
 					//パラメータの表示
 					if (flag_paramata == 1 && nukeru == 0) {
@@ -3959,54 +4057,48 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 						else if (OutputSpeed_Copy == 0) DrawFormatString(PropertyArea.Nest[0] + 270, PropertyArea.Nest[1] + L11, black, "出力(全表示)");//書き換えていない値を表示
 						else if (OutputSpeed_Copy == -1) DrawFormatString(PropertyArea.Nest[0] + 270, PropertyArea.Nest[1] + L11, black, "出力(全表示・クリック後にカーソル)");//書き換えていない値を表示
 						else DrawFormatString(PropertyArea.Nest[0] + 270, PropertyArea.Nest[1] + L11, black, "出力(全表示・カーソル)");//書き換えていない値を表示
-						DrawFormatString(PropertyArea.Nest[0] + 420, PropertyArea.Nest[1] + L11, black, "スクロール(%dpx/秒)", Form_p->ScrollSpeed);
+						DrawFormatString(PropertyArea.Nest[0] + 120 * 1, PropertyArea.Nest[1] + L12, black, "スクロール(%dpx/秒)", Form_p->ScrollSpeed);
 						//書き換えていない値Value1～Value5で表示内容を決める
-						DrawString(PropertyArea.Nest[0], PropertyArea.Nest[1] + L12, "スクロール", blue);
-						if (Value5 == 0) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L12, "高さ(0指定した高さ)", black);
-						else if (Value5 == 1) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L12, "高さ(1メッセージの高さ)", black);
-						if (Value4 == 0) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "幅(0文字と数式で折り返し)", black);
-						else if (Value4 == 1) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "幅(1わかちと数式で折り返し)", black);
-						else if (Value4 == 2) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "幅(2折り返しと改行なし，指定した幅)", black);
-						else if (Value4 == 3) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "幅(3折り返しと改行なし，メッセージの幅)", black);
-						else if (Value4 == 4) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "幅(4折り返しなし，指定した幅)", black);
-						else if (Value4 == 5) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "幅(5折り返しなし，メッセージの幅)", black);
-						//else if (Value4 == 3) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "幅(3折り返しと改行なし，指定した幅，ボックス伸縮)", black);
-						//else if (Value4 == 5) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "幅(5折り返しと改行なし，メッセージの幅，ボックス伸縮)", black);
-						//else if (Value4 == 7) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "幅(7折り返しなし，指定した幅，ボックス伸縮)", black);
-						//else if (Value4 == 9) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "幅(9折り返しなし，メッセージの幅，ボックス伸縮)", black);
+						DrawString(PropertyArea.Nest[0], PropertyArea.Nest[1] + L13, "スクロール", blue);
+						if (Value5 == 0) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "高さ(0:指定した高さ)", black);
+						else if (Value5 == 1) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "高さ(1:メッセージの高さ)", black);
+						if (Value4 == 0) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L14, "幅(0:文字と数式で折り返し)", black);
+						else if (Value4 == 1) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L14, "幅(1:わかちと数式で折り返し)", black);
+						else if (Value4 == 2) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L14, "幅(2:折り返しと改行なし・指定した幅)", black);
+						else if (Value4 == 3) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L14, "幅(3:折り返しと改行なし・メッセージの幅)", black);
+						else if (Value4 == 4) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L14, "幅(4:折り返しなし・指定した幅)", black);
+						else if (Value4 == 5) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L14, "幅(5:折り返しなし・メッセージの幅)", black);
 
-						if (Value3 == 0) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L13, "0停止(左寄せ)", black);
-						else if (Value3 == 1) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L13, "停止(1上寄せ)", black);
-						else if (Value3 == 2) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L13, "停止(2右寄せ)", black);
-						else if (Value3 == 3) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L13, "停止(3下寄せ)", black);
-						else if (Value3 == 4) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L13, "停止(4自動寄せ)", black);
-						else if (Value3 == 5) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L13, "停止(5ループ)", black);
-						else if (Value3 == 6) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L13, "停止(6通過)", black);
-						if (Value2 == 0) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L14, "開始0(左端)", black);
-						else if (Value2 == 1) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L14, "開始(1上端)", black);
-						else if (Value2 == 2) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L14, "開始(2右端)", black);
-						else if (Value2 == 3) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L14, "開始(3下端)", black);
-						else if (Value2 == 4) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L14, "開始(4ボックス内)", black);
-						if (Value1 == 0) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L14, "進行方向(0左)", black);
-						else if (Value1 == 1) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L14, "方向(1左(ボックス))", black);
-						else if (Value1 == 2) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L14, "方向(2上)", black);
-						else if (Value1 == 3) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L14, "方向(3上(ボックス))", black);
-						else if (Value1 == 4) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L14, "方向(4右)", black);
-						else if (Value1 == 5) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L14, "方向(5右(ボックス))", black);
-
-
-						else if (Value1 == 6) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L14, "方向(6下)", black);
-						else if (Value1 == 7) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L14, "方向(7下(ボックス))", black);
-						else if (Value1 == 8) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L14, "方向(8ジョイパッド)", black);
-						else if (Value1 == 9) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L14, "方向(9スクロールなし)", black);
+						if (Value3 == 0) DrawString(PropertyArea.Nest[0] + 460, PropertyArea.Nest[1] + L14, "停止(0:自動)", black);
+						else if (Value3 == 1) DrawString(PropertyArea.Nest[0] + 460, PropertyArea.Nest[1] + L14, "停止(1:左寄せ)", black);
+						else if (Value3 == 2) DrawString(PropertyArea.Nest[0] + 460, PropertyArea.Nest[1] + L14, "停止(2:上寄せ)", black);
+						else if (Value3 == 3) DrawString(PropertyArea.Nest[0] + 460, PropertyArea.Nest[1] + L14, "停止(3:右寄せ)", black);
+						else if (Value3 == 4) DrawString(PropertyArea.Nest[0] + 460, PropertyArea.Nest[1] + L14, "停止(4:下寄せ)", black);
+						else if (Value3 == 5) DrawString(PropertyArea.Nest[0] + 460, PropertyArea.Nest[1] + L14, "停止(5:ループ)", black);
+						else if (Value3 == 6) DrawString(PropertyArea.Nest[0] + 460, PropertyArea.Nest[1] + L14, "停止(6:通過)", black);
+						if (Value2 == 0) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L15, "開始(0:左上)", black);
+						else if (Value2 == 1) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L15, "開始(1:左上の左)", black);
+						else if (Value2 == 2) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L15, "開始(2:左上の上)", black);
+						else if (Value2 == 3) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L15, "開始(3:右上の右)", black);
+						else if (Value2 == 4) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L15, "開始(4:左下の下)", black);
+						if (Value1 == 0) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L15, "方向(0:スクロールなし)", black);
+						else if (Value1 == 1) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L15, "進行方向(1:左)", black);
+						else if (Value1 == 2) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L15, "方向(2:左B)", black);
+						else if (Value1 == 3) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L15, "方向(3:上)", black);
+						else if (Value1 == 4) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L15, "方向(4:上B)", black);
+						else if (Value1 == 5) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L15, "方向(5:右)", black);
+						else if (Value1 == 6) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L15, "方向(6:右B)", black);
+						else if (Value1 == 7) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L15, "方向(7:下)", black);
+						else if (Value1 == 8) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L15, "方向(8:下B)", black);
+						else if (Value1 == 9) DrawString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L15, "方向(9:ジョイパッド)", black);
 
 						//サウンドパス
 						static int OpeningSound_x1 = PropertyArea.Nest[0] + 120 + GetDrawStringWidth("開始音", strlen("開始音"));//開始音（入力状態：バックスペースやデリートのときの音）
-						static int OpeningSound_y1 = PropertyArea.Nest[1] + L15;
+						static int OpeningSound_y1 = PropertyArea.Nest[1] + L16;
 						static int MsgSound_x1 = PropertyArea.Nest[0] + 120 + GetDrawStringWidth("メッセージ音", strlen("メッセージ音"));//行ごとに鳴らす書き出しの音（入力状態：カーソルがジャンプするときの音）
-						static int MsgSound_y1 = PropertyArea.Nest[1] + L16;
+						static int MsgSound_y1 = PropertyArea.Nest[1] + L17;
 						static int ConfirmSound_x1 = PropertyArea.Nest[0] + 120 + GetDrawStringWidth("確定音", strlen("確定音"));//フレーズ書き終え状態，ウィンドウが満杯の状態のときにボタンを押した音（入力状態：数式などが確定するときの音）
-						static int ConfirmSound_y1 = PropertyArea.Nest[1] + L17;
+						static int ConfirmSound_y1 = PropertyArea.Nest[1] + L18;
 						static int SpotColor = GetColor(255, 255, 204);
 						//開始音（入力状態：バックスペースやデリートのときの音）
 						if (OpeningSound_x1 < ActiveMath::MouseX && ActiveMath::MouseX < OpeningSound_x1 + GetDrawStringWidth(Form_RGB_SoundPath_p->OpeningSoundPath, strlen(Form_RGB_SoundPath_p->OpeningSoundPath)) + SystemFontSize
@@ -4093,21 +4185,21 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 							}
 						}
 						//サウンドパスの文字列（カーソル表示のあとに文字列を表示すること）
-						DrawString(PropertyArea.Nest[0], PropertyArea.Nest[1] + L15, "サウンド", blue);
+						DrawString(PropertyArea.Nest[0], PropertyArea.Nest[1] + L16, "サウンド", blue);
 
-						DrawFormatString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L15, black, "開始音(%s)", Form_RGB_SoundPath_p->OpeningSoundPath);
-						DrawFormatString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L16, black, "メッセージ音(%s)", Form_RGB_SoundPath_p->MsgSoundPath);
-						DrawFormatString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L17, black, "確定音(%s)", Form_RGB_SoundPath_p->ConfirmSoundPath);
+						DrawFormatString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L16, black, "開始音(%s)", Form_RGB_SoundPath_p->OpeningSoundPath);
+						DrawFormatString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L17, black, "メッセージ音(%s)", Form_RGB_SoundPath_p->MsgSoundPath);
+						DrawFormatString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L18, black, "確定音(%s)", Form_RGB_SoundPath_p->ConfirmSoundPath);
 
-						DrawString(PropertyArea.Nest[0], PropertyArea.Nest[1] + L18, "メッセージコントロール", red);
+						DrawString(PropertyArea.Nest[0], PropertyArea.Nest[1] + L19, "メッセージコントロール", red);
 
 						//実行中に値（*EditorPad.MsgBox_p～）が初期値（MsgBox_p[MsgBoxCrlNumber].～）のまま変化しないもの
-						DrawString(PropertyArea.Nest[0], PropertyArea.Nest[1] + L19, "フォーム番号", blue);
-						DrawFormatString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L19, black, "MsgFormNo(%d)", MsgFormNo);//
+						DrawString(PropertyArea.Nest[0], PropertyArea.Nest[1] + L20, "フォーム番号", blue);
+						DrawFormatString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L20, black, "MsgFormNo(%d)", MsgFormNo);//
 						//実行中に値（*EditorPad.MsgBox_p～）が初期値（MsgBox_p[MsgBoxCrlNumber].～）から変化するもの
-						DrawString(PropertyArea.Nest[0], PropertyArea.Nest[1] + L20, "サイズ", blue);
-						DrawFormatString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L20, black, "幅(初期値%d:整合値%d)", MsgBox_p[MsgBoxCrlNumber].Width, EditorPad.MsgBox_p->Width);//初期値:実行中の値
-						DrawFormatString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L20, black, "高さ(初期値%d:整合値%d)", MsgBox_p[MsgBoxCrlNumber].Height, EditorPad.MsgBox_p->Height);//初期値:実行中の値
+						DrawString(PropertyArea.Nest[0], PropertyArea.Nest[1] + L21, "サイズ", blue);
+						DrawFormatString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L21, black, "幅(初期値%d:整合値%d)", MsgBox_p[MsgBoxCrlNumber].Width, EditorPad.MsgBox_p->Width);//初期値:実行中の値
+						DrawFormatString(PropertyArea.Nest[0] + 360, PropertyArea.Nest[1] + L21, black, "高さ(初期値%d:整合値%d)", MsgBox_p[MsgBoxCrlNumber].Height, EditorPad.MsgBox_p->Height);//初期値:実行中の値
 
 				/////////////////////////////////////
 						//DrawString(PropertyArea.Nest[0], PropertyArea.Nest[1] + L21, "整合値", gray30);
@@ -4677,18 +4769,20 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 						if (GetOpenFileNameCsv(Dir_FontStyle, SourcePath, Title_FontStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時はDir_FontSetがカレントディレクトリとなる
 							//rwの書き換え
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Title_FontStyle_rw以外は"未設定"とする
 								strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
 							strcpy(Title_FontStyle_rw, Title_FontStyle);
+							PathRelativePathTo(SourcePath, AppDir, FILE_ATTRIBUTE_DIRECTORY, SourcePath, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
-							strcpy(FilePath, Dir_FontStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontStyle);
-							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
+							strcpy(FilePath, Dir_FontStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontStyle);//FilePathは相対パス
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//相対パスどうしを比較して異なるときはコピーする
 							//フォントスタイルのロード
-							LoadFontStyle(FilePath);//絶対パスでロード
+							SetCurrentDirectory(AppDir);//ディレクトリを変更する
+							LoadFontStyle(FilePath);//相対パスでロード
 							nukeru = 1;//タグを再読み込みするため（文字幅で関係あると思う）
 						}
 					}
@@ -4708,17 +4802,19 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 						if (GetOpenFileNameCsv(Dir_FontImgStyle, SourcePath, Title_FontImgStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時はDir_FontImgSetがカレントディレクトリとなる
 							//rwの書き換え
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Title_FontImgStyle_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
 							strcpy(Title_FontImgStyle_rw, Title_FontImgStyle);
+							PathRelativePathTo(SourcePath, AppDir, FILE_ATTRIBUTE_DIRECTORY, SourcePath, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
-							strcpy(FilePath, Dir_FontImgStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontImgStyle);
-							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
+							strcpy(FilePath, Dir_FontImgStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontImgStyle);//FilePathは相対パス
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//相対パスどうしの比較
 							//フォント画像スタイルのロード
+							SetCurrentDirectory(AppDir);//ディレクトリを変更する
 							LoadFontImgStyle(FilePath);//絶対パスでロード
 							nukeru = 1;//タグを再読み込みするため（画像の幅で関係あると思う）
 						}
@@ -4739,17 +4835,19 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 						if (GetOpenFileNameCsv(Dir_TagStyle, SourcePath, Title_TagStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時はDir_TagSetがカレントディレクトリとなる
 							//rwの書き換え
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Title_TagStyle_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
 							strcpy(Title_TagStyle_rw, Title_TagStyle);
+							PathRelativePathTo(SourcePath, AppDir, FILE_ATTRIBUTE_DIRECTORY, SourcePath, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
-							strcpy(FilePath, Dir_TagStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_TagStyle);
+							strcpy(FilePath, Dir_TagStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_TagStyle);//FilePathは相対パス
 							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
 							//タグスタイルのロード
+							SetCurrentDirectory(AppDir);//ディレクトリを変更する
 							LoadTagStyle(FilePath);//絶対パスでロード
 							nukeru = 1;//タグを再読み込みするため
 						}
@@ -4769,15 +4867,18 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 						char SourcePath[MAX_PATH] = { 0 };
 						if (GetOpenFileNameCsv(Dir_JoypadStyle, SourcePath, Title_JoypadStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時はDir_Joypadがカレントディレクトリとなる
-							if (strcmp(Title_JoypadStyle_rw, "なし") == 0) {//JoypadLinkがないとき
+							//rwの書き換え
+							if (strcmp(Title_JoypadStyle_rw, "なし") == 0) {//JoypadLinkがないとき，Title_JoypadStyle_rw以外は"未設定"とする
 								strcpy(Dir_JoypadStyle_rw, "未設定");
 							}
 							strcpy(Title_JoypadStyle_rw, Title_JoypadStyle);
+							PathRelativePathTo(SourcePath, AppDir, FILE_ATTRIBUTE_DIRECTORY, SourcePath, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
-							strcpy(FilePath, Dir_JoypadStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_JoypadStyle);
-							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
+							strcpy(FilePath, Dir_JoypadStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_JoypadStyle);//FilePathは相対パス
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//相対パスどうしの比較
 							//ジョイパッドスタイルのロード
+							SetCurrentDirectory(AppDir);//ディレクトリを変更する
 							LoadJoypadStyle(FilePath);//絶対パスでロード
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
@@ -4795,12 +4896,14 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_FontStyle, MAX_PATH)) {
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							//rwの書き換え
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Dir_FontStyle_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
-							PathRelativePathTo(Dir_FontStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_FontStyle, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_FontStyle_rw, Dir_FontStyle);
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
 					}
@@ -4817,12 +4920,14 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_FontImgStyle, MAX_PATH)) {
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							//rwの書き換え
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Dir_FontImgStyle_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
-							PathRelativePathTo(Dir_FontImgStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontImgStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_FontImgStyle, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontImgStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_FontImgStyle_rw, Dir_FontImgStyle);
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
 					}
@@ -4839,12 +4944,14 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_TagStyle, MAX_PATH)) {
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							//rwの書き換え
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Dir_TagStyle_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
-							PathRelativePathTo(Dir_TagStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_TagStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_TagStyle, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_TagStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_TagStyle_rw, Dir_TagStyle);
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
 					}
@@ -4861,13 +4968,15 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_AppImg, MAX_PATH)) {
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							//rwの書き換え
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Dir_AppImg_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppSound_rw, "未設定");
 							}
-							PathRelativePathTo(Dir_AppImg_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppImg, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
-							nukeru = 1;//タグを再読み込みするため
+							PathRelativePathTo(Dir_AppImg, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppImg, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_AppImg_rw, Dir_AppImg);
+							//nukeru = 1;//タグを再読み込みするため
 						}
 					}
 				}
@@ -4884,13 +4993,15 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_AppSound, MAX_PATH)) {
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							//rwの書き換え
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Dir_AppSound_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定");
 							}
-							PathRelativePathTo(Dir_AppSound_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppSound, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
-							nukeru = 1;//タグを再読み込みするため
+							PathRelativePathTo(Dir_AppSound, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppSound, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_AppSound_rw, Dir_AppSound);
+							//nukeru = 1;//タグを再読み込みするため
 						}
 					}
 				}
@@ -4907,10 +5018,12 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_JoypadStyle, MAX_PATH)) {
-							if (strcmp(Title_JoypadStyle_rw, "なし") == 0) {//JoypadLinkがないとき
+							//rwの書き換え
+							if (strcmp(Title_JoypadStyle_rw, "なし") == 0) {//JoypadLinkがないとき，Dir_JoypadStyle_rw以外は"未設定"とする
 								strcpy(Title_JoypadStyle_rw, "未設定");
 							}
-							PathRelativePathTo(Dir_JoypadStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_JoypadStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_JoypadStyle, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_JoypadStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_JoypadStyle_rw, Dir_JoypadStyle);
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
 					}
@@ -4920,15 +5033,32 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List1.Nest[1] += List1.RowHeight;////次の行の開始位置までずらす　あってもなくてもよい
 
-				//●リンクの保存
+				//●メッセージコードリンクの一括作成
 				r++;
 				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
 					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
+						MakeMsgCodeLink();
+					}
+				}
+				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
+				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
+				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
+				List1.Nest[1] += List1.RowHeight;////次の行の開始位置までずらす　あってもなくてもよい
+
+				//●ジョイパッドリンクの一括作成
+				r++;
+				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
+					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
+					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
+					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
+						MakeJoypadLink();
+/*リンクファイルの保存
 						SetCurrentDirectory(LocalDir);
 						SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						SaveJoypadLink(".\\JoypadLink.txt");//ジョイパッドリンクの保存　全部未設定（つまりTitle_JoypadStyle_rwが"なし"）なら保存しない
+*/
 					}
 				}
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
@@ -5069,7 +5199,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 			}
 			//●カーソルオーバー
 			static const int BackColor_CursorOver = GetColor(240, 250, 250);
-			Math_CursorOver(ActiveMath::MouseX, ActiveMath::MouseY + 20, 2, black, BackColor_CursorOver, NULL);//Math_ButtonTitleShow(const int LocationX, const int LocationY, const int Padding, const int StringColor, const int BackColor, const int Type)
+			Math_CursorOver(ActiveMath::MouseX, ActiveMath::MouseY + 20, 2, black, BackColor_CursorOver);//Math_ButtonTitleShow(const int LocationX, const int LocationY, const int Padding, const int StringColor, const int BackColor)
 			//●マルチガイド
 			MultiGuide(10, 10, EditorPad.Msg_h, EditorPad.MsgBox_p);
 			//●サンプルの制限解除（コントロール＋R）
@@ -5342,7 +5472,7 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 	strcpy(List0Row[2].Title, "アプリケーションの終了");
 
 	//■リンクのプルダウンリスト
-	const int List1RowKosuu = 11;
+	const int List1RowKosuu = 12;
 	ListStrWidth = GetDrawStringWidth("ジョイパッドスタイルディレクトリの変更", strlen("ジョイパッドスタイルディレクトリの変更"));//最大文字数の項目からリストの幅を取得
 	static struct LIST_CTRL List1 = { 0 };
 	List1.ParentBtn_p = &ToolA[1];//ファイルボタン
@@ -5373,7 +5503,8 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 	strcpy(List1Row[7].Title, "アプリ共有画像ディレクトリの変更");
 	strcpy(List1Row[8].Title, "アプリ共有音声ディレクトリの変更");
 	strcpy(List1Row[9].Title, "ジョイパッドスタイルディレクトリの変更");
-	strcpy(List1Row[10].Title, "リンクの保存");
+	strcpy(List1Row[10].Title, "メッセージコードリンクの一括作成");
+	strcpy(List1Row[11].Title, "ジョイパッドリンクの一括作成");
 
 
 	//■設定のプルダウンリスト
@@ -5424,7 +5555,9 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 	struct INPUT_TEXT_BTN_CTRL BaseBtn_h[BaseBtn_Max];//ベースボタン
 	//（パッドメッセージ）
 	const int MsgCharMax_Pad = 2000;//メッセージの最大文字数
-	char Msg_Pad[MsgCharMax_Pad + 1] = { "<math></math>" };//メッセージ（配列サイズは，メッセージの最大文字数＋１）
+	char Msg_Pad[MsgCharMax_Pad + 1] = { "<m></m>" };//メッセージ（配列サイズは，メッセージの最大文字数＋１）
+	//char Msg_Pad[MsgCharMax_Pad + 1] = { "<math></math>" };//メッセージ（配列サイズは，メッセージの最大文字数＋１）
+
 	struct MSG_BOX_FORM PadMsgBoxForm;
 	struct MSG_BOX_CTRL PadMsgBox;
 	//MsgBoxForm_RGB_SoundPathの取得（色の値，音のパス）
@@ -5506,18 +5639,20 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 	}
 	//●メッセージ，メッセージボックスの初期化用コピーの取得
 	char Msg_Copy[MsgCharMax_Pad + 1];
-	struct MSG_BOX_CTRL MsgBox_Pad_Copy;
 	strcpy(Msg_Copy, Msg_Pad);//if (DisplayPad.Msg_h != NULL) 
-	MsgBox_Pad_Copy = *DisplayPad.MsgBox_p;//if (DisplayPad.MsgBox_p != NULL) 
+	//struct MSG_BOX_CTRL MsgBox_Pad_Copy;
+	//MsgBox_Pad_Copy = *DisplayPad.MsgBox_p;//if (DisplayPad.MsgBox_p != NULL) 
 
 	int ExitModeFlag = 0;
 	while (!ExitModeFlag && ProcessMessage() == 0) {
 		//〔入力したメッセージのリセット〕
 		strcpy(Msg_Pad, Msg_Copy);//メッセージのリセット
-		PadMsgBox = MsgBox_Pad_Copy;//ボックスのリセット
-	//	Reparse(&PadMsgBox);//タグの再読み込み指示，アクティブ要素のリセット，フレームカウンターのリセット
+//		PadMsgBox = MsgBox_Pad_Copy;//ボックスのリセット
+		Reparse(&PadMsgBox);//タグの再読み込み指示，アクティブ要素のリセット，フレームカウンターのリセット
 		//PadMsgBox.Tag[0].PositionP = 0;//ActiveElementを0にリセットしてカーソル位置を再検出//ボックスのリセットをリセットしたから不要？？？
 		//PadMsgBox.ParentArea_p = &DisplayArea;
+
+
 
 		//■メッセージプロパティ*MsgBox_p
 		//struct MSG_BOX_CTRL MsgBox;
@@ -5630,7 +5765,7 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 				}
 				///////メッセージの詳細編集
 				else if (ClickedNo == 3) {
-					if (Msg_Copy[0] != '\0' && MsgBox_Pad_Copy.MsgBoxForm_p != NULL ) {
+					if (Msg_Copy[0] != '\0' && PadMsgBox.MsgBoxForm_p != NULL ) {
 						int MsgBoxNumber = 0;
 						int MsgBoxFormNumber = 0;
 						char MsgFilePath[MAX_PATH];
@@ -5639,15 +5774,16 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 						int Area_Kosuu = 2;  int AreaNumber = 0;
 
 						strcpy(Msg_Pad, Msg_Copy);//メッセージのリセット
-						PadMsgBox = MsgBox_Pad_Copy;//ボックスのリセット
-						Reparse(&PadMsgBox);//タグの再読み込み指示（正解ボックスを表示させるため）
-						PadMsgBox.Tag[0].PositionP = 0;//ActiveElementを0にリセットしてカーソル位置を再検出
+						//PadMsgBox = MsgBox_Pad_Copy;//ボックスのリセット
+						//Reparse(&PadMsgBox);//タグの再読み込み指示（正解ボックスを表示させるため）
+						//PadMsgBox.Tag[0].PositionP = 0;//ActiveElementを0にリセットしてカーソル位置を再検出
 						//→								１はMsgBox_Kosuu												１はMsgBoxForm_Kosuu
 						MessagePreviewMode(DisplayPad.MsgBox_p, 1, MsgBoxNumber, DisplayPad.MsgBoxForm_p, &MsgBoxForm_RGB_SoundPath, 1, &MsgBoxFormNumber,
 							Msg_Pad, MsgCharMax_Pad + 1, DisplayArea_Preview_FilePath, &DisplayArea, &BorderColorRGB, &BackColorRGB, &BackImgPath, Area_Kosuu, AreaNumber, //
 							MsgFilePath, FileTitle_Pad, NULL, EditorMode_p, &ExitModeFlag//問題編集もーどのときはNULLのところが, &mondai（これは問題ファイルを保存するのに必要だから）
 						);//ファイルパスはメッセージのファイルパス。ファイル名はパッドのファイル名。
 						if (ExitModeFlag) return 0;
+						strcpy(Msg_Copy, Msg_Pad);//抜けるとクリアーしてしまうので，クリアー用のメッセージに書き写しておく
 						nukeru = 1;
 					}
 				}
@@ -5871,18 +6007,20 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 						if (GetOpenFileNameCsv(Dir_FontStyle, SourcePath, Title_FontStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時はDir_FontSetがカレントディレクトリとなる
 							//rwの書き換え
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Title_FontStyle_rw以外は"未設定"とする
 								strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
 							strcpy(Title_FontStyle_rw, Title_FontStyle);
+							PathRelativePathTo(SourcePath, AppDir, FILE_ATTRIBUTE_DIRECTORY, SourcePath, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
-							strcpy(FilePath, Dir_FontStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontStyle);
-							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
+							strcpy(FilePath, Dir_FontStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontStyle);//FilePathは相対パス
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//相対パスどうしを比較して異なるときはコピーする
 							//フォントスタイルのロード
-							LoadFontStyle(FilePath);//絶対パスでロード
+							SetCurrentDirectory(AppDir);//ディレクトリを変更する
+							LoadFontStyle(FilePath);//相対パスでロード
 							nukeru = 1;//タグを再読み込みするため（文字幅で関係あると思う）
 						}
 					}
@@ -5902,17 +6040,19 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 						if (GetOpenFileNameCsv(Dir_FontImgStyle, SourcePath, Title_FontImgStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時はDir_FontImgSetがカレントディレクトリとなる
 							//rwの書き換え
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Title_FontImgStyle_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
 							strcpy(Title_FontImgStyle_rw, Title_FontImgStyle);
+							PathRelativePathTo(SourcePath, AppDir, FILE_ATTRIBUTE_DIRECTORY, SourcePath, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
-							strcpy(FilePath, Dir_FontImgStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontImgStyle);
-							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
+							strcpy(FilePath, Dir_FontImgStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontImgStyle);//FilePathは相対パス
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//相対パスどうしの比較
 							//フォント画像スタイルのロード
+							SetCurrentDirectory(AppDir);//ディレクトリを変更する
 							LoadFontImgStyle(FilePath);//絶対パスでロード
 							nukeru = 1;//タグを再読み込みするため（画像の幅で関係あると思う）
 						}
@@ -5933,17 +6073,19 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 						if (GetOpenFileNameCsv(Dir_TagStyle, SourcePath, Title_TagStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時はDir_TagSetがカレントディレクトリとなる
 							//rwの書き換え
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Title_TagStyle_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
 							strcpy(Title_TagStyle_rw, Title_TagStyle);
+							PathRelativePathTo(SourcePath, AppDir, FILE_ATTRIBUTE_DIRECTORY, SourcePath, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
-							strcpy(FilePath, Dir_TagStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_TagStyle);
+							strcpy(FilePath, Dir_TagStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_TagStyle);//FilePathは相対パス
 							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
 							//タグスタイルのロード
+							SetCurrentDirectory(AppDir);//ディレクトリを変更する
 							LoadTagStyle(FilePath);//絶対パスでロード
 							nukeru = 1;//タグを再読み込みするため
 						}
@@ -5963,15 +6105,18 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 						char SourcePath[MAX_PATH] = { 0 };
 						if (GetOpenFileNameCsv(Dir_JoypadStyle, SourcePath, Title_JoypadStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時はDir_Joypadがカレントディレクトリとなる
-							if (strcmp(Title_JoypadStyle_rw, "なし") == 0) {//JoypadLinkがないとき
+							//rwの書き換え
+							if (strcmp(Title_JoypadStyle_rw, "なし") == 0) {//JoypadLinkがないとき，Title_JoypadStyle_rw以外は"未設定"とする
 								strcpy(Dir_JoypadStyle_rw, "未設定");
 							}
 							strcpy(Title_JoypadStyle_rw, Title_JoypadStyle);
+							PathRelativePathTo(SourcePath, AppDir, FILE_ATTRIBUTE_DIRECTORY, SourcePath, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
-							strcpy(FilePath, Dir_JoypadStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_JoypadStyle);
-							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
+							strcpy(FilePath, Dir_JoypadStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_JoypadStyle);//FilePathは相対パス
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//相対パスどうしの比較
 							//ジョイパッドスタイルのロード
+							SetCurrentDirectory(AppDir);//ディレクトリを変更する
 							LoadJoypadStyle(FilePath);//絶対パスでロード
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
@@ -5989,12 +6134,14 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_FontStyle, MAX_PATH)) {
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							//rwの書き換え
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Dir_FontStyle_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
-							PathRelativePathTo(Dir_FontStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_FontStyle, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_FontStyle_rw, Dir_FontStyle);
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
 					}
@@ -6011,12 +6158,14 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_FontImgStyle, MAX_PATH)) {
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							//rwの書き換え
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Dir_FontImgStyle_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
-							PathRelativePathTo(Dir_FontImgStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontImgStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_FontImgStyle, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontImgStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_FontImgStyle_rw, Dir_FontImgStyle);
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
 					}
@@ -6033,12 +6182,14 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_TagStyle, MAX_PATH)) {
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							//rwの書き換え
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Dir_TagStyle_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
-							PathRelativePathTo(Dir_TagStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_TagStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_TagStyle, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_TagStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_TagStyle_rw, Dir_TagStyle);
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
 					}
@@ -6055,13 +6206,15 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_AppImg, MAX_PATH)) {
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							//rwの書き換え
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Dir_AppImg_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppSound_rw, "未設定");
 							}
-							PathRelativePathTo(Dir_AppImg_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppImg, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
-							nukeru = 1;//タグを再読み込みするため
+							PathRelativePathTo(Dir_AppImg, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppImg, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_AppImg_rw, Dir_AppImg);
+							//nukeru = 1;//タグを再読み込みするため
 						}
 					}
 				}
@@ -6078,13 +6231,15 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_AppSound, MAX_PATH)) {
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							//rwの書き換え
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Dir_AppSound_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定");
 							}
-							PathRelativePathTo(Dir_AppSound_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppSound, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
-							nukeru = 1;//タグを再読み込みするため
+							PathRelativePathTo(Dir_AppSound, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppSound, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_AppSound_rw, Dir_AppSound);
+							//nukeru = 1;//タグを再読み込みするため
 						}
 					}
 				}
@@ -6101,10 +6256,12 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_JoypadStyle, MAX_PATH)) {
-							if (strcmp(Title_JoypadStyle_rw, "なし") == 0) {//JoypadLinkがないとき
+							//rwの書き換え
+							if (strcmp(Title_JoypadStyle_rw, "なし") == 0) {//JoypadLinkがないとき，Dir_JoypadStyle_rw以外は"未設定"とする
 								strcpy(Title_JoypadStyle_rw, "未設定");
 							}
-							PathRelativePathTo(Dir_JoypadStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_JoypadStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_JoypadStyle, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_JoypadStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_JoypadStyle_rw, Dir_JoypadStyle);
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
 					}
@@ -6114,21 +6271,33 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす
 
-				////リンクの保存
+				//●メッセージコードリンクの一括作成
 				r++;
 				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
 					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-						SetCurrentDirectory(LocalDir);
-						SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
-						SaveJoypadLink(".\\JoypadLink.txt");//ジョイパッドリンクの保存　全部未設定（つまりTitle_JoypadStyle_rwが"なし"）なら保存しない
+						MakeMsgCodeLink();
 					}
 				}
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
 				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
-				//List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす。最後なのでなくてもよい
+				List1.Nest[1] += List1.RowHeight;////次の行の開始位置までずらす　あってもなくてもよい
+
+				//●ジョイパッドリンクの一括作成
+				r++;
+				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
+					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
+					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
+					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
+						MakeJoypadLink();
+					}
+				}
+				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
+				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
+				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
+				//List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす。最後だからなくてよい
 
 				///////左クリックしたとき    プルダウンリストから抜ける
 				if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
@@ -6176,7 +6345,7 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 					&& List2Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List2.Nest[0], List2.Nest[1], List2.Nest[0] + List2.RowWidth, List2.Nest[1] + List2.RowHeight, List2.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-						if (Msg_Copy[0] != '\0' && MsgBox_Pad_Copy.MsgBoxForm_p != NULL) {
+						if (Msg_Copy[0] != '\0' && PadMsgBox.MsgBoxForm_p != NULL) {
 							int MsgBoxNumber = 0;
 							int MsgBoxFormNumber = 0;
 							char MsgFilePath[MAX_PATH];
@@ -6185,9 +6354,9 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 							int Area_Kosuu = 2;  int AreaNumber = 0;
 
 							strcpy(Msg_Pad, Msg_Copy);//メッセージのリセット
-							PadMsgBox = MsgBox_Pad_Copy;//ボックスのリセット
-							Reparse(&PadMsgBox);//タグの再読み込み指示（正解ボックスを表示させるため）
-							PadMsgBox.Tag[0].PositionP = 0;//ActiveElementを0にリセットしてカーソル位置を再検出
+							//PadMsgBox = MsgBox_Pad_Copy;//ボックスのリセット
+							//Reparse(&PadMsgBox);//タグの再読み込み指示（正解ボックスを表示させるため）
+							//PadMsgBox.Tag[0].PositionP = 0;//ActiveElementを0にリセットしてカーソル位置を再検出
 
 						//→								１はMsgBox_Kosuu												１はMsgBoxForm_Kosuu
 							MessagePreviewMode(DisplayPad.MsgBox_p, 1, MsgBoxNumber, DisplayPad.MsgBoxForm_p, &MsgBoxForm_RGB_SoundPath, 1, &MsgBoxFormNumber,
@@ -6195,6 +6364,7 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 								MsgFilePath, FileTitle_Pad, NULL, EditorMode_p, &ExitModeFlag//問題編集もーどのときはNULLのところが, &mondai（これは問題ファイルを保存するのに必要だから）
 							);//ファイルパスはメッセージのファイルパス。ファイル名はパッドのファイル名。
 							if (ExitModeFlag) return 0;
+							strcpy(Msg_Copy, Msg_Pad);//抜けるとクリアーしてしまうので，クリアー用のメッセージに書き写しておく
 							nukeru = 1;
 						}
 					}
@@ -6255,7 +6425,7 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 			//●カーソルオーバー
 			static const int BackColor_CursorOver = GetColor(240, 250, 250);
 			int LocationX = ActiveMath::MouseX; int LocationY = ActiveMath::MouseY + 20;
-			Math_CursorOver(LocationX, LocationY, 2, black, BackColor_CursorOver, NULL);//Math_ButtonTitleShow(const int LocationX, const int LocationY, const int Padding, const int StringColor, const int BackColor, const int Type)
+			Math_CursorOver(LocationX, LocationY, 2, black, BackColor_CursorOver);//Math_ButtonTitleShow(const int LocationX, const int LocationY, const int Padding, const int StringColor, const int BackColor)
 
 
 			//●マルチガイド
@@ -6504,7 +6674,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 	strcpy(List0Row[6].Title, "アプリケーションの終了");
 
 	//■カスタマイズのプルダウンリスト
-	const int List1RowKosuu = 11;
+	const int List1RowKosuu = 12;
 	ListStrWidth = GetDrawStringWidth("ジョイパッドスタイルディレクトリの変更", strlen("ジョイパッドスタイルディレクトリの変更"));//最大文字数の項目からリストの幅を取得
 	static struct LIST_CTRL List1 = { 0 };
 	List1.ParentBtn_p = &ToolA[1];//カスタマイズボタン
@@ -6535,7 +6705,8 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 	strcpy(List1Row[7].Title, "アプリ共有画像ディレクトリの変更");
 	strcpy(List1Row[8].Title, "アプリ共有音声ディレクトリの変更");
 	strcpy(List1Row[9].Title, "ジョイパッドスタイルディレクトリの変更");
-	strcpy(List1Row[10].Title, "リンクの保存");
+	strcpy(List1Row[10].Title, "メッセージコードリンクの一括作成");
+	strcpy(List1Row[11].Title, "ジョイパッドリンクの一括作成");
 
 
 	//■設定のプルダウンリスト
@@ -6639,7 +6810,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 		{
 			struct LOAD_MONDAI_SP m;//ロードするための情報
 			m.FilePath = FilePath_Mondai_h;
-			m.Mondai_h = &Mondai;
+			m.Mondai = &Mondai;
 			m.Syoumon_Kosuu_p = &Syoumon_Kosuu;
 			char Dir[MAX_PATH];
 			GetDirFromPath(Dir, FilePath_Mondai_h);
@@ -6714,7 +6885,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 	int ExitModeFlag = 0;
 	
 	//本来の値をかきうつす（フォームはロードしたものを使うため，書き換える前に元の値をコピーしておく）
-	for (int i = 0; i < MsgBoxForm_Kosuu; i++)MsgBoxForm_Copy[i] = MsgBoxForm[i];
+	//for (int i = 0; i < MsgBoxForm_Kosuu; i++)MsgBoxForm_Copy[i] = MsgBoxForm[i];
 	//カレントディレクトリの指定
 	SetCurrentDirectory(AppDir);//他のモードから移ってきたときに違うディレクトリになっているから必ずここで指定
 	//static int OpeningSound_edit;// = LoadSoundMem(".\\System\\Fixed\\swish1.mp3");//開始音（入力状態：バックスペースやデリートのときの音）
@@ -6768,14 +6939,16 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 		DisplayArea.BackImg = DisplayArea_Preview[0].BackImg;
 
 		if (FilePath_Mondai_h[0] != '\0') {
+			//本来の値をかきうつす（フォームはロードしたものを使うため，書き換える前に元の値をコピーしておく）
+			for (int i = 0; i < MsgBoxForm_Kosuu; i++)MsgBoxForm_Copy[i] = MsgBoxForm[i];
 
 			//■メッセージボックスフォームの値を編集用に書き換える
 			for (int i = 0; i < MsgBoxForm_Kosuu; i++) {//[0]大問　[1]大問正解　[2]小問　[3]小問正解　
 
 				//編集用にかきかえる
-				int Value1 = 9;//９：スクロールなし MsgBoxForm[i].Option % 10;
-				int Value2 = 4;//４：ボックス左上 MsgBoxForm[i].Option % 100 / 10;
-				int Value3 = 4;//下１桁目が4だからここは何でもよい MsgBoxForm[i].Option % 1000 / 100;
+				int Value1 = 0;//０：スクロールなし MsgBoxForm[i].Option % 10;
+				int Value2 = 0;//０：ボックス左上 MsgBoxForm[i].Option % 100 / 10;
+				int Value3 = 0;//０：自動　※下１桁目が0だからここは何でもよい MsgBoxForm[i].Option % 1000 / 100;
 				int Value4 = MsgBoxForm[i].Option % 10000 / 1000;//下から4桁目だけ書き換えない。
 				int Value5 = 1;
 				//int Value5 = MsgBoxForm[i].Option % 100000 / 10000;//下から5桁目だけ書き換えない。;
@@ -6968,7 +7141,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						//※異なるディレクトリで、かつ既にMsgBoxSetが存在するときは保存しない
 						SetCurrentDirectory(LocalDir);
 						SaveMsgBoxSet(".\\MsgBoxSet.txt", MsgBox_Master, MsgBox_Kosuu, MsgBoxFormNumber);
-						SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", MsgBoxForm_Copy, MsgBoxForm_RGB_SoundPath_Set, MsgBoxForm_Kosuu);
+						SaveMsgBoxFormSet(".\\MsgBoxFormSet.txt", MsgBoxForm_Copy, MsgBoxForm_RGB_SoundPath_Set, MsgBoxForm_Kosuu);//
 						SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 					}
 
@@ -7567,7 +7740,8 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 								}
 							}
 							strcpy(Mondai.syoumon[Syoumon_Kosuu - 1], "<p></p>");
-							strcpy(Mondai.syoumonseikai[Syoumon_Kosuu - 1], "<math></math>");
+							strcpy(Mondai.syoumonseikai[Syoumon_Kosuu - 1], "<m></m>");
+							//strcpy(Mondai.syoumonseikai[Syoumon_Kosuu - 1], "<math></math>");
 							HMsgBoxH_S[Syoumon_Kosuu - 1].Tag[0].TagSign = 1;//tag[0].TagSignがActiveTagSign　値が１のときだけタグなどの情報を読み込む
 							HMsgBoxH_SS[Syoumon_Kosuu - 1].Tag[0].TagSign = 1;//tag[0].TagSignがActiveTagSign　値が１のときだけタグなどの情報を読み込む
 
@@ -7600,7 +7774,8 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 								strcpy(Mondai.syoumonseikai[m + 1], Mondai.syoumonseikai[m]);
 							}
 							strcpy(Mondai.syoumon[s], "<p></p>");
-							strcpy(Mondai.syoumonseikai[s], "<math></math>");
+							strcpy(Mondai.syoumonseikai[s], "<m></m>");
+							//strcpy(Mondai.syoumonseikai[s], "<math></math>");
 							Syoumon_Kosuu++;
 							if (copyno >= s) copyno++;//挿入してずれた分だけ番号もずらす
 							for (int p = s; p < Syoumon_Kosuu; p++) {//挿入した箇所以降は書き出し時にタグを読み取る
@@ -7647,7 +7822,8 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 							activereset(&EditorPad.Msg_h, &HMsgBoxH_D, &HMsgBoxH_DS, HMsgBoxH_S, HMsgBoxH_SS, &activesyoumonH, &activesyoumonseikaiH);//ボタンを押す前の編集項目のアクティブをリセット
 							//メッセージのクリアー
 							strcpy(Mondai.syoumon[s], "<p></p>");
-							strcpy(Mondai.syoumonseikai[s], "<math></math>");
+							strcpy(Mondai.syoumonseikai[s], "<m></m>");
+							//strcpy(Mondai.syoumonseikai[s], "<math></math>");
 							//クリアーした状態を書き出す（タグを読みとる）
 							HMsgBoxH_S[s].Tag[0].TagSign = 1;//tag[0].TagSignがActiveTagSign　値が１のときだけタグなどの情報を読み込む
 							HMsgBoxH_SS[s].Tag[0].TagSign = 1;//tag[0].TagSignがActiveTagSign　値が１のときだけタグなどの情報を読み込む
@@ -7863,7 +8039,8 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 					if (ClickedNo == 0) {
 						activereset(&EditorPad.Msg_h, &HMsgBoxH_D, &HMsgBoxH_DS, HMsgBoxH_S, HMsgBoxH_SS, &activesyoumonH, &activesyoumonseikaiH);//アクティブな項目の入力確定，状態のリセット，項目，小問，小問正解のアクティブのリセット
 						strcpy(Mondai.syoumon[Syoumon_Kosuu], "<p></p>");
-						strcpy(Mondai.syoumonseikai[Syoumon_Kosuu], "<math></math>");
+						strcpy(Mondai.syoumonseikai[Syoumon_Kosuu], "<m></m>");
+						//strcpy(Mondai.syoumonseikai[Syoumon_Kosuu], "<math></math>");
 						//メッセージが空の状態を書き出す（タグを読みとる）
 						HMsgBoxH_S[Syoumon_Kosuu].Tag[0].TagSign = 1;//tag[0].TagSignがActiveTagSign　値が１のときだけタグなどの情報を読み込む
 						HMsgBoxH_SS[Syoumon_Kosuu].Tag[0].TagSign = 1;//tag[0].TagSignがActiveTagSign　値が１のときだけタグなどの情報を読み込む
@@ -8159,20 +8336,20 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						if (GetOpenFileNameCsv(Dir_FontStyle, SourcePath, Title_FontStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時はDir_FontSetがカレントディレクトリとなる
 							//rwの書き換え
-							//MsgCodeLinkファイルがないときTitle_FontStyle_rw以外は"未設定"とする
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Title_FontStyle_rw以外は"未設定"とする
 								strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
-							//Title_FontStyle_rwだけ取得した文字列にする
 							strcpy(Title_FontStyle_rw, Title_FontStyle);
+							PathRelativePathTo(SourcePath, AppDir, FILE_ATTRIBUTE_DIRECTORY, SourcePath, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
-							strcpy(FilePath, Dir_FontStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontStyle);
-							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
+							strcpy(FilePath, Dir_FontStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontStyle);//FilePathは相対パス
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//相対パスどうしを比較して異なるときはコピーする
 							//フォントスタイルのロード
-							LoadFontStyle(FilePath);//絶対パスでロード
+							SetCurrentDirectory(AppDir);//ディレクトリを変更する
+							LoadFontStyle(FilePath);//相対パスでロード
 							nukeru = 1;//タグを再読み込みするため（文字幅で関係あると思う）
 						}
 					}
@@ -8192,19 +8369,19 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						if (GetOpenFileNameCsv(Dir_FontImgStyle, SourcePath, Title_FontImgStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時はDir_FontImgSetがカレントディレクトリとなる
 							//rwの書き換え
-							//MsgCodeLinkファイルがないときTitle_FontImgStyle_rw以外は"未設定"とする
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Title_FontImgStyle_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
-							//Title_FontImgStyle_rwだけ取得した文字列にする
 							strcpy(Title_FontImgStyle_rw, Title_FontImgStyle);
+							PathRelativePathTo(SourcePath, AppDir, FILE_ATTRIBUTE_DIRECTORY, SourcePath, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
-							strcpy(FilePath, Dir_FontImgStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontImgStyle);
-							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
+							strcpy(FilePath, Dir_FontImgStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontImgStyle);//FilePathは相対パス
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//相対パスどうしの比較
 							//フォント画像スタイルのロード
+							SetCurrentDirectory(AppDir);//ディレクトリを変更する
 							LoadFontImgStyle(FilePath);//絶対パスでロード
 							nukeru = 1;//タグを再読み込みするため（画像の幅で関係あると思う）
 						}
@@ -8225,19 +8402,19 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						if (GetOpenFileNameCsv(Dir_TagStyle, SourcePath, Title_TagStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時はDir_TagSetがカレントディレクトリとなる
 							//rwの書き換え
-							//MsgCodeLinkファイルがないときTitle_TagStyle_rw以外は"未設定"とする
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Title_TagStyle_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
-							//Title_TagStyle_rwだけ取得した文字列にする
 							strcpy(Title_TagStyle_rw, Title_TagStyle);
+							PathRelativePathTo(SourcePath, AppDir, FILE_ATTRIBUTE_DIRECTORY, SourcePath, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
-							strcpy(FilePath, Dir_TagStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_TagStyle);
+							strcpy(FilePath, Dir_TagStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_TagStyle);//FilePathは相対パス
 							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
 							//タグスタイルのロード
+							SetCurrentDirectory(AppDir);//ディレクトリを変更する
 							LoadTagStyle(FilePath);//絶対パスでロード
 							nukeru = 1;//タグを再読み込みするため
 						}
@@ -8258,17 +8435,17 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						if (GetOpenFileNameCsv(Dir_JoypadStyle, SourcePath, Title_JoypadStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
 						//※終了時はDir_Joypadがカレントディレクトリとなる
 							//rwの書き換え
-							//JoypadLinkファイルがないときTitle_JoypadStyle_rw以外は"未設定"とする
-							if (strcmp(Title_JoypadStyle_rw, "なし") == 0) {//JoypadLinkがないとき
+							if (strcmp(Title_JoypadStyle_rw, "なし") == 0) {//JoypadLinkがないとき，Title_JoypadStyle_rw以外は"未設定"とする
 								strcpy(Dir_JoypadStyle_rw, "未設定");
 							}
-							//Title_JoypadStyle_rwだけ取得した文字列にする
 							strcpy(Title_JoypadStyle_rw, Title_JoypadStyle);
+							PathRelativePathTo(SourcePath, AppDir, FILE_ATTRIBUTE_DIRECTORY, SourcePath, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
-							strcpy(FilePath, Dir_JoypadStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_JoypadStyle);
-							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
+							strcpy(FilePath, Dir_JoypadStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_JoypadStyle);//FilePathは相対パス
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//相対パスどうしの比較
 							//ジョイパッドスタイルのロード
+							SetCurrentDirectory(AppDir);//ディレクトリを変更する
 							LoadJoypadStyle(FilePath);//絶対パスでロード
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
@@ -8287,14 +8464,13 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_FontStyle, MAX_PATH)) {
 							//rwの書き換え
-							//MsgCodeLinkファイルがないときDir_FontStyle_rw以外は"未設定"とする
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Dir_FontStyle_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
-							//Dir_FontStyle_rwだけ取得した文字列を相対パスに変換した文字列にする
-							PathRelativePathTo(Dir_FontStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_FontStyle, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_FontStyle_rw, Dir_FontStyle);
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
 					}
@@ -8312,14 +8488,13 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_FontImgStyle, MAX_PATH)) {
 							//rwの書き換え
-							//MsgCodeLinkファイルがないときDir_FontImgStyle_rw以外は"未設定"とする
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Dir_FontImgStyle_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
-							//Dir_FontImgStyle_rwだけ取得した文字列を相対パスに変換した文字列にする
-							PathRelativePathTo(Dir_FontImgStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontImgStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_FontImgStyle, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontImgStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_FontImgStyle_rw, Dir_FontImgStyle);
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
 					}
@@ -8337,14 +8512,13 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_TagStyle, MAX_PATH)) {
 							//rwの書き換え
-							//MsgCodeLinkファイルがないときDir_TagStyle_rw以外は"未設定"とする
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Dir_TagStyle_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定"); strcpy(Dir_AppSound_rw, "未設定");
 							}
-							//Dir_TagStyle_rwだけ取得した文字列を相対パスに変換した文字列にする
-							PathRelativePathTo(Dir_TagStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_TagStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_TagStyle, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_TagStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_TagStyle_rw, Dir_TagStyle);
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
 					}
@@ -8362,15 +8536,14 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_AppImg, MAX_PATH)) {
 							//rwの書き換え
-							//MsgCodeLinkファイルがないときDir_AppImg_rw以外は"未設定"とする
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Dir_AppImg_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppSound_rw, "未設定");
 							}
-							//Dir_AppImg_rwだけ取得した文字列を相対パスに変換した文字列にする
-							PathRelativePathTo(Dir_AppImg_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppImg, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
-							nukeru = 1;//タグを再読み込みするため
+							PathRelativePathTo(Dir_AppImg, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppImg, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_AppImg_rw, Dir_AppImg);
+							//nukeru = 1;//タグを再読み込みするため
 						}
 					}
 				}
@@ -8388,15 +8561,14 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_AppSound, MAX_PATH)) {
 							//rwの書き換え
-							//MsgCodeLinkファイルがないときDir_AppSound_rw以外は"未設定"とする
-							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき
+							if (strcmp(Title_FontStyle_rw, "なし") == 0) {//MsgCodeLinkがないとき，Dir_AppSound_rw以外は"未設定"とする
 								strcpy(Title_FontStyle_rw, "未設定"); strcpy(Title_FontImgStyle_rw, "未設定"); strcpy(Title_TagStyle_rw, "未設定");
 								strcpy(Dir_FontStyle_rw, "未設定"); strcpy(Dir_FontImgStyle_rw, "未設定"); strcpy(Dir_TagStyle_rw, "未設定");
 								strcpy(Dir_AppImg_rw, "未設定");
 							}
-							//Dir_AppSound_rwだけ取得した文字列を相対パスに変換した文字列にする
-							PathRelativePathTo(Dir_AppSound_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppSound, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
-							nukeru = 1;//タグを再読み込みするため
+							PathRelativePathTo(Dir_AppSound, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppSound, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_AppSound_rw, Dir_AppSound);
+							//nukeru = 1;//タグを再読み込みするため
 						}
 					}
 				}
@@ -8414,12 +8586,11 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 						//ダイアログからディレクトリの選択
 						if (GetOpenDirectoryName(AppDir, Dir_JoypadStyle, MAX_PATH)) {
 							//rwの書き換え
-							//MsgCodeLinkファイルがないときDir_JoypadStyle_rw以外は"未設定"とする
-							if (strcmp(Title_JoypadStyle_rw, "なし") == 0) {//JoypadLinkがないとき
+							if (strcmp(Title_JoypadStyle_rw, "なし") == 0) {//JoypadLinkがないとき，Dir_JoypadStyle_rw以外は"未設定"とする
 								strcpy(Title_JoypadStyle_rw, "未設定");
 							}
-							//Dir_JoypadStyle_rwだけ取得した文字列を相対パスに変換した文字列にする
-							PathRelativePathTo(Dir_JoypadStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_JoypadStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_JoypadStyle, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_JoypadStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_JoypadStyle_rw, Dir_JoypadStyle);
 							//タグの再読み込みは必要なし//nukeru = 1;//タグを再読み込みするため
 						}
 					}
@@ -8429,21 +8600,33 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
 				List1.Nest[1] += List1.RowHeight;////次の行の開始位置までずらす　あってもなくてもよい
 
-				////リンクの保存
+				//●メッセージコードリンクの一括作成
 				r++;
 				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
 					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
 					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
-						SetCurrentDirectory(LocalDir);
-						SaveMsgCodeLink(".\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
-						SaveJoypadLink(".\\JoypadLink.txt");//ジョイパッドリンクの保存　全部未設定（つまりTitle_JoypadStyle_rwが"なし"）なら保存しない
+						MakeMsgCodeLink();
 					}
 				}
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
 				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
 				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
-				//List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす。最後だからなくてもよい
+				List1.Nest[1] += List1.RowHeight;////次の行の開始位置までずらす　あってもなくてもよい
+
+				//●ジョイパッドリンクの一括作成
+				r++;
+				if (List1.Nest[0] < ActiveMath::MouseX && ActiveMath::MouseX < List1.Nest[0] + List1.RowWidth && List1.Nest[1] < ActiveMath::MouseY && ActiveMath::MouseY < List1.Nest[1] + List1.RowHeight
+					&& List1Row[r].Active > 0) {//ボタンの範囲内のとき
+					DrawBox(List1.Nest[0], List1.Nest[1], List1.Nest[0] + List1.RowWidth, List1.Nest[1] + List1.RowHeight, List1.CursorColor, true); //カーソルの表示
+					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
+						MakeJoypadLink();
+					}
+				}
+				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255 * 30 / 100);//非アクティブのときは背景を透かす//aa0/
+				DrawFormatString(List1.Nest[0] + List1.BorderThickness + List1.RowPadding[0], List1.Nest[1] + List1.BorderThickness + List1.RowPadding[1], black, List1Row[r].Title); //文字板の表示
+				if (List1Row[r].Active == 0) SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);//ノーブレンドに戻す（第１引数がDX_BLENDMODE_NOBLENDのとき第２引数は意味を持たない）//aa0/
+				//List1.Nest[1] += List1.RowHeight;//次の行の開始位置までずらす。最後だからなくてよい
 
 				///////左クリックしたとき    プルダウンリストから抜ける
 				if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
@@ -8609,9 +8792,10 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 			//●カーソルオーバー
 			static const int BackColor_CursorOver = GetColor(240, 250, 250);
 			int LocationX = ActiveMath::MouseX; int LocationY = ActiveMath::MouseY + 20;
-			Math_CursorOver(LocationX, LocationY, 2, black, BackColor_CursorOver, NULL);//Math_ButtonTitleShow(const int LocationX, const int LocationY, const int Padding, const int StringColor, const int BackColor, const int Type)
+			Math_CursorOver(LocationX, LocationY, 2, black, BackColor_CursorOver);//Math_ButtonTitleShow(const int LocationX, const int LocationY, const int Padding, const int StringColor, const int BackColor)
 			//●マルチガイド
-	//		MultiGuide();//全メッセージで共有するため，MathWritingP内に入れないこと。
+			//MultiGuide(10, 10, EditorPad.Msg_h, EditorPad.MsgBox_p);//複数のメッセージがあるので，表示させない。//全メッセージで共有するため，MathWritingP内に入れないこと。
+
 			//●サンプルの制限解除（コントロール＋R）
 			if (ActiveMath::Key[KEY_INPUT_R] == 1 && (ActiveMath::Key[KEY_INPUT_LCONTROL] > 0 || ActiveMath::Key[KEY_INPUT_RCONTROL] > 0)) {
 				for (int i = 0; i < ToolBKosuu; i++) ToolB[i].Active = 1;
@@ -8727,6 +8911,7 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 	char DisplayArea_Preview_FilePath[MAX_PATH] = ".\\System\\BackImg\\BackImgPath_Msg.txt";
 	LoadEditorSettings(DisplayArea_Preview_FilePath, &BorderColorRGB, &BackColorRGB, &BackImgPath, &DisplayArea_Preview, DisplayArea_Preview_Kosuu);
 
+/*
 	//■ディスプレイエリア
 	int DisplayArea_Kosuu = 1;
 	static struct AREA_CTRL DisplayArea = { 0 };
@@ -8787,9 +8972,8 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 	strcpy(List0Row[3].Title, "名前を付けて保存");
 	strcpy(List0Row[4].Title, "ホームに戻る");
 	strcpy(List0Row[5].Title, "アプリケーションの終了");
-
 	//■リンクのプルダウンリスト
-	const int List1RowKosuu = 11;
+	const int List1RowKosuu = 12;
 	ListStrWidth = GetDrawStringWidth("ジョイパッドの割り当てディレクトリの変更", strlen("ジョイパッドの割り当てディレクトリの変更"));//最大文字数の項目からリストの幅を取得
 	static struct LIST_CTRL List1 = { 0 };
 	List1.ParentBtn_p = &ToolA[1];//ファイルボタン
@@ -8820,7 +9004,8 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 	strcpy(List1Row[7].Title, "アプリ共有画像ディレクトリの変更");
 	strcpy(List1Row[8].Title, "アプリ共有音声ディレクトリの変更");
 	strcpy(List1Row[9].Title, "ジョイパッドスタイルディレクトリの変更");
-	strcpy(List1Row[10].Title, "リンクの保存");
+	strcpy(List1Row[10].Title, "メッセージコードリンクの一括作成");
+	strcpy(List1Row[11].Title, "ジョイパッドリンクの一括作成");
 
 
 	//■設定のプルダウンリスト
@@ -8846,6 +9031,7 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 	static struct LISTROW_CTRL List2Row[List1RowKosuu] = { 0 };
 	for (int i = 0; i < List2RowKosuu; i++) List2Row[i].List_p = &List2;//★★★
 	strcpy(List2Row[0].Title, "背景の変更");
+*/
 
 
 
@@ -8892,8 +9078,9 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 
 	//メッセージ，設定，背景画像，メッセージプロパティのロード
 
-	char Pathbuff2[MAX_PATH];
-	strcpy(Pathbuff2, LocalDir);
+
+	char DirectoryNow1[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, DirectoryNow1);//チェック用
 
 	if (FilePath_Message_h[0] != '\0') {
 		//●メッセージとメッセージ関連ファイルのロード
@@ -8918,6 +9105,18 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 				return -1;
 			}
 		}
+	char Pathbuff2[MAX_PATH];
+	strcpy(Pathbuff2, LocalDir);
+		/*
+		//ファイルが存在しないとき，
+		if (!strcmp(Title_FontStyle_rw, "なし")) {
+			LoadMsgCodeLink(".\\System\\File\\MsgCodeLink.txt"); //フォント，フォント画像，タグの設定のロード
+		}
+		//ファイルが存在しないとき，
+		if (!strcmp(Title_JoypadStyle_rw, "なし")) {
+			LoadJoypadLink(".\\System\\File\\JoypadLink.txt"); //ジョイパッドの設定のロード
+		}
+		*/
 
 
 		//※終了時はモンスターディレクトリ
@@ -9729,7 +9928,7 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 
 			//●カーソルオーバー
 			static const int BackColor_CursorOver = GetColor(240, 250, 250);
-			Math_CursorOver(ActiveMath::MouseX, ActiveMath::MouseY + 20, 2, black, BackColor_CursorOver, NULL);//Math_ButtonTitleShow(const int LocationX, const int LocationY, const int Padding, const int StringColor, const int BackColor, const int Type)
+			Math_CursorOver(ActiveMath::MouseX, ActiveMath::MouseY + 20, 2, black, BackColor_CursorOver);//Math_ButtonTitleShow(const int LocationX, const int LocationY, const int Padding, const int StringColor, const int BackColor)
 			//●マルチガイド
 		//	MultiGuide();
 			//●サンプルの制限解除（コントロール＋R）
@@ -9860,13 +10059,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 	GraphWidth = 1000;
 	GraphHeight = ScreenHeight-30;
 	SetGraphMode(GraphWidth, GraphHeight, ColorBitNum);//ウインドウサイズの指定(1000, 1010, 32)
-	//ウィンドウサイズの決定
+	//ウィンドウサイズの決定（高さはwhile内で更新）
 	WindowWidth = GraphWidth;
+	SetWindowSizeChangeEnableFlag(FALSE, FALSE);
 	if (GraphHeight < 750) WindowHeight = GraphHeight;
 	else WindowHeight = 750;
-	SetWindowSizeChangeEnableFlag(FALSE, FALSE);
 	SetWindowSize(WindowWidth, WindowHeight);
 	SetWindowPosition((ScreenWidth - WindowWidth - 10) / 2, (ScreenHeight - WindowHeight - 30) / 2);//スクリーンの中央に表示//指定しないと，タイトルバーの縦半分くらいの長さだけ上になる。
+
 
 	int BackColorHandle = GetColor(240, 240, 240);
 	DrawBox(0, 0, WindowWidth, WindowHeight, BackColorHandle, true);
@@ -9879,6 +10079,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 
 	//●編集用パッドのロード（パッドエリア，入力用インデックス，入力用ボタン，入力用基本ボタン，パッドメッセージ）
 	//（ロード）
+
 	//エディターパッド
 	EditorPad.Area_h = EditorPadArea_h;//
 	EditorPad.BtnForm_h = EditorBtnForm_h;//_h
@@ -10320,17 +10521,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 					DrawBox(List0.Nest[0], List0.Nest[1], List0.Nest[0] + List0.RowWidth, List0.Nest[1] + List0.RowHeight, List0.CursorColor, true); //カーソルの表示
 					if (ActiveMath::Mouse[MOUSE_INPUT_LEFT] == 1) {
 						//ダイアログでフォントスタイルのファイルパスを取得
-							SetCurrentDirectory(AppDir);//
-							LoadMsgCodeLink(".\\System\\File\\MsgCodeLink.txt"); //フォント，フォント画像，タグの設定のロード
+						SetCurrentDirectory(AppDir);//
+						LoadMsgCodeLink(".\\System\\File\\MsgCodeLink.txt"); //フォント，フォント画像，タグの設定のロード
 						char SourcePath[MAX_PATH] = { 0 };
 						if (GetOpenFileNameCsv(Dir_FontStyle, SourcePath, Title_FontStyle, MAX_PATH, MAX_PATH)) {//ユーザーが OK ボタンを押せば 0 以外（実際は１），そうでなければ 0 が返る
-						//※終了時はDir_FontSetがカレントディレクトリとなる
+							//※終了時はDir_FontSetがカレントディレクトリとなる
 							//rwの書き換え
 							strcpy(Title_FontStyle_rw, Title_FontStyle);
+							PathRelativePathTo(SourcePath, AppDir, FILE_ATTRIBUTE_DIRECTORY, SourcePath, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//ファイルのコピー（Dir_FontSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
-							strcpy(FilePath, Dir_FontStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontStyle);
-							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
+							strcpy(FilePath, Dir_FontStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontStyle);//FilePathは相対パス
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//相対パスどうしを比較して異なるときはコピーする
 							SetCurrentDirectory(AppDir);
 							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						}
@@ -10356,10 +10558,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 						//※終了時はDir_FontImgSetがカレントディレクトリとなる
 							//rwの書き換え
 							strcpy(Title_FontImgStyle_rw, Title_FontImgStyle);
+							PathRelativePathTo(SourcePath, AppDir, FILE_ATTRIBUTE_DIRECTORY, SourcePath, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//ファイルのコピー（Dir_FontImgSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
-							strcpy(FilePath, Dir_FontImgStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontImgStyle);
-							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
+							strcpy(FilePath, Dir_FontImgStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_FontImgStyle);//FilePathは相対パス
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//相対パスどうしを比較して異なるときはコピーする
 							SetCurrentDirectory(AppDir);
 							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						}
@@ -10386,10 +10589,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 						//※終了時はDir_TagSetがカレントディレクトリとなる
 							//rwの書き換え
 							strcpy(Title_TagStyle_rw, Title_TagStyle);
+							PathRelativePathTo(SourcePath, AppDir, FILE_ATTRIBUTE_DIRECTORY, SourcePath, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//ファイルのコピー（Dir_FontImgSet外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
-							strcpy(FilePath, Dir_TagStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_TagStyle);
-							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
+							strcpy(FilePath, Dir_TagStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_TagStyle);//FilePathは相対パス
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//相対パスどうしを比較して異なるときはコピーする
 							SetCurrentDirectory(AppDir);
 							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						}
@@ -10415,10 +10619,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 						//※終了時はDir_Joypadがカレントディレクトリとなる
 							//rwの書き換え
 							strcpy(Title_JoypadStyle_rw, Title_JoypadStyle);
+							PathRelativePathTo(SourcePath, AppDir, FILE_ATTRIBUTE_DIRECTORY, SourcePath, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
 							//ファイルのコピー（Dir_Joypad外からファイルを選択したとき）
 							char FilePath[MAX_PATH];
-							strcpy(FilePath, Dir_JoypadStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_JoypadStyle);
-							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//絶対パスどうしの比較
+							strcpy(FilePath, Dir_JoypadStyle); strcat(FilePath, "\\"); strcat(FilePath, Title_JoypadStyle);//FilePathは相対パス
+							if (strcmp(SourcePath, FilePath)) CopyFile(SourcePath, FilePath, FALSE);//相対パスどうしを比較して異なるときはコピーする
 							SetCurrentDirectory(AppDir);
 							SaveJoypadLink(".\\System\\File\\JoypadLink.txt");//ジョイパッドリンクの保存　全部未設定（つまりTitle_JoypadStyle_rwが"なし"）なら保存しない
 						}
@@ -10442,7 +10647,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 						LoadMsgCodeLink(".\\System\\File\\MsgCodeLink.txt"); //フォント，フォント画像，タグの設定のロード
 						char SourcePath[MAX_PATH] = { 0 };
 						if (GetOpenDirectoryName(AppDir, Dir_FontStyle, MAX_PATH)) {
-							PathRelativePathTo(Dir_FontStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_FontStyle, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_FontStyle_rw, Dir_FontStyle);
 							SetCurrentDirectory(AppDir);
 							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						}
@@ -10466,7 +10672,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 						LoadMsgCodeLink(".\\System\\File\\MsgCodeLink.txt"); //フォント，フォント画像，タグの設定のロード
 						char SourcePath[MAX_PATH] = { 0 };
 						if (GetOpenDirectoryName(AppDir, Dir_FontImgStyle, MAX_PATH)) {
-							PathRelativePathTo(Dir_FontImgStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontImgStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_FontImgStyle, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_FontImgStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_FontImgStyle_rw, Dir_FontImgStyle);
 							SetCurrentDirectory(AppDir);
 							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						}
@@ -10491,7 +10698,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 						LoadMsgCodeLink(".\\System\\File\\MsgCodeLink.txt"); //フォント，フォント画像，タグの設定のロード
 						char SourcePath[MAX_PATH] = { 0 };
 						if (GetOpenDirectoryName(AppDir, Dir_TagStyle, MAX_PATH)) {
-							PathRelativePathTo(Dir_TagStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_TagStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_TagStyle, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_TagStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_TagStyle_rw, Dir_TagStyle);
 							SetCurrentDirectory(AppDir);
 							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						}
@@ -10515,7 +10723,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 						LoadMsgCodeLink(".\\System\\File\\MsgCodeLink.txt"); //フォント，フォント画像，タグの設定のロード
 						char SourcePath[MAX_PATH] = { 0 };
 						if (GetOpenDirectoryName(AppDir, Dir_AppImg, MAX_PATH)) {
-							PathRelativePathTo(Dir_AppImg_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppImg, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_AppImg, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppImg, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_AppImg_rw, Dir_AppImg);
 							SetCurrentDirectory(AppDir);
 							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						}
@@ -10539,7 +10748,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 						LoadMsgCodeLink(".\\System\\File\\MsgCodeLink.txt"); //フォント，フォント画像，タグの設定のロード
 						char SourcePath[MAX_PATH] = { 0 };
 						if (GetOpenDirectoryName(AppDir, Dir_AppSound, MAX_PATH)) {
-							PathRelativePathTo(Dir_AppSound_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppSound, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_AppSound, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_AppSound, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_AppSound_rw, Dir_AppSound);
 							SetCurrentDirectory(AppDir);
 							SaveMsgCodeLink(".\\System\\File\\MsgCodeLink.txt");//コードリンクの保存　全部未設定（つまりTitle_FontStyle_rwが"なし"）なら保存しない
 						}
@@ -10563,7 +10773,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 						LoadJoypadLink(".\\System\\File\\JoypadLink.txt"); //ジョイパッドの設定のロード
 						char SourcePath[MAX_PATH] = { 0 };
 						if (GetOpenDirectoryName(AppDir, Dir_JoypadStyle, MAX_PATH)) {
-							PathRelativePathTo(Dir_JoypadStyle_rw, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_JoypadStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							PathRelativePathTo(Dir_JoypadStyle, AppDir, FILE_ATTRIBUTE_DIRECTORY, Dir_JoypadStyle, FILE_ATTRIBUTE_ARCHIVE);//絶対パス（第４引数）から相対パス（第１引数）を取得（ここでは同じ変数を使う）
+							strcpy(Dir_JoypadStyle_rw, Dir_JoypadStyle);
 							SetCurrentDirectory(AppDir);
 							SaveJoypadLink(".\\System\\File\\JoypadLink.txt");//ジョイパッドリンクの保存　全部未設定（つまりTitle_JoypadStyle_rwが"なし"）なら保存しない
 						}

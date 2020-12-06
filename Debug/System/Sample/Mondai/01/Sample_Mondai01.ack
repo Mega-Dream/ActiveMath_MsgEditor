@@ -2,26 +2,26 @@
 ƒ‚ƒ“ƒXƒ^[ID
 3
 ‘å–â
-<p><math>#int(^ç^;#frac(3;1)ƒ¿;#frac(3;1)ƒÀ;#fenced(x|ƒ¿)#fenced(x|ƒÀ);dx)|#frac(6;1)#sup(#fenced(ƒÀ|ƒ¿);3)</math>‚Å‚ ‚é‚±‚Æ‚ğ—p‚¢‚ÄCŸ‚Ì’èÏ•ª‚ğ‹‚ß‚æB</p>
+<p><m>#int(^ç^;ƒ¿;ƒÀ;#fenced(x|ƒ¿)#fenced(x|ƒÀ);dx)|#f(6;1)#sup(#fenced(ƒÀ|ƒ¿);3)</m>‚Å‚ ‚é‚±‚Æ‚ğ—p‚¢‚ÄCŸ‚Ì’èÏ•ª‚ğ‹‚ß‚æB</p>
 ‘å–â³‰ğ
-<math>#frac(2;7)#S{‚Ü‚½‚Í}3#frac(2;1)#S{‚Ü‚½‚Í}3.5</math>
+<m>#Mark{‚¢‚¸‚ê‚©}#f(2;7)C3#f(2;1)C3.5</m>
 ¬–â0
-<p><math>#int(^ç^;|#frac(3;1);2;#fenced(3x|1)#fenced(x|2);dx)</math>#img_l{m;car80_red.png}</p>
+<p><m>#int(^ç^;|#f(3;1);2;#fenced(3x|1)#fenced(x|2);dx)</m>#img_l{m;car80_red.png}</p>
 ¬–â³‰ğ0
-<math>#sqrt(2)#S{‡•s“¯}5{#sqrt(3)#S{‡•s“¯}ƒÎ</math>
+<m>#Mark{‡•s“¯}|3C|4</m>
 ¬–â1
-<p>¬–â2<math>#hissan{()(^#ptline(;)^)(^#bline()^)()}</math></p>
+<p>¬–â2<m>#hissan{()(^#ptline(;)^)(^#bline()^)()}</m></p>
 ¬–â³‰ğ1
-<math>2</math>
+<m>5</m>
 ¬–â2
 <p>¬–â3</p>
 ¬–â³‰ğ2
-<math>3</math>
+<m>3</m>
 ¬–â3
 <p>¬–â4</p>
 ¬–â³‰ğ3
-<math>4</math>
+<m>4</m>
 ¬–â4
 <p>¬–â5</p>
 ¬–â³‰ğ4
-<math>5</math>
+<m>5</m>
