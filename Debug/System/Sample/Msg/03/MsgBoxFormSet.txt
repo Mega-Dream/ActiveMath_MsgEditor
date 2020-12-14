@@ -16,7 +16,7 @@ FontColorRGB[3],255,255,255
 Leading,30
 BlinkSpeed,90
 OutputSpeed,0
-ScrollSpeed,200
+ScrollSpeed,3
 Option,3044
 OpeningSound,by_chance.mp3
 MsgSound,

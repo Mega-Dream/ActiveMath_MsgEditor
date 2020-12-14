@@ -19,7 +19,6 @@
 //●グローバル変数
 char ApplicationTitle[] = "Active Math Message Editor";
 //PCモニターは1920 * 1080
-int FPS = 60;
 int ScreenWidth, ScreenHeight;
 int GraphWidth, GraphHeight, ColorBitNum = 32;
 int WindowWidth, WindowHeight;
@@ -1880,7 +1879,7 @@ int EditMonster(char *FilePath_Monster_h, struct MONSTER_CTRL *Monster_p, int *M
 	//////////↓モンスター編集メインループの始まり↓////////////////////↓編集メインループの始まり↓///////////////////↓編集メインループの始まり↓///////////////////↓編集メインループの始まり↓/////////
 	for (int frameH = 0; !ScreenFlip() && !ProcessMessage() && !ClearDrawScreen() && !MathgpUpdateMouse() && !MathgpUpdateKey(); frameH++) {//マウス
 		//●早すぎたら待機
-		SleepToFitFPS(FPS);
+		SleepToFitFPS();
 
 		if (windowflag == 0)Rot -= GetMouseWheelRotVol(); //前回からのマウスホイールの回転の増加量を加算（GetMouseWheelRotVolは下に回転が負の値）
 		//////（１）画面表示処理
@@ -3560,7 +3559,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 			//●キーボードの入力情報をジョイパッドに変換（F1でオン・オフ切り替え）
 			ConvertKeyIntoJoypad();
 			//●早すぎたら待機
-			SleepToFitFPS(FPS);
+			SleepToFitFPS();
 			////　ツールバーA　////
 			static int ClickedNoA = -1;//押されたボタン番号
 			//ツールバー
@@ -4057,7 +4056,7 @@ int MessagePreviewMode(struct MSG_BOX_CTRL *MsgBox_p, int MsgBox_Kosuu, int MsgB
 						else if (OutputSpeed_Copy == 0) DrawFormatString(PropertyArea.Nest[0] + 270, PropertyArea.Nest[1] + L11, black, "出力(全表示)");//書き換えていない値を表示
 						else if (OutputSpeed_Copy == -1) DrawFormatString(PropertyArea.Nest[0] + 270, PropertyArea.Nest[1] + L11, black, "出力(全表示・クリック後にカーソル)");//書き換えていない値を表示
 						else DrawFormatString(PropertyArea.Nest[0] + 270, PropertyArea.Nest[1] + L11, black, "出力(全表示・カーソル)");//書き換えていない値を表示
-						DrawFormatString(PropertyArea.Nest[0] + 120 * 1, PropertyArea.Nest[1] + L12, black, "スクロール(%dpx/秒)", Form_p->ScrollSpeed);
+						DrawFormatString(PropertyArea.Nest[0] + 120 * 1, PropertyArea.Nest[1] + L12, black, "スクロール(%dpx/frame)", Form_p->ScrollSpeed);
 						//書き換えていない値Value1～Value5で表示内容を決める
 						DrawString(PropertyArea.Nest[0], PropertyArea.Nest[1] + L13, "スクロール", blue);
 						if (Value5 == 0) DrawString(PropertyArea.Nest[0] + 120, PropertyArea.Nest[1] + L13, "高さ(0:指定した高さ)", black);
@@ -5676,7 +5675,7 @@ int PadPreviewMode(int *EditorMode_p, char *FilePath_Pad_h) {
 			//●キーボードの入力情報をジョイパッドに変換（F1でオン・オフ切り替え）
 			ConvertKeyIntoJoypad();
 			//●早すぎたら待機
-			SleepToFitFPS(FPS);
+			SleepToFitFPS();
 			//ツールバー
 			ShowArea(Toolbar, 3);
 			////　ツールバーA　////
@@ -7005,7 +7004,7 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 		//////////↓問題編集メインループの始まり↓////////////////////↓問題編集メインループの始まり↓///////////////////↓問題編集メインループの始まり↓///////////////////↓問題編集メインループの始まり↓/////////
 		for (int frameH = 0; !nukeru && !ScreenFlip() && !ProcessMessage() && !ClearDrawScreen() && !MathgpUpdateMouse() && !MathgpUpdateKey(); frameH++) {//マウス・キーボード
 			//●早すぎたら待機
-			SleepToFitFPS(FPS);
+			SleepToFitFPS();
 
 			int rot = GetMouseWheelRotVol(); //前回からのマウスホイールの回転の増加量を加算
 			//モンスターテーブルのスクロール（表示する要素番号の確定に使用）
@@ -9176,7 +9175,7 @@ int EditMessage(int* EditorMode_p, char* FilePath_Message_h) {
 		//////////↓メッセージ編集メインループの始まり↓////////////////////↓メッセージ編集メインループの始まり↓///////////////////↓メッセージ編集メインループの始まり↓///////////////////↓メッセージ編集メインループの始まり↓/////////
 		for (int frameH = 0;!nukeru && !ScreenFlip() && !ProcessMessage() && !ClearDrawScreen() && !MathgpUpdateMouse() && !MathgpUpdateKey(); frameH++) {//マウス・キーボード
 			//●早すぎたら待機
-			SleepToFitFPS(FPS);
+			SleepToFitFPS();
 			//ツールバー
 			ShowArea(Toolbar, 2);
 			////　ツールバーA　////
@@ -10375,7 +10374,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 
 		for (int frameH = 0; !ScreenFlip() && !ProcessMessage() && !ClearDrawScreen() && !MathgpUpdateMouse() && !MathgpUpdateKey(); frameH++) {//&& !MathgpUpdateJoypad() 
 			//●早すぎたら待機
-			SleepToFitFPS(FPS);
+			SleepToFitFPS();
 			//●ディスプレイエリア
 			ShowArea(&DisplayArea, 1);
 			

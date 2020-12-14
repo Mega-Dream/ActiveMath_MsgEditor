@@ -16,7 +16,7 @@ FontColorRGB[3],255,255,255
 Leading,30
 BlinkSpeed,90
 OutputSpeed,50
-ScrollSpeed,200
+ScrollSpeed,3
 Option,10000
 OpeningSound,
 MsgSound,Cyber20-1.mp3
@@ -38,7 +38,7 @@ FontColorRGB[3],255,255,255
 Leading,30
 BlinkSpeed,90
 OutputSpeed,-1
-ScrollSpeed,500
+ScrollSpeed,3
 Option,12000
 OpeningSound,
 MsgSound,
@@ -60,7 +60,7 @@ FontColorRGB[3],255,255,255
 Leading,30
 BlinkSpeed,90
 OutputSpeed,-1
-ScrollSpeed,500
+ScrollSpeed,3
 Option,10000
 OpeningSound,
 MsgSound,
@@ -82,7 +82,7 @@ FontColorRGB[3],255,255,255
 Leading,30
 BlinkSpeed,90
 OutputSpeed,-1
-ScrollSpeed,500
+ScrollSpeed,3
 Option,12000
 OpeningSound,
 MsgSound,
