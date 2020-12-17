@@ -1,4 +1,5 @@
-*** MsgBoxForm0 ***
+Åö
+#MsgBoxFormSet
 MaxLine,-1
 Margin[4],0,0,0,0
 Padding[4],20,15,20,15
@@ -8,15 +9,15 @@ BorderType,1
 BackColorRGB[3],0,51,102
 BackGroundTransparency,0
 ActiveTagColorRGB[3],255,255,0
-ActiveTagColorTransparency,70
+ActiveTagTransparency,80
 ActiveMathColorRGB[3],204,255,255
-ActiveMathColorTransparency,80
+ActiveMathTransparency,80
 FontColorRGB[3],255,255,255
-Leading,5
-BlinkSpeed,120
+Leading,30
+BlinkSpeed,90
 OutputSpeed,0
-ScrollSpeed,200
-Option,21431
+ScrollSpeed,3
+Option,3044
+OpeningSound,by_chance.mp3
 MsgSound,
-ConfirmSound,
-BackDelSound,.\by_chance.mp3
+ConfirmSound,button01a.mp3

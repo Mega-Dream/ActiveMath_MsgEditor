@@ -7738,8 +7738,8 @@ int EditMondai(int* EditorMode_p, char* FilePath_Mondai_h) {
 									HMsgBoxH_SS[m].Tag[0].TagSign = 1;//tag[0].TagSignがActiveTagSign　値が１のときだけタグなどの情報を読み込む
 								}
 							}
-							strcpy(Mondai.syoumon[Syoumon_Kosuu - 1], "<p></p>");
-							strcpy(Mondai.syoumonseikai[Syoumon_Kosuu - 1], "<m></m>");
+							strcpy(Mondai.syoumon[Syoumon_Kosuu - 1], "\0");
+							strcpy(Mondai.syoumonseikai[Syoumon_Kosuu - 1], "\0");
 							//strcpy(Mondai.syoumonseikai[Syoumon_Kosuu - 1], "<math></math>");
 							HMsgBoxH_S[Syoumon_Kosuu - 1].Tag[0].TagSign = 1;//tag[0].TagSignがActiveTagSign　値が１のときだけタグなどの情報を読み込む
 							HMsgBoxH_SS[Syoumon_Kosuu - 1].Tag[0].TagSign = 1;//tag[0].TagSignがActiveTagSign　値が１のときだけタグなどの情報を読み込む
