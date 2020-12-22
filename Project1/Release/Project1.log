@@ -14,8 +14,8 @@ c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(3096): warn
 c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(3532): warning C4244: '=': 'double' から 'int' への変換です。データが失われる可能性があります。
 c:\users\yoshi\source\repos\activemath_msgeditor\project1\source.cpp(3548): warning C4244: '=': 'double' から 'int' への変換です。データが失われる可能性があります。
   コード生成しています。
-  2 of 171 functions ( 1.2%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    8 functions had inline decision re-evaluated but remain unchanged
   コード生成が終了しました。
+  43 of 171 functions (25.1%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    4 functions had inline decision re-evaluated but remain unchanged
   Project1.vcxproj -> C:\Users\Yoshi\source\repos\ActiveMath_MsgEditor\Release\Project1.exe
