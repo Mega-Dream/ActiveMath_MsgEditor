@@ -17,6 +17,9 @@
 #include  <io.h>//_taccess関数で使用（ディレクトリが存在しなければ-1を返す）
 
 //●グローバル変数
+namespace ActiveMath_MessageEditor {
+	char Version[] = "1.01";
+}
 char ApplicationTitle[] = "Active Math Message Editor";
 //PCモニターは1920 * 1080
 int ScreenWidth, ScreenHeight;
@@ -10377,7 +10380,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 			SleepToFitFPS();
 			//●ディスプレイエリア
 			ShowArea(&DisplayArea, 1);
-			
+
 			int ClickedNo = -1;//押されたボタン番号
 			//●ツール（プルダウンリスト）
 			int TopMenu_PushType = 0; int TopMenu_Prev = -2; int TopMenu_Next = -2;
@@ -10386,7 +10389,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 				//リストが開いていない状態でのクリック時
 				//Mouse[MOUSE_INPUT_LEFT] = 2は，プルダウンリストがすぐに消えてしまうのを防ぐ（リストの範囲外クリックに該当するため）（０はだめ。次のループでにまた１になってしまう）
 				if (ClickedNo == 0 && List0.Active != 1) {
-					MenuArea.Active = 0; List0.Active = 1; ActiveMath::Mouse[MOUSE_INPUT_LEFT] = 2; 
+					MenuArea.Active = 0; List0.Active = 1; ActiveMath::Mouse[MOUSE_INPUT_LEFT] = 2;
 				}
 				///////アプリケーションの終了
 				else if (ClickedNo == 1) {
@@ -10475,7 +10478,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 			//●モード番号の取得
 			if (FilePath[0] != '\0') EditorModeChecker(&EditorMode, FilePath);
 			//●編集モードの振り分けに進む
-			if (EditorMode == 0) { Editor(&EditorMode, FilePath); break;	}///////メッセージ編集モード
+			if (EditorMode == 0) { Editor(&EditorMode, FilePath); break; }///////メッセージ編集モード
 			else if (EditorMode == 1) { Editor(&EditorMode, FilePath); break; }///////問題編集モード
 			else if (EditorMode == 2) { Editor(&EditorMode, FilePath); break; }///////パッドビューア
 
@@ -10486,13 +10489,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR lpCmdLine, int) {
 
 			//●ステータスバーエリア
 			ShowArea(&Statusbar, 1);
-			char Copyright[] = "Active Math Message Editor    Version 1.01";
-			int CopyrightX = Statusbar.Nest[2] - GetDrawStringWidth(Copyright, strlen(Copyright));
-			int CopyrightY = Statusbar.Nest[1];
-			DrawFormatString(CopyrightX, CopyrightY, black, Copyright); //文字板の表示
-
-
-						//////カスタマイズのプルダウンリスト
+			{
+				int x = Statusbar.Nest[0];
+				int y = Statusbar.Nest[1];
+				DrawFormatString(x, y, black, "Active Math Message Editor - Version %s      Active Math - Version %s", ActiveMath_MessageEditor::Version, ActiveMath::Version); //バージョンの表示
+			}
+			//////カスタマイズのプルダウンリスト
 			if (List0.Active == 1) {//プルダウンリスト190802
 				ShowList(&List0);
 				//ボタン部分（ボタンの上から描画）
