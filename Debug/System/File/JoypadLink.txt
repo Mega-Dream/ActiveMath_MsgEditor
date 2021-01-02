@@ -1,3 +1,0 @@
-★
-Dir_Joypad_rw,.\Setting\ジョイパッドスタイル
-FileTitle_Joypad_rw,標準ジョイパッドスタイル.csv
