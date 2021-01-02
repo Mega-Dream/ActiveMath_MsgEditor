@@ -18,7 +18,7 @@
 
 //●グローバル変数
 namespace ActiveMath_MessageEditor {
-	char Version[] = "1.01";
+	char Version[] = "1.0.0";
 }
 char ApplicationTitle[] = "Active Math Message Editor";
 //PCモニターは1920 * 1080
